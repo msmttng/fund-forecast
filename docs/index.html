@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>基準価額予報</title>
+  <meta name="description" content="主要インデックス投資信託の翌営業日基準価額を市場指数・先物・為替レートからリアルタイムに試算する基準価額予報サイト。">
+  <meta property="og:title" content="基準価額予報">
+  <meta property="og:description" content="S&amp;P500・NASDAQ100（3倍・2倍・標準）・オルカン・日経平均・TOPIX・SCHD・SOX・FANG+・ゴールド等の翌営業日基準価額をリアルタイム試算。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://msmttng.github.io/fund-forecast/">
+  <meta property="og:site_name" content="基準価額予報">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231d3f72'/%3E%3Cpath d='M5 22 L12 15 L17 18 L26 8' fill='none' stroke='%23ffffff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='26' cy='8' r='2.6' fill='%23ff6b63'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --surface-subtle: #f0f3f7;
+      --text: #17202b;
+      --text-muted: #5b6675;
+      --line: #e3e7ec;
+      --accent: #1d3f72;
+      --up: #c8312f;
+      --up-bg-weak: rgba(200, 49, 47, 0.08);
+      --up-bg-mid: rgba(200, 49, 47, 0.15);
+      --up-bg-strong: #c8312f;
+      --up-text-strong: #ffffff;
+      --down: #1a7f5a;
+      --down-bg-weak: rgba(26, 127, 90, 0.08);
+      --down-bg-mid: rgba(26, 127, 90, 0.15);
+      --down-bg-strong: #1a7f5a;
+      --down-text-strong: #ffffff;
+      --flat-bg: #eef1f5;
+      --badge-lev-bg: #1d3f72;
+      --badge-lev-text: #ffffff;
+      --badge-hedge-bg: #e6ebf2;
+      --badge-hedge-text: #2c4365;
+      --fresh-ok: #1a7f5a;
+      --fresh-normal: #2b6cb0;
+      --fresh-stale: #7a8696;
+      --star-active: #d9822b;
+      --radius: 6px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f141a;
+        --surface: #161d25;
+        --surface-subtle: #1c2530;
+        --text: #e7ecf2;
+        --text-muted: #93a0b0;
+        --line: #243040;
+        --accent: #7fa6e0;
+        --up: #ff6b63;
+        --up-bg-weak: rgba(255, 107, 99, 0.12);
+        --up-bg-mid: rgba(255, 107, 99, 0.22);
+        --up-bg-strong: #d6423a;
+        --up-text-strong: #ffffff;
+        --down: #4cc38a;
+        --down-bg-weak: rgba(76, 195, 138, 0.12);
+        --down-bg-mid: rgba(76, 195, 138, 0.22);
+        --down-bg-strong: #1e8758;
+        --down-text-strong: #ffffff;
+        --flat-bg: #222c38;
+        --badge-lev-bg: #2c5282;
+        --badge-lev-text: #e7ecf2;
+        --badge-hedge-bg: #253242;
+        --badge-hedge-text: #b8c7d9;
+        --fresh-ok: #4cc38a;
+        --fresh-normal: #7fa6e0;
+        --fresh-stale: #738294;
+        --star-active: #f0a44c;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: "IBM Plex Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .num {
+      font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 920px;
+      padding: 0 16px;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    .site-header {
+      background-color: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 0 12px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .site-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .freshness {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .fresh-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--fresh-stale);
+      flex-shrink: 0;
+    }
+    .fresh-dot.ok {
+      background-color: var(--fresh-ok);
+    }
+    .fresh-dot.normal {
+      background-color: var(--fresh-normal);
+    }
+    .fresh-dot.stale {
+      background-color: var(--fresh-stale);
+    }
+
+    .target-heading {
+      margin-top: 4px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .target-date-main {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .target-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Market Strip */
+    .market-strip-wrap {
+      background-color: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 8px 0;
+    }
+
+    .market-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-bottom: 2px;
+    }
+    .market-strip::-webkit-scrollbar {
+      display: none;
+    }
+
+    .market-chip {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      background-color: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 5px 10px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .market-chip-label {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .market-chip-val {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .market-chip-chg {
+      font-weight: 600;
+      font-size: 11.5px;
+    }
+    .market-chip-chg.up {
+      color: var(--up);
+    }
+    .market-chip-chg.down {
+      color: var(--down);
+    }
+    .market-chip-chg.flat {
+      color: var(--text-muted);
+    }
+
+    /* Controls: Search & Tabs */
+    .controls-section {
+      background-color: var(--surface);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .search-bar-row {
+      padding: 10px 0 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      flex: 1 1 auto;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 7px 30px 7px 10px;
+      font-size: 13.5px;
+      font-family: inherit;
+      color: var(--text);
+      background-color: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      outline: none;
+    }
+    .search-input:focus {
+      border-color: var(--accent);
+    }
+
+    .search-clear {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 15px;
+      cursor: pointer;
+      padding: 2px 6px;
+      display: none;
+    }
+    .search-clear.visible {
+      display: block;
+    }
+
+    .tabs-bar {
+      display: flex;
+      gap: 2px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      margin-top: 2px;
+    }
+    .tabs-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-btn {
+      flex: 0 0 auto;
+      background: none;
+      border: none;
+      border-bottom: 2.5px solid transparent;
+      padding: 8px 11px 9px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tab-btn:hover {
+      color: var(--text);
+    }
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .tab-count {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-left: 3px;
+    }
+
+    /* Main Content & Fund List */
+    .main-area {
+      padding-top: 12px;
+      padding-bottom: 32px;
+      transition: opacity 0.15s ease;
+    }
+    .main-area.loading-cached {
+      opacity: 0.65;
+    }
+
+    .group-block {
+      margin-bottom: 18px;
+    }
+
+    .group-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 4px 2px 6px;
+      border-bottom: 1.5px solid var(--text);
+    }
+
+    .group-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+
+    .group-meta {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .fund-list {
+      background-color: var(--surface);
+      border: 1px solid var(--line);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+
+    .empty-notice {
+      background-color: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .fund-item {
+      border-bottom: 1px solid var(--line);
+    }
+    .fund-item:last-child {
+      border-bottom: none;
+    }
+
+    .fund-row-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 11px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .fund-row-main:hover {
+      background-color: var(--surface-subtle);
+    }
+
+    .fund-left {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .fund-line1 {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+
+    .fav-btn {
+      flex: 0 0 auto;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      line-height: 1.2;
+      cursor: pointer;
+      padding: 0 2px;
+      margin-top: 1px;
+    }
+    .fav-btn.active {
+      color: var(--star-active);
+    }
+
+    .fund-name {
+      flex: 1 1 auto;
+      min-width: 0;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-word;
+    }
+
+    .badges-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 10.5px;
+      font-weight: 700;
+      line-height: 1;
+      padding: 3px 5px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .badge-lev {
+      background-color: var(--badge-lev-bg);
+      color: var(--badge-lev-text);
+    }
+    .badge-hedge {
+      background-color: var(--badge-hedge-bg);
+      color: var(--badge-hedge-text);
+    }
+    .badge-stale {
+      background-color: var(--flat-bg);
+      color: var(--text-muted);
+    }
+
+    .fund-line2 {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-left: 22px;
+    }
+
+    .nav-transition {
+      font-size: 14.5px;
+      color: var(--text);
+      display: inline-flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+
+    .nav-cur {
+      color: var(--text-muted);
+      font-size: 13.5px;
+    }
+
+    .nav-arrow {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .nav-forecast {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    .nav-diff {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .change-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 12.5px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    /* Pill Intensity Levels */
+    .change-pill.up-weak {
+      background-color: var(--up-bg-weak);
+      color: var(--up);
+    }
+    .change-pill.up-mid {
+      background-color: var(--up-bg-mid);
+      color: var(--up);
+    }
+    .change-pill.up-strong {
+      background-color: var(--up-bg-strong);
+      color: var(--up-text-strong);
+    }
+    .change-pill.down-weak {
+      background-color: var(--down-bg-weak);
+      color: var(--down);
+    }
+    .change-pill.down-mid {
+      background-color: var(--down-bg-mid);
+      color: var(--down);
+    }
+    .change-pill.down-strong {
+      background-color: var(--down-bg-strong);
+      color: var(--down-text-strong);
+    }
+    .change-pill.flat {
+      background-color: var(--flat-bg);
+      color: var(--text-muted);
+    }
+
+    .fund-right {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sparkline-svg {
+      width: 74px;
+      height: 28px;
+      display: block;
+      overflow: visible;
+    }
+
+    /* Expanded Detail Area */
+    .fund-detail {
+      display: none;
+      padding: 10px 12px 12px 34px;
+      background-color: var(--bg);
+      border-top: 1px dashed var(--line);
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+    .fund-item.expanded .fund-detail {
+      display: block;
+    }
+
+    .detail-formula {
+      color: var(--text);
+      font-weight: 500;
+      margin-bottom: 6px;
+      line-height: 1.55;
+    }
+
+    .detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    /* Footer */
+    .site-footer {
+      border-top: 1px solid var(--line);
+      background-color: var(--surface);
+      padding: 24px 0 36px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    .footer-sec {
+      margin-bottom: 18px;
+    }
+    .footer-sec:last-child {
+      margin-bottom: 0;
+    }
+
+    .footer-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .footer-list {
+      list-style: none;
+    }
+    .footer-list li {
+      position: relative;
+      padding-left: 12px;
+      margin-bottom: 4px;
+      line-height: 1.55;
+    }
+    .footer-list li::before {
+      content: "・";
+      position: absolute;
+      left: 0;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 520px) {
+      .target-date-main {
+        font-size: 19px;
+      }
+      .fund-row-main {
+        padding: 10px 10px;
+        gap: 8px;
+      }
+      .fund-line2 {
+        padding-left: 20px;
+        gap: 6px;
+      }
+      .nav-cur {
+        font-size: 12.5px;
+      }
+      .nav-forecast {
+        font-size: 14.5px;
+      }
+      .nav-diff {
+        display: none;
+      }
+      .sparkline-svg {
+        width: 58px;
+        height: 24px;
+      }
+      .fund-detail {
+        padding-left: 14px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="header-top">
+        <div class="site-title">基準価額予報</div>
+        <div class="freshness" id="freshnessBox">
+          <span class="fresh-dot" id="freshDot"></span>
+          <span id="updatedAtText" class="num">読み込み中...</span>
+        </div>
+      </div>
+      <div class="target-heading">
+        <h1 class="target-date-main" id="targetDateHeading">翌営業日の予想</h1>
+        <div class="target-sub" id="baseDateSub">現在基準日: --/--</div>
+      </div>
+    </div>
+  </header>
+
+  <section class="market-strip-wrap" aria-label="主要市場指標">
+    <div class="container">
+      <div class="market-strip" id="marketStrip"></div>
+    </div>
+  </section>
+
+  <section class="controls-section">
+    <div class="container">
+      <div class="search-bar-row">
+        <div class="search-input-wrap">
+          <input type="search" id="searchInput" class="search-input" placeholder="ファンド名・指数で絞り込み（全グループ横断）" aria-label="ファンド名を検索">
+          <button type="button" id="searchClearBtn" class="search-clear" aria-label="検索をクリア">×</button>
+        </div>
+      </div>
+      <nav class="tabs-bar" id="tabsBar" aria-label="ファンドグループ"></nav>
+    </div>
+  </section>
+
+  <main class="main-area container" id="mainArea">
+    <div id="contentContainer"></div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-sec">
+        <h2 class="footer-title">計算方法について</h2>
+        <ul class="footer-list">
+          <li><strong>対象日</strong>：最新の基準価額日（D0）の翌営業日（土日・日本の祝日・年末年始を除く）の基準価額を試算します。</li>
+          <li><strong>標準（為替ヘッジなし）</strong>：米国・欧州等の指数またはETFの未反映変化率（D0より前の最終終値→最新値）と、ドル円変化率（D0の10:00時点→D1の10:00時点または最新値、仲値の代替）を掛け合わせて <code>(1 + 指数変化率) × (1 + 為替変化率) − 1</code> で算出します。オルカン（ACWI）・MSCIコクサイ（TOK）は対応ETFでの近似値、SCHD・VTIは分配落ち調整を含みます。</li>
+          <li><strong>レバレッジ（為替ヘッジあり）</strong>：先物または指数の未反映変化率 × 倍率（2倍）で算出します。</li>
+          <li><strong>加算型（auAMレバレッジ2倍・トリプル3倍 為替ヘッジ無し）</strong>：NASDAQ100先物（NQ=F）の未反映変化率 × 倍率（2倍または3倍）＋ ドル円変化率 で算出します。</li>
+          <li><strong>国内株式（日経平均・TOPIX・4.3倍ブル）</strong>：東証取引時間中（平日9:00〜15:30）は現物の現在値、夜間・時間外は当日15:30時点からの日経225先物（NIY=F）の変化率で近似します（TOPIXも夜間は日経先物の変化率で近似）。</li>
+          <li><strong>ゴールド・ゴールドプラス</strong>：三菱UFJ純金ファンドは国内ETF（1540.T）の当日終値ベース、Tracersゴールドプラス各ファンドは「株式指数変化率 ＋ 為替変化率 ＋ 金先物（GC=F）変化率」で試算します。</li>
+        </ul>
+      </div>
+      <div class="footer-sec">
+        <h2 class="footer-title">免責事項</h2>
+        <ul class="footer-list">
+          <li>当サイトの予想基準価額は公開市場データから機械的に算出した概算値であり、実際の基準価額（信託報酬控除・先物ロール・実際の公示仲値・マザーファンドの乖離等を反映）とは一致しません。</li>
+          <li>当サイトは投資助言や特定の金融商品の勧誘を目的としたものではありません。投資に関する最終決定はご自身の判断と責任で行ってください。</li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var STORAGE_FAV_KEY = "fund_forecast_favorites_v1";
+      var STORAGE_CACHE_KEY = "fund_forecast_data_cache_v1";
+      var WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+
+      var appData = null;
+      var activeTab = "all";
+      var searchQuery = "";
+      var expandedFunds = {};
+      var favorites = loadFavorites();
+
+      function loadFavorites() {
+        try {
+          var raw = window.localStorage.getItem(STORAGE_FAV_KEY);
+          if (!raw) return [];
+          var parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function saveFavorites(list) {
+        try {
+          window.localStorage.setItem(STORAGE_FAV_KEY, JSON.stringify(list));
+        } catch (e) {
+          // ignore storage errors
+        }
+      }
+
+      function toggleFavorite(fundId) {
+        var idx = favorites.indexOf(fundId);
+        if (idx >= 0) {
+          favorites.splice(idx, 1);
+        } else {
+          favorites.push(fundId);
+        }
+        saveFavorites(favorites);
+        renderTabs();
+        renderMain();
+      }
+
+      function loadCachedData() {
+        try {
+          var raw = window.localStorage.getItem(STORAGE_CACHE_KEY);
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function saveCachedData(data) {
+        try {
+          window.localStorage.setItem(STORAGE_CACHE_KEY, JSON.stringify(data));
+        } catch (e) {
+          // ignore quota/storage errors
+        }
+      }
+
+      function formatMonthDayWeek(dateStr) {
+        if (!dateStr) return "--/--";
+        var parts = dateStr.split("-");
+        if (parts.length !== 3) return dateStr;
+        var y = parseInt(parts[0], 10);
+        var m = parseInt(parts[1], 10);
+        var d = parseInt(parts[2], 10);
+        var dt = new Date(y, m - 1, d);
+        var w = WEEKDAYS[dt.getDay()];
+        return m + "/" + d + "（" + w + "）";
+      }
+
+      function formatShortMonthDay(dateStr) {
+        if (!dateStr) return "--/--";
+        var parts = dateStr.split("-");
+        if (parts.length !== 3) return dateStr;
+        return parseInt(parts[1], 10) + "/" + parseInt(parts[2], 10);
+      }
+
+      function formatTimeHHMM(isoStr) {
+        if (!isoStr) return "--:--";
+        var d = new Date(isoStr);
+        if (isNaN(d.getTime())) return isoStr;
+        var hh = ("0" + d.getHours()).slice(-2);
+        var mm = ("0" + d.getMinutes()).slice(-2);
+        var mo = d.getMonth() + 1;
+        var da = d.getDate();
+        return mo + "/" + da + " " + hh + ":" + mm;
+      }
+
+      function formatInt(n) {
+        if (n === null || n === undefined || isNaN(n)) return "---";
+        return Math.round(Number(n)).toLocaleString("ja-JP");
+      }
+
+      function formatPrice(n) {
+        if (n === null || n === undefined || isNaN(n)) return "---";
+        var num = Number(n);
+        if (Math.abs(num) >= 1000 && Math.floor(num) === num) {
+          return num.toLocaleString("ja-JP");
+        }
+        return num.toLocaleString("ja-JP", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function formatSignedPct(chg) {
+        if (chg === null || chg === undefined || isNaN(chg)) return "0.00%";
+        var num = Number(chg);
+        var sign = num > 0 ? "+" : "";
+        return sign + num.toFixed(2) + "%";
+      }
+
+      function getPillClass(chg) {
+        var num = Number(chg || 0);
+        var abs = Math.abs(num);
+        if (abs < 0.005) return "flat";
+        if (num > 0) {
+          if (abs < 0.5) return "up-weak";
+          if (abs < 2.0) return "up-mid";
+          return "up-strong";
+        } else {
+          if (abs < 0.5) return "down-weak";
+          if (abs < 2.0) return "down-mid";
+          return "down-strong";
+        }
+      }
+
+      function getArrowSymbol(chg) {
+        var num = Number(chg || 0);
+        if (num > 0.004) return "▲";
+        if (num < -0.004) return "▼";
+        return "";
+      }
+
+      function updateFreshness() {
+        if (!appData || !appData.updatedAt) return;
+        var updatedDate = new Date(appData.updatedAt);
+        var now = new Date();
+        var diffMin = (now.getTime() - updatedDate.getTime()) / 60000;
+        var dot = document.getElementById("freshDot");
+        var txt = document.getElementById("updatedAtText");
+        var timeStr = formatTimeHHMM(appData.updatedAt);
+
+        dot.className = "fresh-dot";
+        if (diffMin <= 5.5) {
+          dot.classList.add("ok");
+          txt.textContent = "最終更新 " + timeStr;
+        } else if (diffMin <= 30.5) {
+          dot.classList.add("normal");
+          txt.textContent = "最終更新 " + timeStr + "（" + Math.floor(diffMin) + "分前）";
+        } else {
+          dot.classList.add("stale");
+          txt.textContent = "最終更新 " + timeStr + "・更新が遅れています";
+        }
+      }
+
+      function renderHeader() {
+        if (!appData) return;
+        var targetHeading = document.getElementById("targetDateHeading");
+        var baseSub = document.getElementById("baseDateSub");
+        targetHeading.textContent = formatMonthDayWeek(appData.targetDate) + "の予想";
+        baseSub.textContent = "現在 " + formatShortMonthDay(appData.baseDate) + " → 予想 " + formatShortMonthDay(appData.targetDate);
+        updateFreshness();
+      }
+
+      function renderMarketStrip() {
+        var container = document.getElementById("marketStrip");
+        container.textContent = "";
+        if (!appData || !Array.isArray(appData.markets)) return;
+
+        appData.markets.forEach(function (m) {
+          var chip = document.createElement("div");
+          chip.className = "market-chip";
+
+          var lbl = document.createElement("span");
+          lbl.className = "market-chip-label";
+          lbl.textContent = m.label;
+
+          var val = document.createElement("span");
+          val.className = "market-chip-val num";
+          val.textContent = formatPrice(m.cur);
+
+          var chg = document.createElement("span");
+          var cNum = Number(m.change || 0);
+          var dirClass = cNum > 0.004 ? "up" : (cNum < -0.004 ? "down" : "flat");
+          chg.className = "market-chip-chg num " + dirClass;
+          var arr = getArrowSymbol(cNum);
+          chg.textContent = (arr ? arr + " " : "") + formatSignedPct(cNum);
+
+          chip.appendChild(lbl);
+          chip.appendChild(val);
+          chip.appendChild(chg);
+          container.appendChild(chip);
+        });
+      }
+
+      function syncTabFromHash() {
+        var h = (window.location.hash || "").replace(/^#/, "").trim();
+        if (!h) {
+          activeTab = "all";
+          return;
+        }
+        if (h === "favorites" || h === "all") {
+          activeTab = h;
+          return;
+        }
+        if (appData && Array.isArray(appData.groups)) {
+          var exists = appData.groups.some(function (g) { return g.id === h; });
+          if (exists) {
+            activeTab = h;
+            return;
+          }
+        }
+        activeTab = h;
+      }
+
+      function selectTab(tabId) {
+        activeTab = tabId;
+        if (tabId === "all") {
+          if (window.location.hash) {
+            history.replaceState(null, "", window.location.pathname + window.location.search);
+          }
+        } else {
+          history.replaceState(null, "", "#" + tabId);
+        }
+        renderTabs();
+        renderMain();
+      }
+
+      function renderTabs() {
+        var bar = document.getElementById("tabsBar");
+        bar.textContent = "";
+        if (!appData || !Array.isArray(appData.groups)) return;
+
+        var tabs = [
+          { id: "favorites", label: "お気に入り", count: favorites.length },
+          { id: "all", label: "すべて", count: null }
+        ];
+        appData.groups.forEach(function (g) {
+          tabs.push({ id: g.id, label: g.label, count: (g.funds || []).length });
+        });
+
+        tabs.forEach(function (t) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "tab-btn" + (activeTab === t.id && !searchQuery ? " active" : "");
+          btn.textContent = t.label;
+          if (t.count !== null) {
+            var span = document.createElement("span");
+            span.className = "tab-count num";
+            span.textContent = "(" + t.count + ")";
+            btn.appendChild(span);
+          }
+          btn.addEventListener("click", function () {
+            if (searchQuery) {
+              searchQuery = "";
+              document.getElementById("searchInput").value = "";
+              document.getElementById("searchClearBtn").classList.remove("visible");
+            }
+            selectTab(t.id);
+          });
+          bar.appendChild(btn);
+        });
+      }
+
+      function createSparklineSvg(historyList, forecastVal, changePct) {
+        var ns = "http://www.w3.org/2000/svg";
+        var svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("class", "sparkline-svg");
+        svg.setAttribute("viewBox", "0 0 74 28");
+        svg.setAttribute("aria-hidden", "true");
+
+        var vals = [];
+        if (Array.isArray(historyList)) {
+          for (var i = 0; i < historyList.length; i++) {
+            var v = Number(historyList[i][1]);
+            if (!isNaN(v) && v > 0) vals.push(v);
+          }
+        }
+        if (vals.length < 2) return svg;
+
+        var allVals = vals.slice();
+        var hasForecast = (forecastVal !== null && forecastVal !== undefined && !isNaN(forecastVal));
+        if (hasForecast) allVals.push(Number(forecastVal));
+
+        var minV = Math.min.apply(null, allVals);
+        var maxV = Math.max.apply(null, allVals);
+        var span = maxV - minV;
+        if (span <= 0) span = 1;
+
+        var totalPts = allVals.length;
+        var padX = 3;
+        var padY = 4;
+        var w = 74 - padX * 2;
+        var h = 28 - padY * 2;
+
+        function getXY(idx, val) {
+          var x = padX + (idx / (totalPts - 1)) * w;
+          var y = padY + h - ((val - minV) / span) * h;
+          return [x, y];
+        }
+
+        var polyPts = [];
+        for (var j = 0; j < vals.length; j++) {
+          var p = getXY(j, vals[j]);
+          polyPts.push(p[0].toFixed(1) + "," + p[1].toFixed(1));
+        }
+
+        var polyline = document.createElementNS(ns, "polyline");
+        polyline.setAttribute("points", polyPts.join(" "));
+        polyline.setAttribute("fill", "none");
+        polyline.setAttribute("stroke", "var(--text-muted)");
+        polyline.setAttribute("stroke-width", "1.4");
+        polyline.setAttribute("stroke-linecap", "round");
+        polyline.setAttribute("stroke-linejoin", "round");
+        svg.appendChild(polyline);
+
+        if (hasForecast) {
+          var lastHistPt = getXY(vals.length - 1, vals[vals.length - 1]);
+          var forecastPt = getXY(allVals.length - 1, Number(forecastVal));
+          var strokeColor = Number(changePct || 0) >= 0 ? "var(--up)" : "var(--down)";
+
+          var dashLine = document.createElementNS(ns, "line");
+          dashLine.setAttribute("x1", lastHistPt[0].toFixed(1));
+          dashLine.setAttribute("y1", lastHistPt[1].toFixed(1));
+          dashLine.setAttribute("x2", forecastPt[0].toFixed(1));
+          dashLine.setAttribute("y2", forecastPt[1].toFixed(1));
+          dashLine.setAttribute("stroke", strokeColor);
+          dashLine.setAttribute("stroke-width", "1.5");
+          dashLine.setAttribute("stroke-dasharray", "2,2");
+          svg.appendChild(dashLine);
+
+          var dot = document.createElementNS(ns, "circle");
+          dot.setAttribute("cx", forecastPt[0].toFixed(1));
+          dot.setAttribute("cy", forecastPt[1].toFixed(1));
+          dot.setAttribute("r", "2.3");
+          dot.setAttribute("fill", strokeColor);
+          svg.appendChild(dot);
+        }
+
+        return svg;
+      }
+
+      function buildFormulaText(f) {
+        if (f.error && !f.breakdown) {
+          return "データ取得エラー: " + f.error;
+        }
+        var b = f.breakdown || {};
+        var idx = b.index;
+        var fx = b.fx;
+        var fut = b.futures;
+        var gold = b.gold;
+        var parts = [];
+
+        if (idx) {
+          var symText = idx.symbol + " " + formatPrice(idx.base) + " → " + formatPrice(idx.cur) + "（" + formatSignedPct(idx.change) + "）";
+          if (idx.dividendAdjusted) {
+            symText += "［分配落ち+" + idx.dividendAdjusted + "調整済］";
+          }
+          if (f.model === "additive" || f.model === "leveraged_hedged" || f.model === "domestic_leveraged") {
+            symText += "×" + f.leverage;
+          }
+          parts.push(symText);
+        }
+
+        if (fut) {
+          parts.push("夜間先物近似 " + fut.symbol + " " + formatPrice(fut.base) + " → " + formatPrice(fut.cur) + "（" + formatSignedPct(fut.change) + "）");
+        }
+
+        if (gold) {
+          parts.push("金先物 " + gold.symbol + " " + formatPrice(gold.base) + " → " + formatPrice(gold.cur) + "（" + formatSignedPct(gold.change) + "）");
+        }
+
+        if (fx) {
+          var fxStr = "ドル円 ";
+          if (fx.base !== undefined && fx.cur !== undefined) {
+            fxStr += formatPrice(fx.base) + " → " + formatPrice(fx.cur) + "（" + formatSignedPct(fx.change) + "）";
+          } else {
+            fxStr += formatSignedPct(fx.change);
+          }
+          parts.push(fxStr);
+        }
+
+        return parts.join(" ＋ ") + " ＝ " + formatSignedPct(f.change);
+      }
+
+      function createFundItemElement(f) {
+        var item = document.createElement("div");
+        item.className = "fund-item" + (expandedFunds[f.id] ? " expanded" : "");
+
+        var mainRow = document.createElement("div");
+        mainRow.className = "fund-row-main";
+
+        var left = document.createElement("div");
+        left.className = "fund-left";
+
+        // Line 1: Star + Name + Badges
+        var line1 = document.createElement("div");
+        line1.className = "fund-line1";
+
+        var favBtn = document.createElement("button");
+        favBtn.type = "button";
+        var isFav = favorites.indexOf(f.id) >= 0;
+        favBtn.className = "fav-btn" + (isFav ? " active" : "");
+        favBtn.textContent = isFav ? "★" : "☆";
+        favBtn.setAttribute("aria-label", f.name + "をお気に入りに追加・解除");
+        favBtn.addEventListener("click", function (ev) {
+          ev.stopPropagation();
+          toggleFavorite(f.id);
+        });
+        line1.appendChild(favBtn);
+
+        var nameSpan = document.createElement("span");
+        nameSpan.className = "fund-name";
+        nameSpan.textContent = f.name;
+        line1.appendChild(nameSpan);
+
+        var badgesWrap = document.createElement("span");
+        badgesWrap.className = "badges-inline";
+
+        if (f.leverageLabel) {
+          var bLevLbl = document.createElement("span");
+          bLevLbl.className = "badge badge-lev num";
+          bLevLbl.textContent = "×" + f.leverageLabel;
+          badgesWrap.appendChild(bLevLbl);
+        } else if (f.leverage && Number(f.leverage) !== 1) {
+          var bLev = document.createElement("span");
+          bLev.className = "badge badge-lev num";
+          bLev.textContent = "×" + f.leverage;
+          badgesWrap.appendChild(bLev);
+        }
+
+        if (f.hedged) {
+          var bHedge = document.createElement("span");
+          bHedge.className = "badge badge-hedge";
+          bHedge.textContent = "ヘッジ有";
+          badgesWrap.appendChild(bHedge);
+        }
+
+        if (f.stale) {
+          var bStale = document.createElement("span");
+          bStale.className = "badge badge-stale";
+          bStale.textContent = "前回値";
+          badgesWrap.appendChild(bStale);
+        }
+
+        if (badgesWrap.childNodes.length > 0) {
+          line1.appendChild(badgesWrap);
+        }
+
+        left.appendChild(line1);
+
+        // Line 2: NAV -> Forecast + Diff + Change Pill
+        var line2 = document.createElement("div");
+        line2.className = "fund-line2 num";
+
+        var navTrans = document.createElement("span");
+        navTrans.className = "nav-transition";
+
+        var sCur = document.createElement("span");
+        sCur.className = "nav-cur";
+        sCur.textContent = formatInt(f.nav) + "円";
+
+        var sArr = document.createElement("span");
+        sArr.className = "nav-arrow";
+        sArr.textContent = "→";
+
+        var sFor = document.createElement("span");
+        sFor.className = "nav-forecast";
+        sFor.textContent = formatInt(f.forecast) + "円";
+
+        navTrans.appendChild(sCur);
+        navTrans.appendChild(sArr);
+        navTrans.appendChild(sFor);
+        line2.appendChild(navTrans);
+
+        var diffVal = (f.forecast !== undefined && f.nav !== undefined) ? (f.forecast - f.nav) : 0;
+        var diffSpan = document.createElement("span");
+        diffSpan.className = "nav-diff";
+        diffSpan.textContent = "(" + (diffVal > 0 ? "+" : "") + formatInt(diffVal) + "円)";
+        line2.appendChild(diffSpan);
+
+        var pill = document.createElement("span");
+        pill.className = "change-pill " + getPillClass(f.change);
+        var arrowSym = getArrowSymbol(f.change);
+        pill.textContent = (arrowSym ? arrowSym + " " : "") + formatSignedPct(f.change);
+        line2.appendChild(pill);
+
+        left.appendChild(line2);
+        mainRow.appendChild(left);
+
+        // Right: Sparkline
+        var right = document.createElement("div");
+        right.className = "fund-right";
+        right.appendChild(createSparklineSvg(f.history, f.forecast, f.change));
+        mainRow.appendChild(right);
+
+        mainRow.addEventListener("click", function () {
+          expandedFunds[f.id] = !expandedFunds[f.id];
+          item.classList.toggle("expanded", !!expandedFunds[f.id]);
+        });
+
+        item.appendChild(mainRow);
+
+        // Detail Area
+        var detail = document.createElement("div");
+        detail.className = "fund-detail";
+
+        var formulaDiv = document.createElement("div");
+        formulaDiv.className = "detail-formula num";
+        formulaDiv.textContent = "内訳: " + buildFormulaText(f);
+        detail.appendChild(formulaDiv);
+
+        var metaDiv = document.createElement("div");
+        metaDiv.className = "detail-meta num";
+
+        var mNavDate = document.createElement("span");
+        mNavDate.textContent = "基準価額日: " + (f.navDate || "---") + " → 予想日: " + (f.targetDate || "---");
+        metaDiv.appendChild(mNavDate);
+
+        if (f.breakdown && f.breakdown.index && f.breakdown.index.asOf) {
+          var mAsOf = document.createElement("span");
+          mAsOf.textContent = "市場データ時刻: " + formatTimeHHMM(f.breakdown.index.asOf);
+          metaDiv.appendChild(mAsOf);
+        }
+
+        if (f.isinCd) {
+          var mIsin = document.createElement("span");
+          mIsin.textContent = "ISIN: " + f.isinCd;
+          metaDiv.appendChild(mIsin);
+        }
+
+        if (f.error) {
+          var mErr = document.createElement("span");
+          mErr.textContent = "注意: " + f.error;
+          metaDiv.appendChild(mErr);
+        }
+
+        detail.appendChild(metaDiv);
+        item.appendChild(detail);
+
+        return item;
+      }
+
+      function renderGroupSection(title, metaText, fundsList) {
+        var block = document.createElement("section");
+        block.className = "group-block";
+
+        var header = document.createElement("div");
+        header.className = "group-header";
+
+        var h2 = document.createElement("h2");
+        h2.className = "group-title";
+        h2.textContent = title;
+        header.appendChild(h2);
+
+        if (metaText) {
+          var mSpan = document.createElement("span");
+          mSpan.className = "group-meta num";
+          mSpan.textContent = metaText;
+          header.appendChild(mSpan);
+        }
+
+        block.appendChild(header);
+
+        var listWrap = document.createElement("div");
+        listWrap.className = "fund-list";
+        fundsList.forEach(function (f) {
+          listWrap.appendChild(createFundItemElement(f));
+        });
+        block.appendChild(listWrap);
+        return block;
+      }
+
+      function renderMain() {
+        var container = document.getElementById("contentContainer");
+        container.textContent = "";
+        if (!appData || !Array.isArray(appData.groups)) return;
+
+        var q = searchQuery.trim().toLowerCase();
+
+        // 1. 検索モード（全グループ横断）
+        if (q) {
+          var matched = [];
+          appData.groups.forEach(function (g) {
+            (g.funds || []).forEach(function (f) {
+              var hay = (f.name + " " + g.label + " " + (f.isinCd || "")).toLowerCase();
+              if (hay.indexOf(q) >= 0) {
+                matched.push(f);
+              }
+            });
+          });
+          if (matched.length === 0) {
+            var emptySearch = document.createElement("div");
+            emptySearch.className = "empty-notice";
+            emptySearch.textContent = "「" + searchQuery + "」に一致するファンドが見つかりませんでした。";
+            container.appendChild(emptySearch);
+          } else {
+            container.appendChild(renderGroupSection("検索結果", matched.length + "件", matched));
+          }
+          return;
+        }
+
+        // 2. お気に入りタブ選択時
+        if (activeTab === "favorites") {
+          var favFunds = [];
+          appData.groups.forEach(function (g) {
+            (g.funds || []).forEach(function (f) {
+              if (favorites.indexOf(f.id) >= 0) {
+                favFunds.push(f);
+              }
+            });
+          });
+          if (favFunds.length === 0) {
+            var emptyFav = document.createElement("div");
+            emptyFav.className = "empty-notice";
+            emptyFav.textContent = "各ファンド名の左にある ☆ を押すと、ここにお気に入りファンドをまとめて表示できます。";
+            container.appendChild(emptyFav);
+          } else {
+            container.appendChild(renderGroupSection("お気に入り", favFunds.length + "件", favFunds));
+          }
+          return;
+        }
+
+        // 3. 「すべて」タブ表示時：お気に入りセクションを一番上に出し、続けて全グループを表示
+        if (activeTab === "all") {
+          var topFavFunds = [];
+          appData.groups.forEach(function (g) {
+            (g.funds || []).forEach(function (f) {
+              if (favorites.indexOf(f.id) >= 0) {
+                topFavFunds.push(f);
+              }
+            });
+          });
+          if (topFavFunds.length > 0) {
+            container.appendChild(renderGroupSection("お気に入り", topFavFunds.length + "件", topFavFunds));
+          } else {
+            var favGuide = document.createElement("div");
+            favGuide.className = "empty-notice";
+            favGuide.style.marginBottom = "16px";
+            favGuide.textContent = "お気に入り：各ファンドの ☆ を押すと、一番上に固定表示できます。";
+            container.appendChild(favGuide);
+          }
+
+          appData.groups.forEach(function (g) {
+            if (g.funds && g.funds.length > 0) {
+              container.appendChild(renderGroupSection(g.label, g.funds.length + "本", g.funds));
+            }
+          });
+          return;
+        }
+
+        // 4. 個別グループタブ表示時
+        var targetGroup = null;
+        for (var i = 0; i < appData.groups.length; i++) {
+          if (appData.groups[i].id === activeTab) {
+            targetGroup = appData.groups[i];
+            break;
+          }
+        }
+        if (targetGroup) {
+          container.appendChild(renderGroupSection(targetGroup.label, (targetGroup.funds || []).length + "本", targetGroup.funds || []));
+        }
+      }
+
+      function applyData(data, isCached) {
+        appData = data;
+        var mainEl = document.getElementById("mainArea");
+        if (isCached) {
+          mainEl.classList.add("loading-cached");
+        } else {
+          mainEl.classList.remove("loading-cached");
+        }
+        syncTabFromHash();
+        renderHeader();
+        renderMarketStrip();
+        renderTabs();
+        renderMain();
+      }
+
+      function fetchLatestData() {
+        var url = "./data.json?t=" + Date.now();
+        fetch(url, { cache: "no-store" })
+          .then(function (resp) {
+            if (!resp.ok) throw new Error("HTTP " + resp.status);
+            return resp.json();
+          })
+          .then(function (json) {
+            saveCachedData(json);
+            applyData(json, false);
+          })
+          .catch(function () {
+            var mainEl = document.getElementById("mainArea");
+            mainEl.classList.remove("loading-cached");
+            updateFreshness();
+          });
+      }
+
+      // 初期化：キャッシュがあればまず薄く表示し、直後に最新データを取得
+      var cached = loadCachedData();
+      if (cached) {
+        applyData(cached, true);
+      }
+
+      var searchInput = document.getElementById("searchInput");
+      var clearBtn = document.getElementById("searchClearBtn");
+
+      searchInput.addEventListener("input", function () {
+        searchQuery = searchInput.value || "";
+        clearBtn.classList.toggle("visible", searchQuery.length > 0);
+        renderTabs();
+        renderMain();
+      });
+
+      clearBtn.addEventListener("click", function () {
+        searchQuery = "";
+        searchInput.value = "";
+        clearBtn.classList.remove("visible");
+        renderTabs();
+        renderMain();
+      });
+
+      window.addEventListener("hashchange", function () {
+        syncTabFromHash();
+        renderTabs();
+        renderMain();
+      });
+
+      fetchLatestData();
+      setInterval(fetchLatestData, 60000);
+      setInterval(updateFreshness, 15000);
+    })();
+  </script>
+</body>
+</html>

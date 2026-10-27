@@ -1,0 +1,627 @@
+{
+  "groups": [
+    {
+      "id": "sp500",
+      "label": "S&P500",
+      "funds": [
+        {
+          "id": "emaxis-slim-sp500",
+          "name": "eMAXIS Slim 米国株式（S&P500）",
+          "isinCd": "JP90C000GKC6",
+          "associFundCd": "03311187",
+          "symbol": "^GSPC",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "sbi-v-sp500",
+          "name": "SBI・V・S&P500インデックス・ファンド",
+          "isinCd": "JP90C000J569",
+          "associFundCd": "89311199",
+          "symbol": "^GSPC",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "rakuten-plus-sp500",
+          "name": "楽天・プラス・S&P500インデックス・ファンド",
+          "isinCd": "JP90C000Q2U6",
+          "associFundCd": "9I31223A",
+          "symbol": "^GSPC",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "ifree-sp500",
+          "name": "iFree S&P500インデックス",
+          "isinCd": "JP90C000FCD3",
+          "associFundCd": "04318178",
+          "symbol": "^GSPC",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "tsumitate-sp500",
+          "name": "つみたて米国株式（S&P500）",
+          "isinCd": "JP90C000JX03",
+          "associFundCd": "03315203",
+          "symbol": "^GSPC",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "tawara-sp500",
+          "name": "たわらノーロード S&P500",
+          "isinCd": "JP90C000PER8",
+          "associFundCd": "47318233",
+          "symbol": "^GSPC",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        }
+      ]
+    },
+    {
+      "id": "nasdaq100",
+      "label": "NASDAQ100",
+      "funds": [
+        {
+          "id": "auam-triple-ndx",
+          "name": "auAMトリプル・NASDAQ100 為替ヘッジ無し",
+          "isinCd": "JP90C000T9H5",
+          "associFundCd": "AY31226A",
+          "symbol": "NQ=F",
+          "leverage": 3,
+          "hedged": false,
+          "model": "additive"
+        },
+        {
+          "id": "auam-lev-ndx",
+          "name": "auAMレバレッジ NASDAQ100 為替ヘッジ無し",
+          "isinCd": "JP90C000QZ77",
+          "associFundCd": "AY311247",
+          "symbol": "NQ=F",
+          "leverage": 2,
+          "hedged": false,
+          "model": "additive"
+        },
+        {
+          "id": "ifree-lev-ndx",
+          "name": "iFreeレバレッジ NASDAQ100",
+          "isinCd": "JP90C000H0S5",
+          "associFundCd": "0431218A",
+          "symbol": "NQ=F",
+          "leverage": 2,
+          "hedged": true,
+          "model": "leveraged_hedged"
+        },
+        {
+          "id": "nissei-ndx",
+          "name": "ニッセイ NASDAQ100インデックスファンド＜購入・換金手数料なし＞",
+          "isinCd": "JP90C000PDY6",
+          "associFundCd": "29313233",
+          "symbol": "^NDX",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "ifreenext-ndx",
+          "name": "iFreeNEXT NASDAQ100インデックス",
+          "isinCd": "JP90C000GUN2",
+          "associFundCd": "04317188",
+          "symbol": "^NDX",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "rakuten-plus-ndx",
+          "name": "楽天・プラス・NASDAQ-100インデックス・ファンド",
+          "isinCd": "JP90C000QF22",
+          "associFundCd": "9I314241",
+          "symbol": "^NDX",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "emaxis-ndx",
+          "name": "eMAXIS NASDAQ100インデックス",
+          "isinCd": "JP90C000L9D2",
+          "associFundCd": "0331A211",
+          "symbol": "^NDX",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "sbi-ndx",
+          "name": "SBI NASDAQ100インデックス・ファンド",
+          "isinCd": "JP90C000SWF9",
+          "associFundCd": "89311265",
+          "symbol": "^NDX",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        }
+      ]
+    },
+    {
+      "id": "nikkei225",
+      "label": "日経平均",
+      "funds": [
+        {
+          "id": "emaxis-slim-n225",
+          "name": "eMAXIS Slim 国内株式（日経平均）",
+          "isinCd": "JP90C000FXV1",
+          "associFundCd": "03311182",
+          "symbol": "^N225",
+          "futuresSymbol": "NIY=F",
+          "leverage": 1,
+          "hedged": false,
+          "model": "domestic"
+        },
+        {
+          "id": "tawara-n225",
+          "name": "たわらノーロード 日経225",
+          "isinCd": "JP90C000CMF4",
+          "associFundCd": "4731815C",
+          "symbol": "^N225",
+          "futuresSymbol": "NIY=F",
+          "leverage": 1,
+          "hedged": false,
+          "model": "domestic"
+        },
+        {
+          "id": "nissei-n225",
+          "name": "ニッセイ 日経225インデックスファンド",
+          "isinCd": "JP90C0001R39",
+          "associFundCd": "29311041",
+          "symbol": "^N225",
+          "futuresSymbol": "NIY=F",
+          "leverage": 1,
+          "hedged": false,
+          "model": "domestic"
+        },
+        {
+          "id": "rakuten-jp-43bull",
+          "name": "楽天日本株4.3倍ブル",
+          "isinCd": "JP90C000CCD0",
+          "associFundCd": "9I31115A",
+          "symbol": "^N225",
+          "futuresSymbol": "NIY=F",
+          "leverage": 4.3,
+          "hedged": false,
+          "model": "domestic_leveraged"
+        },
+        {
+          "id": "sbi-jp-43bull",
+          "name": "SBI 日本株4.3ブル",
+          "isinCd": "JP90C000FSK4",
+          "associFundCd": "8931317C",
+          "symbol": "^N225",
+          "futuresSymbol": "NIY=F",
+          "leverage": 4.3,
+          "hedged": false,
+          "model": "domestic_leveraged"
+        }
+      ]
+    },
+    {
+      "id": "topix",
+      "label": "TOPIX",
+      "funds": [
+        {
+          "id": "emaxis-slim-topix",
+          "name": "eMAXIS Slim 国内株式（TOPIX）",
+          "isinCd": "JP90C000ENA9",
+          "associFundCd": "03317172",
+          "symbol": "1306.T",
+          "futuresSymbol": "NIY=F",
+          "leverage": 1,
+          "hedged": false,
+          "model": "domestic"
+        },
+        {
+          "id": "nissei-topix",
+          "name": "ニッセイ TOPIXインデックスファンド＜購入・換金手数料なし＞",
+          "isinCd": "JP90C000BRT6",
+          "associFundCd": "29312154",
+          "symbol": "1306.T",
+          "futuresSymbol": "NIY=F",
+          "leverage": 1,
+          "hedged": false,
+          "model": "domestic"
+        },
+        {
+          "id": "tsumitate-topix",
+          "name": "つみたて日本株式（TOPIX）",
+          "isinCd": "JP90C000F8E0",
+          "associFundCd": "03312178",
+          "symbol": "1306.T",
+          "futuresSymbol": "NIY=F",
+          "leverage": 1,
+          "hedged": false,
+          "model": "domestic"
+        },
+        {
+          "id": "daiwa-fw-topix",
+          "name": "（ダイワファンドラップ）TOPIXインデックス",
+          "isinCd": "JP90C000DRZ9",
+          "associFundCd": "0431I169",
+          "symbol": "1306.T",
+          "futuresSymbol": "NIY=F",
+          "leverage": 1,
+          "hedged": false,
+          "model": "domestic"
+        },
+        {
+          "id": "tokiomarine-topix",
+          "name": "東京海上セレクション・日本株TOPIX",
+          "isinCd": "JP90C0000HT6",
+          "associFundCd": "49314019",
+          "symbol": "1306.T",
+          "futuresSymbol": "NIY=F",
+          "leverage": 1,
+          "hedged": false,
+          "model": "domestic"
+        },
+        {
+          "id": "emaxis-topix",
+          "name": "eMAXIS TOPIXインデックス",
+          "isinCd": "JP90C0006LD9",
+          "associFundCd": "0331209A",
+          "symbol": "1306.T",
+          "futuresSymbol": "NIY=F",
+          "leverage": 1,
+          "hedged": false,
+          "model": "domestic"
+        }
+      ]
+    },
+    {
+      "id": "allcountry",
+      "label": "オルカン",
+      "funds": [
+        {
+          "id": "emaxis-slim-acwi",
+          "name": "eMAXIS Slim 全世界株式（オール・カントリー）",
+          "isinCd": "JP90C000H1T1",
+          "associFundCd": "0331418A",
+          "symbol": "ACWI",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "rakuten-plus-acwi",
+          "name": "楽天・プラス・オールカントリー株式インデックス・ファンド",
+          "isinCd": "JP90C000Q2W2",
+          "associFundCd": "9I31123A",
+          "symbol": "ACWI",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "tawara-acwi",
+          "name": "たわらノーロード 全世界株式",
+          "isinCd": "JP90C000HZE8",
+          "associFundCd": "47312197",
+          "symbol": "ACWI",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "tsumitate-acwi",
+          "name": "つみたて全世界株式",
+          "isinCd": "JP90C000JX11",
+          "associFundCd": "03316203",
+          "symbol": "ACWI",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "hajimete-nisa-acwi",
+          "name": "はじめてのNISA・全世界株式インデックス（オール・カントリー）",
+          "isinCd": "JP90C000PSN7",
+          "associFundCd": "01312237",
+          "symbol": "ACWI",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "nikko-acwi",
+          "name": "インデックスファンドMSCIオール・カントリー（全世界株式）",
+          "isinCd": "JP90C000PHS9",
+          "associFundCd": "02311234",
+          "symbol": "ACWI",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        }
+      ]
+    },
+    {
+      "id": "kokusai",
+      "label": "コクサイ",
+      "funds": [
+        {
+          "id": "tawara-kokusai",
+          "name": "たわらノーロード 先進国株式",
+          "isinCd": "JP90C000CMK4",
+          "associFundCd": "4731B15C",
+          "symbol": "TOK",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "emaxis-slim-kokusai",
+          "name": "eMAXIS Slim 先進国株式インデックス（除く日本）",
+          "isinCd": "JP90C000ENC5",
+          "associFundCd": "03319172",
+          "symbol": "TOK",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "nissei-kokusai",
+          "name": "ニッセイ 外国株式インデックスファンド＜購入・換金手数料なし＞",
+          "isinCd": "JP90C0009VE0",
+          "associFundCd": "2931113C",
+          "symbol": "TOK",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "tsumitate-kokusai",
+          "name": "つみたて先進国株式",
+          "isinCd": "JP90C000F8F7",
+          "associFundCd": "03313178",
+          "symbol": "TOK",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "smtam-dc-kokusai",
+          "name": "三井住友・DC外国株式インデックスファンドS",
+          "isinCd": "JP90C00009Q3",
+          "associFundCd": "7931204B",
+          "symbol": "TOK",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "dc-daiwa-kokusai",
+          "name": "DCダイワ 外国株式インデックス",
+          "isinCd": "JP90C0003RN2",
+          "associFundCd": "04313031",
+          "symbol": "TOK",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        }
+      ]
+    },
+    {
+      "id": "schd",
+      "label": "SCHD",
+      "funds": [
+        {
+          "id": "rakuten-schd-q",
+          "name": "楽天・シュワブ・高配当株式・米国ファンド（四半期決算型）",
+          "isinCd": "JP90C000R6N1",
+          "associFundCd": "9I312249",
+          "symbol": "SCHD",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard_div"
+        },
+        {
+          "id": "sbi-schd-4",
+          "name": "SBI・S・米国高配当株式ファンド（年4回決算型）",
+          "isinCd": "JP90C000REE2",
+          "associFundCd": "8931224C",
+          "symbol": "SCHD",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard_div"
+        },
+        {
+          "id": "rakuten-schd-g",
+          "name": "楽天・シュワブ・高配当株式・米国ファンド（資産成長型）",
+          "isinCd": "JP90C000S073",
+          "associFundCd": "9I316257",
+          "symbol": "SCHD",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard_div"
+        },
+        {
+          "id": "sbi-schd-1",
+          "name": "SBI・S・米国高配当株式ファンド（年1回決算型）",
+          "isinCd": "JP90C000S5B7",
+          "associFundCd": "89312259",
+          "symbol": "SCHD",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard_div"
+        }
+      ]
+    },
+    {
+      "id": "sox",
+      "label": "SOX",
+      "funds": [
+        {
+          "id": "nissei-sox-noload",
+          "name": "ニッセイ SOX指数インデックスファンド（米国半導体株）＜購入・換金手数料なし＞",
+          "isinCd": "JP90C000PDZ3",
+          "associFundCd": "29314233",
+          "symbol": "^SOX",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "rakuten-plus-sox",
+          "name": "楽天・プラス・SOXインデックス・ファンド",
+          "isinCd": "JP90C000QF30",
+          "associFundCd": "9I315241",
+          "symbol": "^SOX",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "nissei-sox",
+          "name": "ニッセイ・インデックス・SOX（米国半導体株）",
+          "isinCd": "JP90C000R8K3",
+          "associFundCd": "2931224A",
+          "symbol": "^SOX",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        }
+      ]
+    },
+    {
+      "id": "fangplus",
+      "label": "FANG+",
+      "funds": [
+        {
+          "id": "ifreenext-fang",
+          "name": "iFreeNEXT FANG+インデックス",
+          "isinCd": "JP90C000FZD4",
+          "associFundCd": "04311181",
+          "symbol": "^NYFANG",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "ifreenext-fang-monthly",
+          "name": "iFreeNEXT FANG+インデックス（毎月決算／予想分配金提示型）",
+          "isinCd": "JP90C000SE21",
+          "associFundCd": "0431125C",
+          "symbol": "^NYFANG",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "ifree-lev-fang",
+          "name": "iFreeレバレッジ FANG+",
+          "isinCd": "JP90C000KLQ6",
+          "associFundCd": "04314208",
+          "symbol": "^NYFANG",
+          "leverage": 2,
+          "hedged": true,
+          "model": "leveraged_hedged"
+        }
+      ]
+    },
+    {
+      "id": "vti",
+      "label": "VTI",
+      "funds": [
+        {
+          "id": "rakuten-vti",
+          "name": "楽天・全米株式インデックス・ファンド（楽天・VTI）",
+          "isinCd": "JP90C000FHD2",
+          "associFundCd": "9I312179",
+          "symbol": "VTI",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard_div"
+        },
+        {
+          "id": "sbi-v-vti",
+          "name": "SBI・V・全米株式インデックス・ファンド",
+          "isinCd": "JP90C000LY16",
+          "associFundCd": "89311216",
+          "symbol": "VTI",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard_div"
+        }
+      ]
+    },
+    {
+      "id": "gold",
+      "label": "ゴールド",
+      "funds": [
+        {
+          "id": "sbi-ishares-gold",
+          "name": "SBI・iシェアーズ・ゴールドファンド（為替ヘッジなし）",
+          "isinCd": "JP90C000PLM4",
+          "associFundCd": "8931A236",
+          "symbol": "IGLN.L",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "mufg-pure-gold",
+          "name": "三菱UFJ 純金ファンド",
+          "isinCd": "JP90C0007G10",
+          "associFundCd": "03311112",
+          "symbol": "1540.T",
+          "leverage": 1,
+          "hedged": false,
+          "model": "domestic_close"
+        },
+        {
+          "id": "tracers-sp500-gold",
+          "name": "Tracers S&P500ゴールドプラス",
+          "isinCd": "JP90C000NS46",
+          "associFundCd": "02315228",
+          "symbol": "^GSPC",
+          "goldSymbol": "GC=F",
+          "leverage": 2,
+          "leverageLabel": "1+1",
+          "hedged": false,
+          "model": "gold_plus"
+        },
+        {
+          "id": "tracers-ndx-gold",
+          "name": "Tracers NASDAQ100ゴールドプラス",
+          "isinCd": "JP90C000RH60",
+          "associFundCd": "02311251",
+          "symbol": "^NDX",
+          "goldSymbol": "GC=F",
+          "leverage": 2,
+          "leverageLabel": "1+1",
+          "hedged": false,
+          "model": "gold_plus"
+        },
+        {
+          "id": "tracers-acwi-gold",
+          "name": "Tracers MSCIオール・カントリー・ゴールドプラス",
+          "isinCd": "JP90C000SNW3",
+          "associFundCd": "02311263",
+          "symbol": "ACWI",
+          "goldSymbol": "GC=F",
+          "leverage": 2,
+          "leverageLabel": "1+1",
+          "hedged": false,
+          "model": "gold_plus"
+        }
+      ]
+    }
+  ]
+}
