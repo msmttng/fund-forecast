@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-30T08:08:25+09:00",
+  "updatedAt": "2026-10-30T11:35:33+09:00",
   "baseDate": "2026-10-29",
   "targetDate": "2026-10-30",
   "markets": [
@@ -26,27 +26,27 @@
       "label": "NASDAQ100先物",
       "symbol": "NQ=F",
       "base": 29979.5,
-      "cur": 29059.0,
-      "change": -3.07,
-      "asOf": "2026-10-30T07:57:18+09:00"
+      "cur": 28889.0,
+      "change": -3.64,
+      "asOf": "2026-10-30T11:25:34+09:00"
     },
     {
       "id": "n225",
       "label": "日経平均(先物考慮)",
       "symbol": "^N225",
       "base": 64659.47,
-      "cur": 63780.09,
-      "change": -1.36,
-      "asOf": "2026-10-30T07:57:16+09:00"
+      "cur": 62893.96,
+      "change": -2.73,
+      "asOf": "2026-10-30T11:20:35+09:00"
     },
     {
       "id": "usdjpy",
       "label": "ドル円",
       "symbol": "JPY=X",
       "base": 157.96,
-      "cur": 157.75,
-      "change": -0.13,
-      "asOf": "2026-10-30T08:07:22+09:00"
+      "cur": 157.36,
+      "change": -0.38,
+      "asOf": "2026-10-30T11:35:34+09:00"
     },
     {
       "id": "sox",
@@ -80,17 +80,17 @@
       "label": "金先物",
       "symbol": "GC=F",
       "base": 4051.6,
-      "cur": 4036.6,
-      "change": -0.37,
-      "asOf": "2026-10-30T07:57:09+09:00"
+      "cur": 4019.5,
+      "change": -0.79,
+      "asOf": "2026-10-30T11:25:27+09:00"
     }
   ],
   "fx": {
     "base": 157.96,
-    "cur": 157.75,
-    "change": -0.13,
-    "estimated": true,
-    "asOf": "2026-10-30T08:07:22+09:00"
+    "cur": 157.36,
+    "change": -0.38,
+    "estimated": false,
+    "asOf": "2026-10-30T11:35:34+09:00"
   },
   "groups": [
     {
@@ -105,9 +105,9 @@
           "nav": 45093,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 44895,
-          "diff": -198,
-          "change": -0.44,
+          "forecast": 44785,
+          "diff": -308,
+          "change": -0.68,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -121,8 +121,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -256,9 +256,9 @@
           "nav": 41226,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 41045,
-          "diff": -181,
-          "change": -0.44,
+          "forecast": 40944,
+          "diff": -282,
+          "change": -0.68,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -272,8 +272,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -407,9 +407,9 @@
           "nav": 20063,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 19975,
-          "diff": -88,
-          "change": -0.44,
+          "forecast": 19926,
+          "diff": -137,
+          "change": -0.68,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -423,8 +423,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -558,9 +558,9 @@
           "nav": 49944,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 49725,
-          "diff": -219,
-          "change": -0.44,
+          "forecast": 49602,
+          "diff": -342,
+          "change": -0.68,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -574,8 +574,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -709,9 +709,9 @@
           "nav": 39036,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 38865,
-          "diff": -171,
-          "change": -0.44,
+          "forecast": 38769,
+          "diff": -267,
+          "change": -0.68,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -725,8 +725,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -860,9 +860,9 @@
           "nav": 23480,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 23377,
-          "diff": -103,
-          "change": -0.44,
+          "forecast": 23319,
+          "diff": -161,
+          "change": -0.68,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -876,8 +876,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -1017,9 +1017,9 @@
           "nav": 9783,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 8869,
-          "diff": -914,
-          "change": -9.35,
+          "forecast": 8678,
+          "diff": -1105,
+          "change": -11.29,
           "leverage": 3,
           "hedged": false,
           "model": "additive",
@@ -1027,14 +1027,14 @@
             "index": {
               "symbol": "NQ=F",
               "base": 29979.5,
-              "cur": 29059.0,
-              "change": -3.07,
-              "asOf": "2026-10-30T07:57:18+09:00"
+              "cur": 28889.0,
+              "change": -3.64,
+              "asOf": "2026-10-30T11:25:34+09:00"
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -1092,9 +1092,9 @@
           "nav": 20598,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 19305,
-          "diff": -1293,
-          "change": -6.28,
+          "forecast": 19021,
+          "diff": -1577,
+          "change": -7.66,
           "leverage": 2,
           "hedged": false,
           "model": "additive",
@@ -1102,14 +1102,14 @@
             "index": {
               "symbol": "NQ=F",
               "base": 29979.5,
-              "cur": 29059.0,
-              "change": -3.07,
-              "asOf": "2026-10-30T07:57:18+09:00"
+              "cur": 28889.0,
+              "change": -3.64,
+              "asOf": "2026-10-30T11:25:34+09:00"
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -1243,9 +1243,9 @@
           "nav": 70696,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 66355,
-          "diff": -4341,
-          "change": -6.14,
+          "forecast": 65553,
+          "diff": -5143,
+          "change": -7.27,
           "leverage": 2,
           "hedged": true,
           "model": "leveraged_hedged",
@@ -1253,9 +1253,9 @@
             "index": {
               "symbol": "NQ=F",
               "base": 29979.5,
-              "cur": 29059.0,
-              "change": -3.07,
-              "asOf": "2026-10-30T07:57:18+09:00"
+              "cur": 28889.0,
+              "change": -3.64,
+              "asOf": "2026-10-30T11:25:34+09:00"
             }
           },
           "history": [
@@ -1389,9 +1389,9 @@
           "nav": 28107,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 27682,
-          "diff": -425,
-          "change": -1.51,
+          "forecast": 27614,
+          "diff": -493,
+          "change": -1.75,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -1405,8 +1405,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -1540,9 +1540,9 @@
           "nav": 56153,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 55305,
-          "diff": -848,
-          "change": -1.51,
+          "forecast": 55169,
+          "diff": -984,
+          "change": -1.75,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -1556,8 +1556,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -1691,9 +1691,9 @@
           "nav": 18928,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 18642,
-          "diff": -286,
-          "change": -1.51,
+          "forecast": 18596,
+          "diff": -332,
+          "change": -1.75,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -1707,8 +1707,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -1842,9 +1842,9 @@
           "nav": 35310,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 34777,
-          "diff": -533,
-          "change": -1.51,
+          "forecast": 34691,
+          "diff": -619,
+          "change": -1.75,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -1858,8 +1858,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -1993,9 +1993,9 @@
           "nav": 10091,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 9939,
-          "diff": -152,
-          "change": -1.51,
+          "forecast": 9914,
+          "diff": -177,
+          "change": -1.75,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -2009,8 +2009,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -2150,9 +2150,9 @@
           "nav": 32209,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 31771,
-          "diff": -438,
-          "change": -1.36,
+          "forecast": 31330,
+          "diff": -879,
+          "change": -2.73,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -2160,15 +2160,9 @@
             "index": {
               "symbol": "^N225",
               "base": 64659.47,
-              "cur": 63780.09,
-              "change": -1.36,
-              "asOf": "2026-10-30T07:57:16+09:00"
-            },
-            "futures": {
-              "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 63825.0,
-              "change": -1.36
+              "cur": 62893.96,
+              "change": -2.73,
+              "asOf": "2026-10-30T11:20:35+09:00"
             }
           },
           "history": [
@@ -2302,9 +2296,9 @@
           "nav": 39486,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 38949,
-          "diff": -537,
-          "change": -1.36,
+          "forecast": 38408,
+          "diff": -1078,
+          "change": -2.73,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -2312,15 +2306,9 @@
             "index": {
               "symbol": "^N225",
               "base": 64659.47,
-              "cur": 63780.09,
-              "change": -1.36,
-              "asOf": "2026-10-30T07:57:16+09:00"
-            },
-            "futures": {
-              "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 63825.0,
-              "change": -1.36
+              "cur": 62893.96,
+              "change": -2.73,
+              "asOf": "2026-10-30T11:20:35+09:00"
             }
           },
           "history": [
@@ -2454,9 +2442,9 @@
           "nav": 82660,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 81536,
-          "diff": -1124,
-          "change": -1.36,
+          "forecast": 80403,
+          "diff": -2257,
+          "change": -2.73,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -2464,15 +2452,9 @@
             "index": {
               "symbol": "^N225",
               "base": 64659.47,
-              "cur": 63780.09,
-              "change": -1.36,
-              "asOf": "2026-10-30T07:57:16+09:00"
-            },
-            "futures": {
-              "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 63825.0,
-              "change": -1.36
+              "cur": 62893.96,
+              "change": -2.73,
+              "asOf": "2026-10-30T11:20:35+09:00"
             }
           },
           "history": [
@@ -2606,9 +2588,9 @@
           "nav": 85183,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 80201,
-          "diff": -4982,
-          "change": -5.85,
+          "forecast": 75182,
+          "diff": -10001,
+          "change": -11.74,
           "leverage": 4.3,
           "hedged": false,
           "model": "domestic_leveraged",
@@ -2616,15 +2598,9 @@
             "index": {
               "symbol": "^N225",
               "base": 64659.47,
-              "cur": 63780.09,
-              "change": -1.36,
-              "asOf": "2026-10-30T07:57:16+09:00"
-            },
-            "futures": {
-              "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 63825.0,
-              "change": -1.36
+              "cur": 62893.96,
+              "change": -2.73,
+              "asOf": "2026-10-30T11:20:35+09:00"
             }
           },
           "history": [
@@ -2758,9 +2734,9 @@
           "nav": 58101,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 54703,
-          "diff": -3398,
-          "change": -5.85,
+          "forecast": 51279,
+          "diff": -6822,
+          "change": -11.74,
           "leverage": 4.3,
           "hedged": false,
           "model": "domestic_leveraged",
@@ -2768,15 +2744,9 @@
             "index": {
               "symbol": "^N225",
               "base": 64659.47,
-              "cur": 63780.09,
-              "change": -1.36,
-              "asOf": "2026-10-30T07:57:16+09:00"
-            },
-            "futures": {
-              "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 63825.0,
-              "change": -1.36
+              "cur": 62893.96,
+              "change": -2.73,
+              "asOf": "2026-10-30T11:20:35+09:00"
             }
           },
           "history": [
@@ -2916,9 +2886,9 @@
           "nav": 32162,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 31725,
-          "diff": -437,
-          "change": -1.36,
+          "forecast": 31704,
+          "diff": -458,
+          "change": -1.42,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -2926,15 +2896,9 @@
             "index": {
               "symbol": "1306.T",
               "base": 421.3,
-              "cur": 415.57,
-              "change": -1.36,
-              "asOf": "2026-10-30T07:57:16+09:00"
-            },
-            "futures": {
-              "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 63825.0,
-              "change": -1.36
+              "cur": 415.3,
+              "change": -1.42,
+              "asOf": "2026-10-30T11:20:29+09:00"
             }
           },
           "history": [
@@ -3068,9 +3032,9 @@
           "nav": 31543,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 31114,
-          "diff": -429,
-          "change": -1.36,
+          "forecast": 31094,
+          "diff": -449,
+          "change": -1.42,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -3078,15 +3042,9 @@
             "index": {
               "symbol": "1306.T",
               "base": 421.3,
-              "cur": 415.57,
-              "change": -1.36,
-              "asOf": "2026-10-30T07:57:16+09:00"
-            },
-            "futures": {
-              "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 63825.0,
-              "change": -1.36
+              "cur": 415.3,
+              "change": -1.42,
+              "asOf": "2026-10-30T11:20:29+09:00"
             }
           },
           "history": [
@@ -3220,9 +3178,9 @@
           "nav": 30414,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 30000,
-          "diff": -414,
-          "change": -1.36,
+          "forecast": 29981,
+          "diff": -433,
+          "change": -1.42,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -3230,15 +3188,9 @@
             "index": {
               "symbol": "1306.T",
               "base": 421.3,
-              "cur": 415.57,
-              "change": -1.36,
-              "asOf": "2026-10-30T07:57:16+09:00"
-            },
-            "futures": {
-              "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 63825.0,
-              "change": -1.36
+              "cur": 415.3,
+              "change": -1.42,
+              "asOf": "2026-10-30T11:20:29+09:00"
             }
           },
           "history": [
@@ -3372,9 +3324,9 @@
           "nav": 36555,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 36058,
-          "diff": -497,
-          "change": -1.36,
+          "forecast": 36034,
+          "diff": -521,
+          "change": -1.42,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -3382,15 +3334,9 @@
             "index": {
               "symbol": "1306.T",
               "base": 421.3,
-              "cur": 415.57,
-              "change": -1.36,
-              "asOf": "2026-10-30T07:57:16+09:00"
-            },
-            "futures": {
-              "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 63825.0,
-              "change": -1.36
+              "cur": 415.3,
+              "change": -1.42,
+              "asOf": "2026-10-30T11:20:29+09:00"
             }
           },
           "history": [
@@ -3524,9 +3470,9 @@
           "nav": 56768,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 55996,
-          "diff": -772,
-          "change": -1.36,
+          "forecast": 55960,
+          "diff": -808,
+          "change": -1.42,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -3534,15 +3480,9 @@
             "index": {
               "symbol": "1306.T",
               "base": 421.3,
-              "cur": 415.57,
-              "change": -1.36,
-              "asOf": "2026-10-30T07:57:16+09:00"
-            },
-            "futures": {
-              "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 63825.0,
-              "change": -1.36
+              "cur": 415.3,
+              "change": -1.42,
+              "asOf": "2026-10-30T11:20:29+09:00"
             }
           },
           "history": [
@@ -3676,9 +3616,9 @@
           "nav": 61051,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 60221,
-          "diff": -830,
-          "change": -1.36,
+          "forecast": 60182,
+          "diff": -869,
+          "change": -1.42,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -3686,15 +3626,9 @@
             "index": {
               "symbol": "1306.T",
               "base": 421.3,
-              "cur": 415.57,
-              "change": -1.36,
-              "asOf": "2026-10-30T07:57:16+09:00"
-            },
-            "futures": {
-              "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 63825.0,
-              "change": -1.36
+              "cur": 415.3,
+              "change": -1.42,
+              "asOf": "2026-10-30T11:20:29+09:00"
             }
           },
           "history": [
@@ -3834,9 +3768,9 @@
           "nav": 37902,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 37753,
-          "diff": -149,
-          "change": -0.39,
+          "forecast": 37661,
+          "diff": -241,
+          "change": -0.64,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -3850,8 +3784,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -3985,9 +3919,9 @@
           "nav": 19531,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 19454,
-          "diff": -77,
-          "change": -0.39,
+          "forecast": 19407,
+          "diff": -124,
+          "change": -0.64,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -4001,8 +3935,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -4136,9 +4070,9 @@
           "nav": 35242,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 35104,
-          "diff": -138,
-          "change": -0.39,
+          "forecast": 35018,
+          "diff": -224,
+          "change": -0.64,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -4152,8 +4086,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -4287,9 +4221,9 @@
           "nav": 34204,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 34070,
-          "diff": -134,
-          "change": -0.39,
+          "forecast": 33986,
+          "diff": -218,
+          "change": -0.64,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -4303,8 +4237,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -4438,9 +4372,9 @@
           "nav": 19651,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 19574,
-          "diff": -77,
-          "change": -0.39,
+          "forecast": 19526,
+          "diff": -125,
+          "change": -0.64,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -4454,8 +4388,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -4589,9 +4523,9 @@
           "nav": 21697,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 21612,
-          "diff": -85,
-          "change": -0.39,
+          "forecast": 21559,
+          "diff": -138,
+          "change": -0.64,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -4605,8 +4539,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -4746,9 +4680,9 @@
           "nav": 48972,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 48899,
-          "diff": -73,
-          "change": -0.15,
+          "forecast": 48778,
+          "diff": -194,
+          "change": -0.4,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -4762,8 +4696,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -4897,9 +4831,9 @@
           "nav": 45491,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 45423,
-          "diff": -68,
-          "change": -0.15,
+          "forecast": 45311,
+          "diff": -180,
+          "change": -0.4,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -4913,8 +4847,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -5048,9 +4982,9 @@
           "nav": 60082,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 59992,
-          "diff": -90,
-          "change": -0.15,
+          "forecast": 59844,
+          "diff": -238,
+          "change": -0.4,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -5064,8 +4998,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -5199,9 +5133,9 @@
           "nav": 43038,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 42974,
-          "diff": -64,
-          "change": -0.15,
+          "forecast": 42868,
+          "diff": -170,
+          "change": -0.4,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -5215,8 +5149,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -5350,9 +5284,9 @@
           "nav": 108704,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 108541,
-          "diff": -163,
-          "change": -0.15,
+          "forecast": 108274,
+          "diff": -430,
+          "change": -0.4,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -5366,8 +5300,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -5501,9 +5435,9 @@
           "nav": 133248,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 133048,
-          "diff": -200,
-          "change": -0.15,
+          "forecast": 132721,
+          "diff": -527,
+          "change": -0.4,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -5517,8 +5451,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -5658,9 +5592,9 @@
           "nav": 13958,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 14146,
-          "diff": 188,
-          "change": 1.35,
+          "forecast": 14111,
+          "diff": 153,
+          "change": 1.1,
           "leverage": 1,
           "hedged": false,
           "model": "standard_div",
@@ -5674,8 +5608,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -5809,9 +5743,9 @@
           "nav": 13037,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 13212,
-          "diff": 175,
-          "change": 1.35,
+          "forecast": 13180,
+          "diff": 143,
+          "change": 1.1,
           "leverage": 1,
           "hedged": false,
           "model": "standard_div",
@@ -5825,8 +5759,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -5960,9 +5894,9 @@
           "nav": 14238,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 14430,
-          "diff": 192,
-          "change": 1.35,
+          "forecast": 14394,
+          "diff": 156,
+          "change": 1.1,
           "leverage": 1,
           "hedged": false,
           "model": "standard_div",
@@ -5976,8 +5910,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -6111,9 +6045,9 @@
           "nav": 14167,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 14358,
-          "diff": 191,
-          "change": 1.35,
+          "forecast": 14322,
+          "diff": 155,
+          "change": 1.1,
           "leverage": 1,
           "hedged": false,
           "model": "standard_div",
@@ -6127,8 +6061,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -6268,9 +6202,9 @@
           "nav": 44293,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 43606,
-          "diff": -687,
-          "change": -1.55,
+          "forecast": 43498,
+          "diff": -795,
+          "change": -1.79,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -6284,8 +6218,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -6419,9 +6353,9 @@
           "nav": 29541,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 29083,
-          "diff": -458,
-          "change": -1.55,
+          "forecast": 29011,
+          "diff": -530,
+          "change": -1.79,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -6435,8 +6369,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -6570,9 +6504,9 @@
           "nav": 22552,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 22202,
-          "diff": -350,
-          "change": -1.55,
+          "forecast": 22147,
+          "diff": -405,
+          "change": -1.79,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -6586,8 +6520,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -6727,9 +6661,9 @@
           "nav": 98383,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 96152,
-          "diff": -2231,
-          "change": -2.27,
+          "forecast": 95915,
+          "diff": -2468,
+          "change": -2.51,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -6743,8 +6677,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -6878,9 +6812,9 @@
           "nav": 10676,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 10434,
-          "diff": -242,
-          "change": -2.27,
+          "forecast": 10408,
+          "diff": -268,
+          "change": -2.51,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -6894,8 +6828,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -7181,9 +7115,9 @@
           "nav": 45350,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 45178,
-          "diff": -172,
-          "change": -0.38,
+          "forecast": 45067,
+          "diff": -283,
+          "change": -0.62,
           "leverage": 1,
           "hedged": false,
           "model": "standard_div",
@@ -7197,8 +7131,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -7332,9 +7266,9 @@
           "nav": 25694,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 25596,
-          "diff": -98,
-          "change": -0.38,
+          "forecast": 25533,
+          "diff": -161,
+          "change": -0.62,
           "leverage": 1,
           "hedged": false,
           "model": "standard_div",
@@ -7348,8 +7282,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -7489,9 +7423,9 @@
           "nav": 22880,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 22694,
-          "diff": -186,
-          "change": -0.81,
+          "forecast": 22638,
+          "diff": -242,
+          "change": -1.06,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
@@ -7505,8 +7439,8 @@
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -7640,9 +7574,9 @@
           "nav": 47665,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 47665,
-          "diff": 0,
-          "change": 0.0,
+          "forecast": 47451,
+          "diff": -214,
+          "change": -0.45,
           "leverage": 1,
           "hedged": false,
           "model": "domestic_close",
@@ -7650,9 +7584,9 @@
             "index": {
               "symbol": "1540.T",
               "base": 18945.0,
-              "cur": 18945.0,
-              "change": 0.0,
-              "asOf": "2026-10-29T15:30:00+09:00"
+              "cur": 18860.0,
+              "change": -0.45,
+              "asOf": "2026-10-30T11:20:24+09:00"
             }
           },
           "history": [
@@ -7786,9 +7720,9 @@
           "nav": 40470,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 40142,
-          "diff": -328,
-          "change": -0.81,
+          "forecast": 39872,
+          "diff": -598,
+          "change": -1.48,
           "leverage": 2,
           "hedged": false,
           "model": "gold_plus",
@@ -7803,14 +7737,14 @@
             "gold": {
               "symbol": "GC=F",
               "base": 4051.6,
-              "cur": 4036.6,
-              "change": -0.37,
-              "asOf": "2026-10-30T07:57:09+09:00"
+              "cur": 4019.5,
+              "change": -0.79,
+              "asOf": "2026-10-30T11:25:27+09:00"
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -7945,9 +7879,9 @@
           "nav": 17793,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 17458,
-          "diff": -335,
-          "change": -1.88,
+          "forecast": 17339,
+          "diff": -454,
+          "change": -2.55,
           "leverage": 2,
           "hedged": false,
           "model": "gold_plus",
@@ -7962,14 +7896,14 @@
             "gold": {
               "symbol": "GC=F",
               "base": 4051.6,
-              "cur": 4036.6,
-              "change": -0.37,
-              "asOf": "2026-10-30T07:57:09+09:00"
+              "cur": 4019.5,
+              "change": -0.79,
+              "asOf": "2026-10-30T11:25:27+09:00"
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
@@ -8104,9 +8038,9 @@
           "nav": 8469,
           "navDate": "2026-10-29",
           "targetDate": "2026-10-30",
-          "forecast": 8404,
-          "diff": -65,
-          "change": -0.76,
+          "forecast": 8348,
+          "diff": -121,
+          "change": -1.43,
           "leverage": 2,
           "hedged": false,
           "model": "gold_plus",
@@ -8121,14 +8055,14 @@
             "gold": {
               "symbol": "GC=F",
               "base": 4051.6,
-              "cur": 4036.6,
-              "change": -0.37,
-              "asOf": "2026-10-30T07:57:09+09:00"
+              "cur": 4019.5,
+              "change": -0.79,
+              "asOf": "2026-10-30T11:25:27+09:00"
             },
             "fx": {
               "base": 157.96,
-              "cur": 157.75,
-              "change": -0.13
+              "cur": 157.36,
+              "change": -0.38
             }
           },
           "history": [
