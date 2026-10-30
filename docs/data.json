@@ -1,96 +1,96 @@
 {
-  "updatedAt": "2026-10-31T05:22:06+09:00",
-  "baseDate": "2026-10-29",
-  "targetDate": "2026-10-30",
+  "updatedAt": "2026-10-31T08:56:38+09:00",
+  "baseDate": "2026-10-30",
+  "targetDate": "2026-11-02",
   "markets": [
     {
       "id": "sp500",
       "label": "S&P500",
       "symbol": "^GSPC",
-      "base": 7743.98,
+      "base": 7720.39,
       "cur": 7580.07,
-      "change": -2.12,
-      "asOf": "2026-10-31T05:16:53+09:00"
+      "change": -1.82,
+      "asOf": "2026-10-31T05:47:43+09:00"
     },
     {
       "id": "ndx",
       "label": "NASDAQ100",
       "symbol": "^NDX",
-      "base": 29813.16,
-      "cur": 28310.5,
-      "change": -5.04,
-      "asOf": "2026-10-31T04:48:05+09:00"
+      "base": 29402.51,
+      "cur": 28384.85,
+      "change": -3.46,
+      "asOf": "2026-10-31T06:15:59+09:00"
     },
     {
       "id": "nqf",
       "label": "NASDAQ100先物",
       "symbol": "NQ=F",
-      "base": 29979.5,
-      "cur": 28373.25,
-      "change": -5.36,
-      "asOf": "2026-10-31T04:32:58+09:00"
+      "base": 29562.0,
+      "cur": 28543.0,
+      "change": -3.45,
+      "asOf": "2026-10-31T05:59:59+09:00"
     },
     {
       "id": "n225",
       "label": "日経平均(先物考慮)",
       "symbol": "^N225",
-      "base": 64659.47,
-      "cur": 62116.26,
-      "change": -3.93,
-      "asOf": "2026-10-31T04:33:06+09:00"
+      "base": 63290.11,
+      "cur": 62248.4,
+      "change": -1.65,
+      "asOf": "2026-10-31T05:59:50+09:00"
     },
     {
       "id": "usdjpy",
       "label": "ドル円",
       "symbol": "JPY=X",
-      "base": 157.96,
-      "cur": 157.36,
-      "change": -0.38,
-      "asOf": "2026-10-31T05:22:00+09:00"
+      "base": 157.36,
+      "cur": 157.52,
+      "change": 0.1,
+      "asOf": "2026-10-31T05:59:33+09:00"
     },
     {
       "id": "sox",
       "label": "SOX",
       "symbol": "^SOX",
-      "base": 11684.0,
-      "cur": 10497.72,
-      "change": -10.15,
-      "asOf": "2026-10-31T04:02:17+09:00"
+      "base": 11518.2,
+      "cur": 10688.8,
+      "change": -7.2,
+      "asOf": "2026-10-31T06:15:59+09:00"
     },
     {
       "id": "fang",
       "label": "FANG+",
       "symbol": "^NYFANG",
-      "base": 18527.78,
-      "cur": 17527.66,
-      "change": -5.4,
-      "asOf": "2026-10-31T04:28:36+09:00"
+      "base": 18132.04,
+      "cur": 17595.83,
+      "change": -2.96,
+      "asOf": "2026-10-31T05:00:02+09:00"
     },
     {
       "id": "acwi",
       "label": "ACWI(オルカン)",
       "symbol": "ACWI",
-      "base": 159.22,
-      "cur": 156.02,
-      "change": -2.01,
-      "asOf": "2026-10-31T04:59:17+09:00"
+      "base": 158.81,
+      "cur": 156.04,
+      "change": -1.74,
+      "asOf": "2026-10-31T05:00:01+09:00"
     },
     {
       "id": "gold",
       "label": "金先物",
       "symbol": "GC=F",
-      "base": 4051.6,
-      "cur": 3890.2,
-      "change": -3.98,
-      "asOf": "2026-10-31T05:03:03+09:00"
+      "base": 4031.4,
+      "cur": 3884.9,
+      "change": -3.63,
+      "asOf": "2026-10-31T05:59:59+09:00"
     }
   ],
   "fx": {
-    "base": 157.96,
-    "cur": 157.36,
-    "change": -0.38,
-    "estimated": false,
-    "asOf": "2026-10-31T05:22:00+09:00"
+    "base": 157.36,
+    "cur": 157.52,
+    "change": 0.1,
+    "estimated": true,
+    "asOf": "2026-10-31T05:59:33+09:00"
   },
   "groups": [
     {
@@ -102,34 +102,30 @@
           "name": "eMAXIS Slim 米国株式（S&P500）",
           "isinCd": "JP90C000GKC6",
           "associFundCd": "03311187",
-          "nav": 45093,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 43971,
-          "diff": -1122,
-          "change": -2.49,
+          "nav": 44816,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 44046,
+          "diff": -770,
+          "change": -1.72,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^GSPC",
-              "base": 7743.98,
+              "base": 7720.39,
               "cur": 7580.07,
-              "change": -2.12,
-              "asOf": "2026-10-31T05:16:53+09:00"
+              "change": -1.82,
+              "asOf": "2026-10-31T05:47:43+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              43314
-            ],
             [
               "2026-09-15",
               43398
@@ -245,6 +241,10 @@
             [
               "2026-10-29",
               45093
+            ],
+            [
+              "2026-10-30",
+              44816
             ]
           ]
         },
@@ -253,34 +253,30 @@
           "name": "SBI・V・S&P500インデックス・ファンド",
           "isinCd": "JP90C000J569",
           "associFundCd": "89311199",
-          "nav": 41226,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 40200,
-          "diff": -1026,
-          "change": -2.49,
+          "nav": 40950,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 40247,
+          "diff": -703,
+          "change": -1.72,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^GSPC",
-              "base": 7743.98,
+              "base": 7720.39,
               "cur": 7580.07,
-              "change": -2.12,
-              "asOf": "2026-10-31T05:16:53+09:00"
+              "change": -1.82,
+              "asOf": "2026-10-31T05:47:43+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              39584
-            ],
             [
               "2026-09-15",
               39667
@@ -396,6 +392,10 @@
             [
               "2026-10-29",
               41226
+            ],
+            [
+              "2026-10-30",
+              40950
             ]
           ]
         },
@@ -404,34 +404,30 @@
           "name": "楽天・プラス・S&P500インデックス・ファンド",
           "isinCd": "JP90C000Q2U6",
           "associFundCd": "9I31223A",
-          "nav": 20063,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 19564,
-          "diff": -499,
-          "change": -2.49,
+          "nav": 19940,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 19598,
+          "diff": -342,
+          "change": -1.72,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^GSPC",
-              "base": 7743.98,
+              "base": 7720.39,
               "cur": 7580.07,
-              "change": -2.12,
-              "asOf": "2026-10-31T05:16:53+09:00"
+              "change": -1.82,
+              "asOf": "2026-10-31T05:47:43+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              19273
-            ],
             [
               "2026-09-15",
               19310
@@ -547,6 +543,10 @@
             [
               "2026-10-29",
               20063
+            ],
+            [
+              "2026-10-30",
+              19940
             ]
           ]
         },
@@ -555,34 +555,30 @@
           "name": "iFree S&P500インデックス",
           "isinCd": "JP90C000FCD3",
           "associFundCd": "04318178",
-          "nav": 49944,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 48701,
-          "diff": -1243,
-          "change": -2.49,
+          "nav": 49635,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 48783,
+          "diff": -852,
+          "change": -1.72,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^GSPC",
-              "base": 7743.98,
+              "base": 7720.39,
               "cur": 7580.07,
-              "change": -2.12,
-              "asOf": "2026-10-31T05:16:53+09:00"
+              "change": -1.82,
+              "asOf": "2026-10-31T05:47:43+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              47982
-            ],
             [
               "2026-09-15",
               48077
@@ -698,6 +694,10 @@
             [
               "2026-10-29",
               49944
+            ],
+            [
+              "2026-10-30",
+              49635
             ]
           ]
         },
@@ -706,34 +706,30 @@
           "name": "つみたて米国株式（S&P500）",
           "isinCd": "JP90C000JX03",
           "associFundCd": "03315203",
-          "nav": 39036,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 38064,
-          "diff": -972,
-          "change": -2.49,
+          "nav": 38796,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 38130,
+          "diff": -666,
+          "change": -1.72,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^GSPC",
-              "base": 7743.98,
+              "base": 7720.39,
               "cur": 7580.07,
-              "change": -2.12,
-              "asOf": "2026-10-31T05:16:53+09:00"
+              "change": -1.82,
+              "asOf": "2026-10-31T05:47:43+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              37503
-            ],
             [
               "2026-09-15",
               37575
@@ -849,6 +845,10 @@
             [
               "2026-10-29",
               39036
+            ],
+            [
+              "2026-10-30",
+              38796
             ]
           ]
         },
@@ -857,34 +857,30 @@
           "name": "たわらノーロード S&P500",
           "isinCd": "JP90C000PER8",
           "associFundCd": "47318233",
-          "nav": 23480,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 22896,
-          "diff": -584,
-          "change": -2.49,
+          "nav": 23337,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 22936,
+          "diff": -401,
+          "change": -1.72,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^GSPC",
-              "base": 7743.98,
+              "base": 7720.39,
               "cur": 7580.07,
-              "change": -2.12,
-              "asOf": "2026-10-31T05:16:53+09:00"
+              "change": -1.82,
+              "asOf": "2026-10-31T05:47:43+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              22555
-            ],
             [
               "2026-09-15",
               22600
@@ -1000,6 +996,10 @@
             [
               "2026-10-29",
               23480
+            ],
+            [
+              "2026-10-30",
+              23337
             ]
           ]
         }
@@ -1014,27 +1014,27 @@
           "name": "auAMトリプル・NASDAQ100 為替ヘッジ無し",
           "isinCd": "JP90C000T9H5",
           "associFundCd": "AY31226A",
-          "nav": 9783,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 8173,
-          "diff": -1610,
-          "change": -16.45,
+          "nav": 9347,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 8390,
+          "diff": -957,
+          "change": -10.24,
           "leverage": 3,
           "hedged": false,
           "model": "additive",
           "breakdown": {
             "index": {
               "symbol": "NQ=F",
-              "base": 29979.5,
-              "cur": 28373.25,
-              "change": -5.36,
-              "asOf": "2026-10-31T04:32:58+09:00"
+              "base": 29562.0,
+              "cur": 28543.0,
+              "change": -3.45,
+              "asOf": "2026-10-31T05:59:59+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
@@ -1081,6 +1081,10 @@
             [
               "2026-10-29",
               9783
+            ],
+            [
+              "2026-10-30",
+              9347
             ]
           ]
         },
@@ -1089,34 +1093,30 @@
           "name": "auAMレバレッジ NASDAQ100 為替ヘッジ無し",
           "isinCd": "JP90C000QZ77",
           "associFundCd": "AY311247",
-          "nav": 20598,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 18312,
-          "diff": -2286,
-          "change": -11.1,
+          "nav": 19966,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 18610,
+          "diff": -1356,
+          "change": -6.79,
           "leverage": 2,
           "hedged": false,
           "model": "additive",
           "breakdown": {
             "index": {
               "symbol": "NQ=F",
-              "base": 29979.5,
-              "cur": 28373.25,
-              "change": -5.36,
-              "asOf": "2026-10-31T04:32:58+09:00"
+              "base": 29562.0,
+              "cur": 28543.0,
+              "change": -3.45,
+              "asOf": "2026-10-31T05:59:59+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              19682
-            ],
             [
               "2026-09-15",
               19502
@@ -1232,6 +1232,10 @@
             [
               "2026-10-29",
               20598
+            ],
+            [
+              "2026-10-30",
+              19966
             ]
           ]
         },
@@ -1240,29 +1244,25 @@
           "name": "iFreeレバレッジ NASDAQ100",
           "isinCd": "JP90C000H0S5",
           "associFundCd": "0431218A",
-          "nav": 70696,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 63120,
-          "diff": -7576,
-          "change": -10.72,
+          "nav": 68729,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 63991,
+          "diff": -4738,
+          "change": -6.89,
           "leverage": 2,
           "hedged": true,
           "model": "leveraged_hedged",
           "breakdown": {
             "index": {
               "symbol": "NQ=F",
-              "base": 29979.5,
-              "cur": 28373.25,
-              "change": -5.36,
-              "asOf": "2026-10-31T04:32:58+09:00"
+              "base": 29562.0,
+              "cur": 28543.0,
+              "change": -3.45,
+              "asOf": "2026-10-31T05:59:59+09:00"
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              69562
-            ],
             [
               "2026-09-15",
               68446
@@ -1378,6 +1378,10 @@
             [
               "2026-10-29",
               70696
+            ],
+            [
+              "2026-10-30",
+              68729
             ]
           ]
         },
@@ -1386,34 +1390,30 @@
           "name": "ニッセイ NASDAQ100インデックスファンド＜購入・換金手数料なし＞",
           "isinCd": "JP90C000PDY6",
           "associFundCd": "29313233",
-          "nav": 28107,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 26589,
-          "diff": -1518,
-          "change": -5.4,
+          "nav": 27633,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 26704,
+          "diff": -929,
+          "change": -3.36,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^NDX",
-              "base": 29813.16,
-              "cur": 28310.5,
-              "change": -5.04,
-              "asOf": "2026-10-31T04:48:05+09:00"
+              "base": 29402.51,
+              "cur": 28384.85,
+              "change": -3.46,
+              "asOf": "2026-10-31T06:15:59+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              26925
-            ],
             [
               "2026-09-15",
               26884
@@ -1529,6 +1529,10 @@
             [
               "2026-10-29",
               28107
+            ],
+            [
+              "2026-10-30",
+              27633
             ]
           ]
         },
@@ -1537,34 +1541,30 @@
           "name": "iFreeNEXT NASDAQ100インデックス",
           "isinCd": "JP90C000GUN2",
           "associFundCd": "04317188",
-          "nav": 56153,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 53120,
-          "diff": -3033,
-          "change": -5.4,
+          "nav": 55204,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 53348,
+          "diff": -1856,
+          "change": -3.36,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^NDX",
-              "base": 29813.16,
-              "cur": 28310.5,
-              "change": -5.04,
-              "asOf": "2026-10-31T04:48:05+09:00"
+              "base": 29402.51,
+              "cur": 28384.85,
+              "change": -3.46,
+              "asOf": "2026-10-31T06:15:59+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              53799
-            ],
             [
               "2026-09-15",
               53718
@@ -1680,6 +1680,10 @@
             [
               "2026-10-29",
               56153
+            ],
+            [
+              "2026-10-30",
+              55204
             ]
           ]
         },
@@ -1688,34 +1692,30 @@
           "name": "楽天・プラス・NASDAQ-100インデックス・ファンド",
           "isinCd": "JP90C000QF22",
           "associFundCd": "9I314241",
-          "nav": 18928,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 17906,
-          "diff": -1022,
-          "change": -5.4,
+          "nav": 18609,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 17983,
+          "diff": -626,
+          "change": -3.36,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^NDX",
-              "base": 29813.16,
-              "cur": 28310.5,
-              "change": -5.04,
-              "asOf": "2026-10-31T04:48:05+09:00"
+              "base": 29402.51,
+              "cur": 28384.85,
+              "change": -3.46,
+              "asOf": "2026-10-31T06:15:59+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              18131
-            ],
             [
               "2026-09-15",
               18104
@@ -1831,6 +1831,10 @@
             [
               "2026-10-29",
               18928
+            ],
+            [
+              "2026-10-30",
+              18609
             ]
           ]
         },
@@ -1839,34 +1843,30 @@
           "name": "eMAXIS NASDAQ100インデックス",
           "isinCd": "JP90C000L9D2",
           "associFundCd": "0331A211",
-          "nav": 35310,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 33403,
-          "diff": -1907,
-          "change": -5.4,
+          "nav": 34716,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 33549,
+          "diff": -1167,
+          "change": -3.36,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^NDX",
-              "base": 29813.16,
-              "cur": 28310.5,
-              "change": -5.04,
-              "asOf": "2026-10-31T04:48:05+09:00"
+              "base": 29402.51,
+              "cur": 28384.85,
+              "change": -3.46,
+              "asOf": "2026-10-31T06:15:59+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              33819
-            ],
             [
               "2026-09-15",
               33769
@@ -1982,6 +1982,10 @@
             [
               "2026-10-29",
               35310
+            ],
+            [
+              "2026-10-30",
+              34716
             ]
           ]
         },
@@ -1990,34 +1994,30 @@
           "name": "SBI NASDAQ100インデックス・ファンド",
           "isinCd": "JP90C000SWF9",
           "associFundCd": "89311265",
-          "nav": 10091,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 9546,
-          "diff": -545,
-          "change": -5.4,
+          "nav": 9921,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 9587,
+          "diff": -334,
+          "change": -3.36,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^NDX",
-              "base": 29813.16,
-              "cur": 28310.5,
-              "change": -5.04,
-              "asOf": "2026-10-31T04:48:05+09:00"
+              "base": 29402.51,
+              "cur": 28384.85,
+              "change": -3.46,
+              "asOf": "2026-10-31T06:15:59+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              9665
-            ],
             [
               "2026-09-15",
               9650
@@ -2133,6 +2133,10 @@
             [
               "2026-10-29",
               10091
+            ],
+            [
+              "2026-10-30",
+              9921
             ]
           ]
         }
@@ -2147,35 +2151,31 @@
           "name": "eMAXIS Slim 国内株式（日経平均）",
           "isinCd": "JP90C000FXV1",
           "associFundCd": "03311182",
-          "nav": 32209,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 30942,
-          "diff": -1267,
-          "change": -3.93,
+          "nav": 31529,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 31010,
+          "diff": -519,
+          "change": -1.65,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
           "breakdown": {
             "index": {
               "symbol": "^N225",
-              "base": 64659.47,
-              "cur": 62116.26,
-              "change": -3.93,
-              "asOf": "2026-10-31T04:33:06+09:00"
+              "base": 63290.11,
+              "cur": 62248.4,
+              "change": -1.65,
+              "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 62160.0,
-              "change": -3.93
+              "base": 63490.0,
+              "cur": 62445.0,
+              "change": -1.65
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              31440
-            ],
             [
               "2026-09-15",
               31435
@@ -2291,6 +2291,10 @@
             [
               "2026-10-29",
               32209
+            ],
+            [
+              "2026-10-30",
+              31529
             ]
           ]
         },
@@ -2299,35 +2303,31 @@
           "name": "たわらノーロード 日経225",
           "isinCd": "JP90C000CMF4",
           "associFundCd": "4731815C",
-          "nav": 39486,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 37933,
-          "diff": -1553,
-          "change": -3.93,
+          "nav": 38651,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 38015,
+          "diff": -636,
+          "change": -1.65,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
           "breakdown": {
             "index": {
               "symbol": "^N225",
-              "base": 64659.47,
-              "cur": 62116.26,
-              "change": -3.93,
-              "asOf": "2026-10-31T04:33:06+09:00"
+              "base": 63290.11,
+              "cur": 62248.4,
+              "change": -1.65,
+              "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 62160.0,
-              "change": -3.93
+              "base": 63490.0,
+              "cur": 62445.0,
+              "change": -1.65
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              38545
-            ],
             [
               "2026-09-15",
               38540
@@ -2443,6 +2443,10 @@
             [
               "2026-10-29",
               39486
+            ],
+            [
+              "2026-10-30",
+              38651
             ]
           ]
         },
@@ -2451,35 +2455,31 @@
           "name": "ニッセイ 日経225インデックスファンド",
           "isinCd": "JP90C0001R39",
           "associFundCd": "29311041",
-          "nav": 82660,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 79409,
-          "diff": -3251,
-          "change": -3.93,
+          "nav": 80917,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 79585,
+          "diff": -1332,
+          "change": -1.65,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
           "breakdown": {
             "index": {
               "symbol": "^N225",
-              "base": 64659.47,
-              "cur": 62116.26,
-              "change": -3.93,
-              "asOf": "2026-10-31T04:33:06+09:00"
+              "base": 63290.11,
+              "cur": 62248.4,
+              "change": -1.65,
+              "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 62160.0,
-              "change": -3.93
+              "base": 63490.0,
+              "cur": 62445.0,
+              "change": -1.65
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              80706
-            ],
             [
               "2026-09-15",
               80692
@@ -2595,6 +2595,10 @@
             [
               "2026-10-29",
               82660
+            ],
+            [
+              "2026-10-30",
+              80917
             ]
           ]
         },
@@ -2603,35 +2607,31 @@
           "name": "楽天日本株4.3倍ブル",
           "isinCd": "JP90C000CCD0",
           "associFundCd": "9I31115A",
-          "nav": 85183,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 70776,
-          "diff": -14407,
-          "change": -16.91,
+          "nav": 78134,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 72604,
+          "diff": -5530,
+          "change": -7.08,
           "leverage": 4.3,
           "hedged": false,
           "model": "domestic_leveraged",
           "breakdown": {
             "index": {
               "symbol": "^N225",
-              "base": 64659.47,
-              "cur": 62116.26,
-              "change": -3.93,
-              "asOf": "2026-10-31T04:33:06+09:00"
+              "base": 63290.11,
+              "cur": 62248.4,
+              "change": -1.65,
+              "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 62160.0,
-              "change": -3.93
+              "base": 63490.0,
+              "cur": 62445.0,
+              "change": -1.65
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              82301
-            ],
             [
               "2026-09-15",
               82132
@@ -2747,6 +2747,10 @@
             [
               "2026-10-29",
               85183
+            ],
+            [
+              "2026-10-30",
+              78134
             ]
           ]
         },
@@ -2755,35 +2759,31 @@
           "name": "SBI 日本株4.3ブル",
           "isinCd": "JP90C000FSK4",
           "associFundCd": "8931317C",
-          "nav": 58101,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 48274,
-          "diff": -9827,
-          "change": -16.91,
+          "nav": 53329,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 49555,
+          "diff": -3774,
+          "change": -7.08,
           "leverage": 4.3,
           "hedged": false,
           "model": "domestic_leveraged",
           "breakdown": {
             "index": {
               "symbol": "^N225",
-              "base": 64659.47,
-              "cur": 62116.26,
-              "change": -3.93,
-              "asOf": "2026-10-31T04:33:06+09:00"
+              "base": 63290.11,
+              "cur": 62248.4,
+              "change": -1.65,
+              "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 62160.0,
-              "change": -3.93
+              "base": 63490.0,
+              "cur": 62445.0,
+              "change": -1.65
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              56027
-            ],
             [
               "2026-09-15",
               55912
@@ -2899,6 +2899,10 @@
             [
               "2026-10-29",
               58101
+            ],
+            [
+              "2026-10-30",
+              53329
             ]
           ]
         }
@@ -2913,35 +2917,31 @@
           "name": "eMAXIS Slim 国内株式（TOPIX）",
           "isinCd": "JP90C000ENA9",
           "associFundCd": "03317172",
-          "nav": 32162,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 30897,
-          "diff": -1265,
-          "change": -3.93,
+          "nav": 31851,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 31327,
+          "diff": -524,
+          "change": -1.65,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
           "breakdown": {
             "index": {
               "symbol": "1306.T",
-              "base": 421.3,
-              "cur": 404.73,
-              "change": -3.93,
-              "asOf": "2026-10-31T04:33:06+09:00"
+              "base": 416.4,
+              "cur": 409.55,
+              "change": -1.65,
+              "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 62160.0,
-              "change": -3.93
+              "base": 63490.0,
+              "cur": 62445.0,
+              "change": -1.65
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              32316
-            ],
             [
               "2026-09-15",
               32149
@@ -3057,6 +3057,10 @@
             [
               "2026-10-29",
               32162
+            ],
+            [
+              "2026-10-30",
+              31851
             ]
           ]
         },
@@ -3065,35 +3069,31 @@
           "name": "ニッセイ TOPIXインデックスファンド＜購入・換金手数料なし＞",
           "isinCd": "JP90C000BRT6",
           "associFundCd": "29312154",
-          "nav": 31543,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 30302,
-          "diff": -1241,
-          "change": -3.93,
+          "nav": 31234,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 30720,
+          "diff": -514,
+          "change": -1.65,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
           "breakdown": {
             "index": {
               "symbol": "1306.T",
-              "base": 421.3,
-              "cur": 404.73,
-              "change": -3.93,
-              "asOf": "2026-10-31T04:33:06+09:00"
+              "base": 416.4,
+              "cur": 409.55,
+              "change": -1.65,
+              "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 62160.0,
-              "change": -3.93
+              "base": 63490.0,
+              "cur": 62445.0,
+              "change": -1.65
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              31696
-            ],
             [
               "2026-09-15",
               31531
@@ -3209,6 +3209,10 @@
             [
               "2026-10-29",
               31543
+            ],
+            [
+              "2026-10-30",
+              31234
             ]
           ]
         },
@@ -3217,35 +3221,31 @@
           "name": "つみたて日本株式（TOPIX）",
           "isinCd": "JP90C000F8E0",
           "associFundCd": "03312178",
-          "nav": 30414,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 29218,
-          "diff": -1196,
-          "change": -3.93,
+          "nav": 30120,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 29624,
+          "diff": -496,
+          "change": -1.65,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
           "breakdown": {
             "index": {
               "symbol": "1306.T",
-              "base": 421.3,
-              "cur": 404.73,
-              "change": -3.93,
-              "asOf": "2026-10-31T04:33:06+09:00"
+              "base": 416.4,
+              "cur": 409.55,
+              "change": -1.65,
+              "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 62160.0,
-              "change": -3.93
+              "base": 63490.0,
+              "cur": 62445.0,
+              "change": -1.65
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              30562
-            ],
             [
               "2026-09-15",
               30403
@@ -3361,6 +3361,10 @@
             [
               "2026-10-29",
               30414
+            ],
+            [
+              "2026-10-30",
+              30120
             ]
           ]
         },
@@ -3369,35 +3373,31 @@
           "name": "（ダイワファンドラップ）TOPIXインデックス",
           "isinCd": "JP90C000DRZ9",
           "associFundCd": "0431I169",
-          "nav": 36555,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 35117,
-          "diff": -1438,
-          "change": -3.93,
+          "nav": 36198,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 35602,
+          "diff": -596,
+          "change": -1.65,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
           "breakdown": {
             "index": {
               "symbol": "1306.T",
-              "base": 421.3,
-              "cur": 404.73,
-              "change": -3.93,
-              "asOf": "2026-10-31T04:33:06+09:00"
+              "base": 416.4,
+              "cur": 409.55,
+              "change": -1.65,
+              "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 62160.0,
-              "change": -3.93
+              "base": 63490.0,
+              "cur": 62445.0,
+              "change": -1.65
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              36741
-            ],
             [
               "2026-09-15",
               36549
@@ -3513,6 +3513,10 @@
             [
               "2026-10-29",
               36555
+            ],
+            [
+              "2026-10-30",
+              36198
             ]
           ]
         },
@@ -3521,35 +3525,31 @@
           "name": "東京海上セレクション・日本株TOPIX",
           "isinCd": "JP90C0000HT6",
           "associFundCd": "49314019",
-          "nav": 56768,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 54535,
-          "diff": -2233,
-          "change": -3.93,
+          "nav": 56211,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 55286,
+          "diff": -925,
+          "change": -1.65,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
           "breakdown": {
             "index": {
               "symbol": "1306.T",
-              "base": 421.3,
-              "cur": 404.73,
-              "change": -3.93,
-              "asOf": "2026-10-31T04:33:06+09:00"
+              "base": 416.4,
+              "cur": 409.55,
+              "change": -1.65,
+              "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 62160.0,
-              "change": -3.93
+              "base": 63490.0,
+              "cur": 62445.0,
+              "change": -1.65
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              57051
-            ],
             [
               "2026-09-15",
               56750
@@ -3665,6 +3665,10 @@
             [
               "2026-10-29",
               56768
+            ],
+            [
+              "2026-10-30",
+              56211
             ]
           ]
         },
@@ -3673,35 +3677,31 @@
           "name": "eMAXIS TOPIXインデックス",
           "isinCd": "JP90C0006LD9",
           "associFundCd": "0331209A",
-          "nav": 61051,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 58650,
-          "diff": -2401,
-          "change": -3.93,
+          "nav": 60461,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 59466,
+          "diff": -995,
+          "change": -1.65,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
           "breakdown": {
             "index": {
               "symbol": "1306.T",
-              "base": 421.3,
-              "cur": 404.73,
-              "change": -3.93,
-              "asOf": "2026-10-31T04:33:06+09:00"
+              "base": 416.4,
+              "cur": 409.55,
+              "change": -1.65,
+              "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
-              "base": 64705.0,
-              "cur": 62160.0,
-              "change": -3.93
+              "base": 63490.0,
+              "cur": 62445.0,
+              "change": -1.65
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              61367
-            ],
             [
               "2026-09-15",
               61048
@@ -3817,6 +3817,10 @@
             [
               "2026-10-29",
               61051
+            ],
+            [
+              "2026-10-30",
+              60461
             ]
           ]
         }
@@ -3831,34 +3835,30 @@
           "name": "eMAXIS Slim 全世界株式（オール・カントリー）",
           "isinCd": "JP90C000H1T1",
           "associFundCd": "0331418A",
-          "nav": 37902,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 36999,
-          "diff": -903,
-          "change": -2.38,
+          "nav": 37716,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 37096,
+          "diff": -620,
+          "change": -1.64,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "ACWI",
-              "base": 159.22,
-              "cur": 156.02,
-              "change": -2.01,
-              "asOf": "2026-10-31T04:59:17+09:00"
+              "base": 158.81,
+              "cur": 156.04,
+              "change": -1.74,
+              "asOf": "2026-10-31T05:00:01+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              37072
-            ],
             [
               "2026-09-15",
               37081
@@ -3974,6 +3974,10 @@
             [
               "2026-10-29",
               37902
+            ],
+            [
+              "2026-10-30",
+              37716
             ]
           ]
         },
@@ -3982,34 +3986,30 @@
           "name": "楽天・プラス・オールカントリー株式インデックス・ファンド",
           "isinCd": "JP90C000Q2W2",
           "associFundCd": "9I31123A",
-          "nav": 19531,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 19066,
-          "diff": -465,
-          "change": -2.38,
+          "nav": 19435,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 19116,
+          "diff": -319,
+          "change": -1.64,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "ACWI",
-              "base": 159.22,
-              "cur": 156.02,
-              "change": -2.01,
-              "asOf": "2026-10-31T04:59:17+09:00"
+              "base": 158.81,
+              "cur": 156.04,
+              "change": -1.74,
+              "asOf": "2026-10-31T05:00:01+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              19103
-            ],
             [
               "2026-09-15",
               19107
@@ -4125,6 +4125,10 @@
             [
               "2026-10-29",
               19531
+            ],
+            [
+              "2026-10-30",
+              19435
             ]
           ]
         },
@@ -4133,34 +4137,30 @@
           "name": "たわらノーロード 全世界株式",
           "isinCd": "JP90C000HZE8",
           "associFundCd": "47312197",
-          "nav": 35242,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 34402,
-          "diff": -840,
-          "change": -2.38,
+          "nav": 35070,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 34494,
+          "diff": -576,
+          "change": -1.64,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "ACWI",
-              "base": 159.22,
-              "cur": 156.02,
-              "change": -2.01,
-              "asOf": "2026-10-31T04:59:17+09:00"
+              "base": 158.81,
+              "cur": 156.04,
+              "change": -1.74,
+              "asOf": "2026-10-31T05:00:01+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              34475
-            ],
             [
               "2026-09-15",
               34484
@@ -4276,6 +4276,10 @@
             [
               "2026-10-29",
               35242
+            ],
+            [
+              "2026-10-30",
+              35070
             ]
           ]
         },
@@ -4284,34 +4288,30 @@
           "name": "つみたて全世界株式",
           "isinCd": "JP90C000JX11",
           "associFundCd": "03316203",
-          "nav": 34204,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 33389,
-          "diff": -815,
-          "change": -2.38,
+          "nav": 34036,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 33477,
+          "diff": -559,
+          "change": -1.64,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "ACWI",
-              "base": 159.22,
-              "cur": 156.02,
-              "change": -2.01,
-              "asOf": "2026-10-31T04:59:17+09:00"
+              "base": 158.81,
+              "cur": 156.04,
+              "change": -1.74,
+              "asOf": "2026-10-31T05:00:01+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              33461
-            ],
             [
               "2026-09-15",
               33470
@@ -4427,6 +4427,10 @@
             [
               "2026-10-29",
               34204
+            ],
+            [
+              "2026-10-30",
+              34036
             ]
           ]
         },
@@ -4435,34 +4439,30 @@
           "name": "はじめてのNISA・全世界株式インデックス（オール・カントリー）",
           "isinCd": "JP90C000PSN7",
           "associFundCd": "01312237",
-          "nav": 19651,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 19183,
-          "diff": -468,
-          "change": -2.38,
+          "nav": 19554,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 19233,
+          "diff": -321,
+          "change": -1.64,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "ACWI",
-              "base": 159.22,
-              "cur": 156.02,
-              "change": -2.01,
-              "asOf": "2026-10-31T04:59:17+09:00"
+              "base": 158.81,
+              "cur": 156.04,
+              "change": -1.74,
+              "asOf": "2026-10-31T05:00:01+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              19220
-            ],
             [
               "2026-09-15",
               19225
@@ -4578,6 +4578,10 @@
             [
               "2026-10-29",
               19651
+            ],
+            [
+              "2026-10-30",
+              19554
             ]
           ]
         },
@@ -4586,34 +4590,30 @@
           "name": "インデックスファンドMSCIオール・カントリー（全世界株式）",
           "isinCd": "JP90C000PHS9",
           "associFundCd": "02311234",
-          "nav": 21697,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 21180,
-          "diff": -517,
-          "change": -2.38,
+          "nav": 21590,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 21235,
+          "diff": -355,
+          "change": -1.64,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "ACWI",
-              "base": 159.22,
-              "cur": 156.02,
-              "change": -2.01,
-              "asOf": "2026-10-31T04:59:17+09:00"
+              "base": 158.81,
+              "cur": 156.04,
+              "change": -1.74,
+              "asOf": "2026-10-31T05:00:01+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              21232
-            ],
             [
               "2026-09-15",
               21237
@@ -4729,6 +4729,10 @@
             [
               "2026-10-29",
               21697
+            ],
+            [
+              "2026-10-30",
+              21590
             ]
           ]
         }
@@ -4743,34 +4747,30 @@
           "name": "たわらノーロード 先進国株式",
           "isinCd": "JP90C000CMK4",
           "associFundCd": "4731B15C",
-          "nav": 48972,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 47957,
-          "diff": -1015,
-          "change": -2.07,
+          "nav": 48801,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 48027,
+          "diff": -774,
+          "change": -1.59,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "TOK",
-              "base": 154.26,
+              "base": 154.24,
               "cur": 151.64,
-              "change": -1.7,
+              "change": -1.69,
               "asOf": "2026-10-31T05:00:00+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              47425
-            ],
             [
               "2026-09-15",
               47509
@@ -4886,6 +4886,10 @@
             [
               "2026-10-29",
               48972
+            ],
+            [
+              "2026-10-30",
+              48801
             ]
           ]
         },
@@ -4894,34 +4898,30 @@
           "name": "eMAXIS Slim 先進国株式インデックス（除く日本）",
           "isinCd": "JP90C000ENC5",
           "associFundCd": "03319172",
-          "nav": 45491,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 44548,
-          "diff": -943,
-          "change": -2.07,
+          "nav": 45333,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 44614,
+          "diff": -719,
+          "change": -1.59,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "TOK",
-              "base": 154.26,
+              "base": 154.24,
               "cur": 151.64,
-              "change": -1.7,
+              "change": -1.69,
               "asOf": "2026-10-31T05:00:00+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              44050
-            ],
             [
               "2026-09-15",
               44128
@@ -5037,6 +5037,10 @@
             [
               "2026-10-29",
               45491
+            ],
+            [
+              "2026-10-30",
+              45333
             ]
           ]
         },
@@ -5045,34 +5049,30 @@
           "name": "ニッセイ 外国株式インデックスファンド＜購入・換金手数料なし＞",
           "isinCd": "JP90C0009VE0",
           "associFundCd": "2931113C",
-          "nav": 60082,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 58837,
-          "diff": -1245,
-          "change": -2.07,
+          "nav": 59873,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 58924,
+          "diff": -949,
+          "change": -1.59,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "TOK",
-              "base": 154.26,
+              "base": 154.24,
               "cur": 151.64,
-              "change": -1.7,
+              "change": -1.69,
               "asOf": "2026-10-31T05:00:00+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              58180
-            ],
             [
               "2026-09-15",
               58283
@@ -5188,6 +5188,10 @@
             [
               "2026-10-29",
               60082
+            ],
+            [
+              "2026-10-30",
+              59873
             ]
           ]
         },
@@ -5196,34 +5200,30 @@
           "name": "つみたて先進国株式",
           "isinCd": "JP90C000F8F7",
           "associFundCd": "03313178",
-          "nav": 43038,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 42146,
-          "diff": -892,
-          "change": -2.07,
+          "nav": 42888,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 42208,
+          "diff": -680,
+          "change": -1.59,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "TOK",
-              "base": 154.26,
+              "base": 154.24,
               "cur": 151.64,
-              "change": -1.7,
+              "change": -1.69,
               "asOf": "2026-10-31T05:00:00+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              41681
-            ],
             [
               "2026-09-15",
               41755
@@ -5339,6 +5339,10 @@
             [
               "2026-10-29",
               43038
+            ],
+            [
+              "2026-10-30",
+              42888
             ]
           ]
         },
@@ -5347,34 +5351,30 @@
           "name": "三井住友・DC外国株式インデックスファンドS",
           "isinCd": "JP90C00009Q3",
           "associFundCd": "7931204B",
-          "nav": 108704,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 106451,
-          "diff": -2253,
-          "change": -2.07,
+          "nav": 108326,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 106609,
+          "diff": -1717,
+          "change": -1.59,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "TOK",
-              "base": 154.26,
+              "base": 154.24,
               "cur": 151.64,
-              "change": -1.7,
+              "change": -1.69,
               "asOf": "2026-10-31T05:00:00+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              105278
-            ],
             [
               "2026-09-15",
               105461
@@ -5490,6 +5490,10 @@
             [
               "2026-10-29",
               108704
+            ],
+            [
+              "2026-10-30",
+              108326
             ]
           ]
         },
@@ -5498,34 +5502,30 @@
           "name": "DCダイワ 外国株式インデックス",
           "isinCd": "JP90C0003RN2",
           "associFundCd": "04313031",
-          "nav": 133248,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 130487,
-          "diff": -2761,
-          "change": -2.07,
+          "nav": 132786,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 130681,
+          "diff": -2105,
+          "change": -1.59,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "TOK",
-              "base": 154.26,
+              "base": 154.24,
               "cur": 151.64,
-              "change": -1.7,
+              "change": -1.69,
               "asOf": "2026-10-31T05:00:00+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              129068
-            ],
             [
               "2026-09-15",
               129298
@@ -5641,6 +5641,10 @@
             [
               "2026-10-29",
               133248
+            ],
+            [
+              "2026-10-30",
+              132786
             ]
           ]
         }
@@ -5655,34 +5659,30 @@
           "name": "楽天・シュワブ・高配当株式・米国ファンド（四半期決算型）",
           "isinCd": "JP90C000R6N1",
           "associFundCd": "9I312249",
-          "nav": 13958,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 14170,
-          "diff": 212,
-          "change": 1.52,
+          "nav": 14117,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 14199,
+          "diff": 82,
+          "change": 0.58,
           "leverage": 1,
           "hedged": false,
           "model": "standard_div",
           "breakdown": {
             "index": {
               "symbol": "SCHD",
-              "base": 35.09,
-              "cur": 35.76,
-              "change": 1.91,
-              "asOf": "2026-10-31T04:02:01+09:00"
+              "base": 35.61,
+              "cur": 35.78,
+              "change": 0.48,
+              "asOf": "2026-10-31T05:00:00+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              13113
-            ],
             [
               "2026-09-15",
               13284
@@ -5798,6 +5798,10 @@
             [
               "2026-10-29",
               13958
+            ],
+            [
+              "2026-10-30",
+              14117
             ]
           ]
         },
@@ -5806,34 +5810,30 @@
           "name": "SBI・S・米国高配当株式ファンド（年4回決算型）",
           "isinCd": "JP90C000REE2",
           "associFundCd": "8931224C",
-          "nav": 13037,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 13235,
-          "diff": 198,
-          "change": 1.52,
+          "nav": 13188,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 13265,
+          "diff": 77,
+          "change": 0.58,
           "leverage": 1,
           "hedged": false,
           "model": "standard_div",
           "breakdown": {
             "index": {
               "symbol": "SCHD",
-              "base": 35.09,
-              "cur": 35.76,
-              "change": 1.91,
-              "asOf": "2026-10-31T04:02:01+09:00"
+              "base": 35.61,
+              "cur": 35.78,
+              "change": 0.48,
+              "asOf": "2026-10-31T05:00:00+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              12335
-            ],
             [
               "2026-09-15",
               12498
@@ -5949,6 +5949,10 @@
             [
               "2026-10-29",
               13037
+            ],
+            [
+              "2026-10-30",
+              13188
             ]
           ]
         },
@@ -5957,34 +5961,30 @@
           "name": "楽天・シュワブ・高配当株式・米国ファンド（資産成長型）",
           "isinCd": "JP90C000S073",
           "associFundCd": "9I316257",
-          "nav": 14238,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 14455,
-          "diff": 217,
-          "change": 1.52,
+          "nav": 14401,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 14485,
+          "diff": 84,
+          "change": 0.58,
           "leverage": 1,
           "hedged": false,
           "model": "standard_div",
           "breakdown": {
             "index": {
               "symbol": "SCHD",
-              "base": 35.09,
-              "cur": 35.76,
-              "change": 1.91,
-              "asOf": "2026-10-31T04:02:01+09:00"
+              "base": 35.61,
+              "cur": 35.78,
+              "change": 0.48,
+              "asOf": "2026-10-31T05:00:00+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              13373
-            ],
             [
               "2026-09-15",
               13548
@@ -6100,6 +6100,10 @@
             [
               "2026-10-29",
               14238
+            ],
+            [
+              "2026-10-30",
+              14401
             ]
           ]
         },
@@ -6108,34 +6112,30 @@
           "name": "SBI・S・米国高配当株式ファンド（年1回決算型）",
           "isinCd": "JP90C000S5B7",
           "associFundCd": "89312259",
-          "nav": 14167,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 14383,
-          "diff": 216,
-          "change": 1.52,
+          "nav": 14332,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 14415,
+          "diff": 83,
+          "change": 0.58,
           "leverage": 1,
           "hedged": false,
           "model": "standard_div",
           "breakdown": {
             "index": {
               "symbol": "SCHD",
-              "base": 35.09,
-              "cur": 35.76,
-              "change": 1.91,
-              "asOf": "2026-10-31T04:02:01+09:00"
+              "base": 35.61,
+              "cur": 35.78,
+              "change": 0.48,
+              "asOf": "2026-10-31T05:00:00+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              13303
-            ],
             [
               "2026-09-15",
               13479
@@ -6251,6 +6251,10 @@
             [
               "2026-10-29",
               14167
+            ],
+            [
+              "2026-10-30",
+              14332
             ]
           ]
         }
@@ -6265,34 +6269,30 @@
           "name": "ニッセイ SOX指数インデックスファンド（米国半導体株）＜購入・換金手数料なし＞",
           "isinCd": "JP90C000PDZ3",
           "associFundCd": "29314233",
-          "nav": 44293,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 39645,
-          "diff": -4648,
-          "change": -10.49,
+          "nav": 43529,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 40436,
+          "diff": -3093,
+          "change": -7.11,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^SOX",
-              "base": 11684.0,
-              "cur": 10497.72,
-              "change": -10.15,
-              "asOf": "2026-10-31T04:02:17+09:00"
+              "base": 11518.2,
+              "cur": 10688.8,
+              "change": -7.2,
+              "asOf": "2026-10-31T06:15:59+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              43590
-            ],
             [
               "2026-09-15",
               41314
@@ -6408,6 +6408,10 @@
             [
               "2026-10-29",
               44293
+            ],
+            [
+              "2026-10-30",
+              43529
             ]
           ]
         },
@@ -6416,34 +6420,30 @@
           "name": "楽天・プラス・SOXインデックス・ファンド",
           "isinCd": "JP90C000QF30",
           "associFundCd": "9I315241",
-          "nav": 29541,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 26441,
-          "diff": -3100,
-          "change": -10.49,
+          "nav": 29031,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 26968,
+          "diff": -2063,
+          "change": -7.11,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^SOX",
-              "base": 11684.0,
-              "cur": 10497.72,
-              "change": -10.15,
-              "asOf": "2026-10-31T04:02:17+09:00"
+              "base": 11518.2,
+              "cur": 10688.8,
+              "change": -7.2,
+              "asOf": "2026-10-31T06:15:59+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              29060
-            ],
             [
               "2026-09-15",
               27560
@@ -6559,6 +6559,10 @@
             [
               "2026-10-29",
               29541
+            ],
+            [
+              "2026-10-30",
+              29031
             ]
           ]
         },
@@ -6567,34 +6571,30 @@
           "name": "ニッセイ・インデックス・SOX（米国半導体株）",
           "isinCd": "JP90C000R8K3",
           "associFundCd": "2931224A",
-          "nav": 22552,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 20185,
-          "diff": -2367,
-          "change": -10.49,
+          "nav": 22162,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 20587,
+          "diff": -1575,
+          "change": -7.11,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^SOX",
-              "base": 11684.0,
-              "cur": 10497.72,
-              "change": -10.15,
-              "asOf": "2026-10-31T04:02:17+09:00"
+              "base": 11518.2,
+              "cur": 10688.8,
+              "change": -7.2,
+              "asOf": "2026-10-31T06:15:59+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              22201
-            ],
             [
               "2026-09-15",
               21042
@@ -6710,6 +6710,10 @@
             [
               "2026-10-29",
               22552
+            ],
+            [
+              "2026-10-30",
+              22162
             ]
           ]
         }
@@ -6724,34 +6728,30 @@
           "name": "iFreeNEXT FANG+インデックス",
           "isinCd": "JP90C000FZD4",
           "associFundCd": "04311181",
-          "nav": 98383,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 92718,
-          "diff": -5665,
-          "change": -5.76,
+          "nav": 95983,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 93240,
+          "diff": -2743,
+          "change": -2.86,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^NYFANG",
-              "base": 18527.78,
-              "cur": 17527.66,
-              "change": -5.4,
-              "asOf": "2026-10-31T04:28:36+09:00"
+              "base": 18132.04,
+              "cur": 17595.83,
+              "change": -2.96,
+              "asOf": "2026-10-31T05:00:02+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              96194
-            ],
             [
               "2026-09-15",
               97131
@@ -6867,6 +6867,10 @@
             [
               "2026-10-29",
               98383
+            ],
+            [
+              "2026-10-30",
+              95983
             ]
           ]
         },
@@ -6875,34 +6879,30 @@
           "name": "iFreeNEXT FANG+インデックス（毎月決算／予想分配金提示型）",
           "isinCd": "JP90C000SE21",
           "associFundCd": "0431125C",
-          "nav": 10676,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 10061,
-          "diff": -615,
-          "change": -5.76,
+          "nav": 10416,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 10118,
+          "diff": -298,
+          "change": -2.86,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "^NYFANG",
-              "base": 18527.78,
-              "cur": 17527.66,
-              "change": -5.4,
-              "asOf": "2026-10-31T04:28:36+09:00"
+              "base": 18132.04,
+              "cur": 17595.83,
+              "change": -2.96,
+              "asOf": "2026-10-31T05:00:02+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              10629
-            ],
             [
               "2026-09-15",
               10732
@@ -7018,6 +7018,10 @@
             [
               "2026-10-29",
               10676
+            ],
+            [
+              "2026-10-30",
+              10416
             ]
           ]
         },
@@ -7026,29 +7030,25 @@
           "name": "iFreeレバレッジ FANG+",
           "isinCd": "JP90C000KLQ6",
           "associFundCd": "04314208",
-          "nav": 43538,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 38838,
-          "diff": -4700,
-          "change": -10.8,
+          "nav": 41692,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 39226,
+          "diff": -2466,
+          "change": -5.91,
           "leverage": 2,
           "hedged": true,
           "model": "leveraged_hedged",
           "breakdown": {
             "index": {
               "symbol": "^NYFANG",
-              "base": 18527.78,
-              "cur": 17527.66,
-              "change": -5.4,
-              "asOf": "2026-10-31T04:28:36+09:00"
+              "base": 18132.04,
+              "cur": 17595.83,
+              "change": -2.96,
+              "asOf": "2026-10-31T05:00:02+09:00"
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              44440
-            ],
             [
               "2026-09-15",
               44678
@@ -7164,6 +7164,10 @@
             [
               "2026-10-29",
               43538
+            ],
+            [
+              "2026-10-30",
+              41692
             ]
           ]
         }
@@ -7178,34 +7182,30 @@
           "name": "楽天・全米株式インデックス・ファンド（楽天・VTI）",
           "isinCd": "JP90C000FHD2",
           "associFundCd": "9I312179",
-          "nav": 45350,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 44272,
-          "diff": -1078,
-          "change": -2.38,
+          "nav": 45098,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 44348,
+          "diff": -750,
+          "change": -1.66,
           "leverage": 1,
           "hedged": false,
           "model": "standard_div",
           "breakdown": {
             "index": {
               "symbol": "VTI",
-              "base": 379.17,
+              "base": 378.24,
               "cur": 371.57,
-              "change": -2.0,
+              "change": -1.76,
               "asOf": "2026-10-31T05:00:00+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              43668
-            ],
             [
               "2026-09-15",
               43774
@@ -7321,6 +7321,10 @@
             [
               "2026-10-29",
               45350
+            ],
+            [
+              "2026-10-30",
+              45098
             ]
           ]
         },
@@ -7329,34 +7333,30 @@
           "name": "SBI・V・全米株式インデックス・ファンド",
           "isinCd": "JP90C000LY16",
           "associFundCd": "89311216",
-          "nav": 25694,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 25083,
-          "diff": -611,
-          "change": -2.38,
+          "nav": 25552,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 25127,
+          "diff": -425,
+          "change": -1.66,
           "leverage": 1,
           "hedged": false,
           "model": "standard_div",
           "breakdown": {
             "index": {
               "symbol": "VTI",
-              "base": 379.17,
+              "base": 378.24,
               "cur": 371.57,
-              "change": -2.0,
+              "change": -1.76,
               "asOf": "2026-10-31T05:00:00+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              24745
-            ],
             [
               "2026-09-15",
               24803
@@ -7472,6 +7472,10 @@
             [
               "2026-10-29",
               25694
+            ],
+            [
+              "2026-10-30",
+              25552
             ]
           ]
         }
@@ -7486,34 +7490,30 @@
           "name": "SBI・iシェアーズ・ゴールドファンド（為替ヘッジなし）",
           "isinCd": "JP90C000PLM4",
           "associFundCd": "8931A236",
-          "nav": 22880,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 22004,
-          "diff": -876,
-          "change": -3.83,
+          "nav": 22655,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 22043,
+          "diff": -612,
+          "change": -2.7,
           "leverage": 1,
           "hedged": false,
           "model": "standard",
           "breakdown": {
             "index": {
               "symbol": "IGLN.L",
-              "base": 78.35,
+              "base": 77.82,
               "cur": 75.64,
-              "change": -3.46,
+              "change": -2.8,
               "asOf": "2026-10-31T01:35:21+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              24080
-            ],
             [
               "2026-09-15",
               23808
@@ -7629,6 +7629,10 @@
             [
               "2026-10-29",
               22880
+            ],
+            [
+              "2026-10-30",
+              22655
             ]
           ]
         },
@@ -7637,10 +7641,10 @@
           "name": "三菱UFJ 純金ファンド",
           "isinCd": "JP90C0007G10",
           "associFundCd": "03311112",
-          "nav": 47665,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 47665,
+          "nav": 47138,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 47138,
           "diff": 0,
           "change": 0.0,
           "leverage": 1,
@@ -7649,17 +7653,13 @@
           "breakdown": {
             "index": {
               "symbol": "1540.T",
-              "base": 18945.0,
-              "cur": 18945.0,
+              "base": 18735.0,
+              "cur": 18735.0,
               "change": 0.0,
               "asOf": "2026-10-30T15:30:00+09:00"
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              50321
-            ],
             [
               "2026-09-15",
               50070
@@ -7775,6 +7775,10 @@
             [
               "2026-10-29",
               47665
+            ],
+            [
+              "2026-10-30",
+              47138
             ]
           ]
         },
@@ -7783,41 +7787,37 @@
           "name": "Tracers S&P500ゴールドプラス",
           "isinCd": "JP90C000NS46",
           "associFundCd": "02315228",
-          "nav": 40470,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 37847,
-          "diff": -2623,
-          "change": -6.48,
+          "nav": 40009,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 37869,
+          "diff": -2140,
+          "change": -5.35,
           "leverage": 2,
           "hedged": false,
           "model": "gold_plus",
           "breakdown": {
             "index": {
               "symbol": "^GSPC",
-              "base": 7743.98,
+              "base": 7720.39,
               "cur": 7580.07,
-              "change": -2.12,
-              "asOf": "2026-10-31T05:16:53+09:00"
+              "change": -1.82,
+              "asOf": "2026-10-31T05:47:43+09:00"
             },
             "gold": {
               "symbol": "GC=F",
-              "base": 4051.6,
-              "cur": 3890.2,
-              "change": -3.98,
-              "asOf": "2026-10-31T05:03:03+09:00"
+              "base": 4031.4,
+              "cur": 3884.9,
+              "change": -3.63,
+              "asOf": "2026-10-31T05:59:59+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              42493
-            ],
             [
               "2026-09-15",
               42001
@@ -7933,6 +7933,10 @@
             [
               "2026-10-29",
               40470
+            ],
+            [
+              "2026-10-30",
+              40009
             ]
           ],
           "leverageLabel": "1+1"
@@ -7942,41 +7946,37 @@
           "name": "Tracers NASDAQ100ゴールドプラス",
           "isinCd": "JP90C000RH60",
           "associFundCd": "02311251",
-          "nav": 17793,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 16120,
-          "diff": -1673,
-          "change": -9.4,
+          "nav": 17406,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 16189,
+          "diff": -1217,
+          "change": -6.99,
           "leverage": 2,
           "hedged": false,
           "model": "gold_plus",
           "breakdown": {
             "index": {
               "symbol": "^NDX",
-              "base": 29813.16,
-              "cur": 28310.5,
-              "change": -5.04,
-              "asOf": "2026-10-31T04:48:05+09:00"
+              "base": 29402.51,
+              "cur": 28384.85,
+              "change": -3.46,
+              "asOf": "2026-10-31T06:15:59+09:00"
             },
             "gold": {
               "symbol": "GC=F",
-              "base": 4051.6,
-              "cur": 3890.2,
-              "change": -3.98,
-              "asOf": "2026-10-31T05:03:03+09:00"
+              "base": 4031.4,
+              "cur": 3884.9,
+              "change": -3.63,
+              "asOf": "2026-10-31T05:59:59+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              18624
-            ],
             [
               "2026-09-15",
               18346
@@ -8092,6 +8092,10 @@
             [
               "2026-10-29",
               17793
+            ],
+            [
+              "2026-10-30",
+              17406
             ]
           ],
           "leverageLabel": "1+1"
@@ -8101,41 +8105,37 @@
           "name": "Tracers MSCIオール・カントリー・ゴールドプラス",
           "isinCd": "JP90C000SNW3",
           "associFundCd": "02311263",
-          "nav": 8469,
-          "navDate": "2026-10-29",
-          "targetDate": "2026-10-30",
-          "forecast": 7929,
-          "diff": -540,
-          "change": -6.37,
+          "nav": 8376,
+          "navDate": "2026-10-30",
+          "targetDate": "2026-11-02",
+          "forecast": 7934,
+          "diff": -442,
+          "change": -5.28,
           "leverage": 2,
           "hedged": false,
           "model": "gold_plus",
           "breakdown": {
             "index": {
               "symbol": "ACWI",
-              "base": 159.22,
-              "cur": 156.02,
-              "change": -2.01,
-              "asOf": "2026-10-31T04:59:17+09:00"
+              "base": 158.81,
+              "cur": 156.04,
+              "change": -1.74,
+              "asOf": "2026-10-31T05:00:01+09:00"
             },
             "gold": {
               "symbol": "GC=F",
-              "base": 4051.6,
-              "cur": 3890.2,
-              "change": -3.98,
-              "asOf": "2026-10-31T05:03:03+09:00"
+              "base": 4031.4,
+              "cur": 3884.9,
+              "change": -3.63,
+              "asOf": "2026-10-31T05:59:59+09:00"
             },
             "fx": {
-              "base": 157.96,
-              "cur": 157.36,
-              "change": -0.38
+              "base": 157.36,
+              "cur": 157.52,
+              "change": 0.1
             }
           },
           "history": [
-            [
-              "2026-09-14",
-              9014
-            ],
             [
               "2026-09-15",
               8887
@@ -8251,6 +8251,10 @@
             [
               "2026-10-29",
               8469
+            ],
+            [
+              "2026-10-30",
+              8376
             ]
           ],
           "leverageLabel": "1+1"
