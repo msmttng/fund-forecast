@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>トリプルNASDAQ 購入ジャッジ | auAMトリプル・NASDAQ100 専用アドバイザー</title>
+  <meta name="description" content="auAMトリプル・NASDAQ100 為替ヘッジ無し専用の購入指示指数（0〜100点）・注文タイミング判定・分割ロット計算ダッシュボード。">
+  <meta property="og:title" content="トリプルNASDAQ 購入ジャッジ">
+  <meta property="og:description" content="発射台基準価額・時間外先物リード・RSI・60日高値比・VIX・祝日またぎリスクから「今注文してよいか」と推奨投入額をリアルタイム判定。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://msmttng.github.io/fund-forecast/triple.html">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2316325c'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='monospace' font-weight='700' font-size='15' fill='%234cc38a'%3E3x%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --surface-subtle: #eef2f7;
+      --text: #15202b;
+      --text-muted: #5a6676;
+      --line: #dde3ea;
+      --accent: #1d3f72;
+      --accent-soft: rgba(29, 63, 114, 0.09);
+
+      /* 市場騰落色（日本式：上昇=赤、下落=緑） */
+      --mkt-up: #c8312f;
+      --mkt-down: #1a7f5a;
+
+      /* ジャッジ判定色 */
+      --judge-buy: #137a54;
+      --judge-buy-bg: rgba(19, 122, 84, 0.10);
+      --judge-buy-border: rgba(19, 122, 84, 0.35);
+      --judge-watch: #1d4ed8;
+      --judge-watch-bg: rgba(29, 78, 216, 0.09);
+      --judge-watch-border: rgba(29, 78, 216, 0.32);
+      --judge-mild: #b76e14;
+      --judge-mild-bg: rgba(183, 110, 20, 0.10);
+      --judge-mild-border: rgba(183, 110, 20, 0.35);
+      --judge-wait: #556272;
+      --judge-wait-bg: rgba(85, 98, 114, 0.10);
+      --judge-wait-border: rgba(85, 98, 114, 0.28);
+      --judge-ng: #c8312f;
+      --judge-ng-bg: rgba(200, 49, 47, 0.10);
+      --judge-ng-border: rgba(200, 49, 47, 0.36);
+
+      --fresh-ok: #1a7f5a;
+      --fresh-normal: #2b6cb0;
+      --fresh-stale: #7a8696;
+      --radius: 8px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1218;
+        --surface: #151c24;
+        --surface-subtle: #1b2531;
+        --text: #e7edf4;
+        --text-muted: #92a0b2;
+        --line: #253242;
+        --accent: #82aaf0;
+        --accent-soft: rgba(130, 170, 240, 0.13);
+
+        --mkt-up: #ff6b63;
+        --mkt-down: #4cc38a;
+
+        --judge-buy: #4cc38a;
+        --judge-buy-bg: rgba(76, 195, 138, 0.13);
+        --judge-buy-border: rgba(76, 195, 138, 0.40);
+        --judge-watch: #72a4ff;
+        --judge-watch-bg: rgba(114, 164, 255, 0.13);
+        --judge-watch-border: rgba(114, 164, 255, 0.38);
+        --judge-mild: #f2ab46;
+        --judge-mild-bg: rgba(242, 171, 70, 0.13);
+        --judge-mild-border: rgba(242, 171, 70, 0.38);
+        --judge-wait: #96a4b6;
+        --judge-wait-bg: rgba(150, 164, 182, 0.12);
+        --judge-wait-border: rgba(150, 164, 182, 0.28);
+        --judge-ng: #ff6b63;
+        --judge-ng-bg: rgba(255, 107, 99, 0.14);
+        --judge-ng-border: rgba(255, 107, 99, 0.42);
+
+        --fresh-ok: #4cc38a;
+        --fresh-normal: #82aaf0;
+        --fresh-stale: #738294;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: "IBM Plex Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .num {
+      font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    /* Header */
+    .site-header {
+      background-color: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 0;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .brand-badge {
+      background-color: var(--accent);
+      color: #0f141a;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.03em;
+    }
+    @media (prefers-color-scheme: light) {
+      .brand-badge {
+        color: #ffffff;
+      }
+    }
+
+    .site-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      color: var(--text);
+    }
+
+    .back-link {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background-color: var(--surface-subtle);
+      white-space: nowrap;
+    }
+    .back-link:hover {
+      border-color: var(--accent);
+    }
+
+    .header-sub {
+      margin-top: 6px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .fund-title-main {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .freshness {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 5px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .fresh-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--fresh-stale);
+      flex-shrink: 0;
+    }
+    .fresh-dot.ok { background-color: var(--fresh-ok); }
+    .fresh-dot.normal { background-color: var(--fresh-normal); }
+    .fresh-dot.stale { background-color: var(--fresh-stale); }
+
+    /* Main */
+    .main-area {
+      padding: 14px 0 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background-color: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .card-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .card-subtitle {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    /* Hero Verdict Card */
+    .hero-card {
+      border-width: 1.5px;
+    }
+    .hero-card.tone-buy_strong {
+      border-color: var(--judge-buy-border);
+      background-image: linear-gradient(180deg, var(--judge-buy-bg) 0%, var(--surface) 68%);
+    }
+    .hero-card.tone-watch_buy {
+      border-color: var(--judge-watch-border);
+      background-image: linear-gradient(180deg, var(--judge-watch-bg) 0%, var(--surface) 68%);
+    }
+    .hero-card.tone-buy_mild {
+      border-color: var(--judge-mild-border);
+      background-image: linear-gradient(180deg, var(--judge-mild-bg) 0%, var(--surface) 68%);
+    }
+    .hero-card.tone-wait {
+      border-color: var(--judge-wait-border);
+    }
+    .hero-card.tone-danger {
+      border-color: var(--judge-ng-border);
+      background-image: linear-gradient(180deg, var(--judge-ng-bg) 0%, var(--surface) 68%);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .gauge-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .gauge-svg {
+      width: 184px;
+      height: 108px;
+      display: block;
+      overflow: visible;
+    }
+
+    .rank-chip {
+      margin-top: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background-color: var(--surface);
+    }
+
+    .verdict-col {
+      min-width: 0;
+    }
+
+    .verdict-top-badges {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .action-pill {
+      display: inline-block;
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 5px;
+    }
+    .tone-buy_strong .action-pill { background-color: var(--judge-buy); color: #ffffff; }
+    .tone-watch_buy .action-pill { background-color: var(--judge-watch); color: #ffffff; }
+    .tone-buy_mild .action-pill { background-color: var(--judge-mild); color: #ffffff; }
+    .tone-wait .action-pill { background-color: var(--judge-wait); color: #ffffff; }
+    .tone-danger .action-pill { background-color: var(--judge-ng); color: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      .tone-buy_strong .action-pill { color: #09150f; }
+      .tone-watch_buy .action-pill { color: #081226; }
+      .tone-buy_mild .action-pill { color: #1c1103; }
+    }
+
+    .window-pill {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background-color: var(--surface-subtle);
+      border: 1px solid var(--line);
+      padding: 3px 8px;
+      border-radius: 5px;
+    }
+
+    .verdict-headline {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.4;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .verdict-detail {
+      font-size: 13.5px;
+      color: var(--text);
+      line-height: 1.65;
+      opacity: 0.92;
+    }
+
+    /* Schedule Strip inside Hero */
+    .schedule-strip {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--line);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .sched-item {
+      background-color: var(--surface-subtle);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+
+    .sched-lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .sched-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .sched-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .warn-tag {
+      display: inline-block;
+      color: var(--judge-mild);
+      font-weight: 700;
+    }
+
+    /* 2-Stage Price Flow */
+    .price-flow-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .price-step {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 11px 12px;
+      background-color: var(--surface-subtle);
+      position: relative;
+    }
+    .price-step.highlight {
+      background-color: var(--surface);
+      border-color: var(--accent);
+      border-width: 1.5px;
+    }
+
+    .step-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .step-price {
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.25;
+    }
+
+    .step-chg {
+      margin-top: 4px;
+      font-size: 12.5px;
+      font-weight: 700;
+    }
+    .chg-up { color: var(--mkt-up); }
+    .chg-down { color: var(--mkt-down); }
+    .chg-flat { color: var(--text-muted); }
+
+    .step-note {
+      margin-top: 6px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* Budget Calculator */
+    .calc-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 12px;
+    }
+
+    .field-group {
+      flex: 1 1 220px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .budget-input-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .budget-input {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      background-color: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      outline: none;
+    }
+    .budget-input:focus {
+      border-color: var(--accent);
+    }
+
+    .preset-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 6px;
+    }
+
+    .preset-btn {
+      background-color: var(--surface-subtle);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .preset-btn:hover {
+      border-color: var(--accent);
+    }
+
+    .cutoff-toggle {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+      background-color: var(--bg);
+    }
+
+    .cutoff-btn {
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .cutoff-btn.active {
+      background-color: var(--accent);
+      color: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      .cutoff-btn.active {
+        color: #0b121c;
+      }
+    }
+
+    .calc-result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .calc-box {
+      background-color: var(--surface-subtle);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+    .calc-box.primary {
+      background-color: var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .calc-box-lbl {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .calc-box-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 2px;
+    }
+
+    .calc-box-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Scenario Table */
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+    .data-table th {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background-color: var(--surface-subtle);
+      white-space: nowrap;
+    }
+    .data-table td.r,
+    .data-table th.r {
+      text-align: right;
+    }
+    .data-table tr.current-row {
+      background-color: var(--accent-soft);
+      font-weight: 600;
+    }
+
+    /* 5-Axis Breakdown */
+    .axes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .axis-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .axis-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .axis-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .axis-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .axis-score {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 8px;
+      background-color: var(--surface-subtle);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background-color: var(--accent);
+      transition: width 0.25s ease;
+    }
+    .bar-fill.good { background-color: var(--judge-buy); }
+    .bar-fill.warn { background-color: var(--judge-mild); }
+    .bar-fill.bad { background-color: var(--judge-ng); }
+
+    /* Technical Pills & Chart */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .tech-item {
+      background-color: var(--surface-subtle);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+
+    .tech-lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .tech-val {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 2px;
+    }
+
+    .chart-box {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background-color: var(--bg);
+      padding: 10px 10px 6px;
+    }
+
+    .chart-svg {
+      width: 100%;
+      height: 165px;
+      display: block;
+    }
+
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Reasons & Rules List */
+    .bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 13px;
+      color: var(--text);
+    }
+    .bullet-list li {
+      position: relative;
+      padding-left: 14px;
+      line-height: 1.55;
+    }
+    .bullet-list li::before {
+      content: "•";
+      position: absolute;
+      left: 2px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .discord-status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .status-chip {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 5px;
+      border: 1px solid var(--line);
+      background-color: var(--surface-subtle);
+      color: var(--text);
+    }
+    .status-chip.ok {
+      border-color: var(--judge-buy-border);
+      background-color: var(--judge-buy-bg);
+      color: var(--judge-buy);
+      font-weight: 700;
+    }
+
+    .site-footer {
+      border-top: 1px solid var(--line);
+      background-color: var(--surface);
+      padding: 20px 0 32px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 680px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .schedule-strip,
+      .price-flow-grid,
+      .calc-result-grid {
+        grid-template-columns: 1fr;
+      }
+      .tech-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .verdict-headline {
+        font-size: 16.5px;
+      }
+      .card {
+        padding: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="header-top">
+        <div class="brand-wrap">
+          <span class="brand-badge num">3x NASDAQ</span>
+          <span class="site-title">トリプルNASDAQ 購入ジャッジ</span>
+        </div>
+        <a href="./index.html" class="back-link">全ファンド予報へ →</a>
+      </div>
+      <div class="header-sub">
+        <h1 class="fund-title-main" id="fundTitle">auAMトリプル・NASDAQ100 為替ヘッジ無し</h1>
+        <div class="freshness">
+          <span class="fresh-dot" id="freshDot"></span>
+          <span id="updatedAtText" class="num">読み込み中...</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-area container" id="mainArea">
+    <!-- 1. Hero Verdict Card -->
+    <section class="card hero-card tone-wait" id="heroCard" aria-label="購入指示ジャッジ">
+      <div class="hero-grid">
+        <div class="gauge-box">
+          <svg class="gauge-svg" viewBox="0 0 200 116" aria-label="購入指示指数メーター">
+            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="var(--line)" stroke-width="14" stroke-linecap="round"></path>
+            <path id="gaugeArc" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="var(--accent)" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="251.3"></path>
+            <text x="100" y="66" text-anchor="middle" font-size="11" fill="var(--text-muted)" font-weight="600">購入指示指数</text>
+            <text id="gaugeScoreText" class="num" x="100" y="96" text-anchor="middle" font-size="34" font-weight="700" fill="var(--text)">--</text>
+            <text x="18" y="114" text-anchor="middle" font-size="10" class="num" fill="var(--text-muted)">0</text>
+            <text x="100" y="14" text-anchor="middle" font-size="10" class="num" fill="var(--text-muted)">50</text>
+            <text x="182" y="114" text-anchor="middle" font-size="10" class="num" fill="var(--text-muted)">100</text>
+          </svg>
+          <div class="rank-chip num" id="rankChip">RANK --</div>
+        </div>
+
+        <div class="verdict-col">
+          <div class="verdict-top-badges">
+            <span class="action-pill" id="actionBadge">判定中...</span>
+            <span class="window-pill" id="windowLabel">--</span>
+          </div>
+          <h2 class="verdict-headline" id="verdictHeadline">最新データを読み込んでいます...</h2>
+          <p class="verdict-detail" id="verdictDetail"></p>
+        </div>
+      </div>
+
+      <div class="schedule-strip">
+        <div class="sched-item">
+          <div class="sched-lbl">現在の注文受付枠・締切</div>
+          <div class="sched-val num" id="schedCutoffVal">--/-- --:--</div>
+          <div class="sched-sub num" id="schedCountdown">締切まで計算中...</div>
+        </div>
+        <div class="sched-item">
+          <div class="sched-lbl">今注文したときの約定日</div>
+          <div class="sched-val num" id="schedExecVal">--/--</div>
+          <div class="sched-sub" id="schedNightsSub">米国市場 --晩分</div>
+        </div>
+        <div class="sched-item">
+          <div class="sched-lbl">推奨投入ロット（金額指定）</div>
+          <div class="sched-val num" id="schedAllocVal">待機資金の --%</div>
+          <div class="sched-sub" id="schedAllocSub">一括投入禁止・分割エントリー</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 2-Stage Price Board -->
+    <section class="card" aria-label="2段階価格トラッキング">
+      <div class="card-title">
+        <span>いくらで買えるのか？（発射台 ＋ 昼間の時間外リード）</span>
+        <span class="card-subtitle num" id="accuracyNote"></span>
+      </div>
+      <div class="price-flow-grid">
+        <div class="price-step">
+          <div class="step-tag" id="d0Tag">① 前回確定基準価額</div>
+          <div class="step-price num" id="d0Price">---円</div>
+          <div class="step-chg chg-flat">過去の確定値</div>
+          <div class="step-note">今から注文してこの価格で約定することはありません。</div>
+        </div>
+
+        <div class="price-step highlight">
+          <div class="step-tag" id="lpTag">② 発射台（土台となる予想基準価額）</div>
+          <div class="step-price num" id="lpPrice">---円</div>
+          <div class="step-chg num" id="lpChg">--%</div>
+          <div class="step-note" id="lpBreakdownNote">直近の米国市場引け＋仲値を織り込んだ新しいスタート地点です。</div>
+        </div>
+
+        <div class="price-step">
+          <div class="step-tag" id="provTag">③ 昼間リード反映・暫定約定スタート値</div>
+          <div class="step-price num" id="provPrice">---円</div>
+          <div class="step-chg num" id="leadChg">時間外リード --%</div>
+          <div class="step-note" id="provNote">発射台以降の時間外 NQ=F×3＋為替変動を反映。ここから約定日までの米国市場変動が乗ります。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Personal Order Calculator & Scenario Simulator -->
+    <section class="card" aria-label="注文金額シミュレーター">
+      <div class="card-title">
+        <span>あなた専用の分割注文シミュレーター</span>
+        <span class="card-subtitle">ブラウザ内のみに保存（外部送信なし）</span>
+      </div>
+
+      <div class="calc-controls">
+        <div class="field-group">
+          <label class="field-label" for="budgetInput">トリプルNASDAQ用 買付待機資金（円）</label>
+          <div class="budget-input-row">
+            <input type="number" id="budgetInput" class="budget-input num" min="0" step="10000" value="300000">
+          </div>
+          <div class="preset-btns">
+            <button type="button" class="preset-btn num" data-budget="100000">10万円</button>
+            <button type="button" class="preset-btn num" data-budget="300000">30万円</button>
+            <button type="button" class="preset-btn num" data-budget="500000">50万円</button>
+            <button type="button" class="preset-btn num" data-budget="1000000">100万円</button>
+          </div>
+        </div>
+
+        <div>
+          <span class="field-label">証券会社の注文締切時刻</span>
+          <div class="cutoff-toggle" role="group" aria-label="注文締切時刻の選択">
+            <button type="button" class="cutoff-btn num active" id="btnCutoff1530" data-cutoff="15:30">15:30（SBI・楽天等）</button>
+            <button type="button" class="cutoff-btn num" id="btnCutoff1500" data-cutoff="15:00">15:00</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="calc-result-grid">
+        <div class="calc-box primary">
+          <div class="calc-box-lbl">今回の推奨注文額（金額指定）</div>
+          <div class="calc-box-val num" id="calcOrderYen">---円</div>
+          <div class="calc-box-sub num" id="calcOrderSub">推奨比率 --%</div>
+        </div>
+        <div class="calc-box">
+          <div class="calc-box-lbl">注文後の残り待機資金</div>
+          <div class="calc-box-val num" id="calcRemainYen">---円</div>
+          <div class="calc-box-sub">続落時の第2弾・第3弾として温存</div>
+        </div>
+        <div class="calc-box">
+          <div class="calc-box-lbl">横ばい時の想定取得口数</div>
+          <div class="calc-box-val num" id="calcEstUnits">---口</div>
+          <div class="calc-box-sub">※売却時は「口数指定」が鉄則</div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>約定までの米国市場シナリオ</th>
+              <th class="r">想定約定価額</th>
+              <th class="r">前回確定比</th>
+              <th class="r">推奨額での取得口数</th>
+            </tr>
+          </thead>
+          <tbody id="scenarioTbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 4. 5-Axis Score Breakdown & Reasons -->
+    <section class="card" aria-label="購入指示指数の内訳と判断根拠">
+      <div class="card-title">
+        <span>購入指示指数（0〜100点）の5軸スコア内訳</span>
+        <span class="card-subtitle">押し目買い・昼間の高値掴み回避特化モデル</span>
+      </div>
+      <div class="axes-list" id="axesList"></div>
+
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line);">
+        <div class="field-label" style="margin-bottom: 6px;">現在の判断根拠まとめ</div>
+        <ul class="bullet-list" id="reasonsList"></ul>
+      </div>
+    </section>
+
+    <!-- 5. NASDAQ100 Technicals & 60-Day Chart -->
+    <section class="card" aria-label="テクニカル指標と60日チャート">
+      <div class="card-title">
+        <span>NASDAQ100 テクニカル位置（直近60営業日）</span>
+        <span class="card-subtitle num" id="techAsOfSub"></span>
+      </div>
+
+      <div class="tech-grid">
+        <div class="tech-item">
+          <div class="tech-lbl">60日高値からの調整</div>
+          <div class="tech-val num" id="techDd">--%</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-lbl">RSI (14日・売られすぎ度)</div>
+          <div class="tech-val num" id="techRsi">--</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-lbl">25日移動平均乖離率</div>
+          <div class="tech-val num" id="techSmaDev">--%</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-lbl">VIX 恐怖指数</div>
+          <div class="tech-val num" id="techVix">--</div>
+        </div>
+      </div>
+
+      <div class="chart-box">
+        <svg class="chart-svg" id="ndxChartSvg" viewBox="0 0 640 165" preserveAspectRatio="none" aria-label="NASDAQ100 60日推移チャート"></svg>
+        <div class="chart-legend">
+          <span>━━ NASDAQ100 終値（右端●は先物換算現在水準）</span>
+          <span>┈┈ 25日移動平均線（SMA25）</span>
+          <span>── 60日最高値ライン</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Discord Notification Schedule & Rules -->
+    <section class="card" aria-label="Discord自動通知スケジュール">
+      <div class="card-title">
+        <span>Discord Webhook 自動通知ルール</span>
+        <span class="card-subtitle">GitHub Actions 5分監視連動</span>
+      </div>
+      <div class="discord-status-row" id="discordStatusRow"></div>
+      <ul class="bullet-list">
+        <li><strong>営業日 10:15頃（着地速報）</strong>：三菱UFJ銀行の公示仲値（10:00）反映後、その日夕方に確定する発射台基準価額と暫定スコアを通知します。</li>
+        <li><strong>営業日 15:05頃（締切直前の最終注文ジャッジ）</strong>：昼間の時間外 <code>NQ=F</code> 先物（×3倍）と為替の動きまで織り込み、「今なら何％注文してよいか／見送るべきか／朝の注文を取り消すべきか」を最終通知します。</li>
+        <li><strong>営業日 13:00〜14:55（買い好機急浮上アラート）</strong>：昼間の時間外取引で米国株先物やドル円が急落し、購入指示指数が買い好機（68点以上かつ昼間リード−1.5%以下、または朝比+10点以上急上昇）に入った瞬間に先行通知します。</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>※当ページの購入指示指数および推奨ロットは公開市場データから機械的に算出した自己判断補助指標であり、将来の利益を保証する投資助言ではありません。3倍レバレッジ型投資信託は1日で10%以上の価格変動や横ばい局面での減価が発生し得ます。最終的な投資判断はご自身の責任で行ってください。</p>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var DATA_BRANCH_URL = "https://raw.githubusercontent.com/msmttng/fund-forecast/data/triple_data.json";
+      var DATA_LOCAL_URL = "./triple_data.json";
+      var STORAGE_BUDGET_KEY = "triple_ndx_budget_yen_v1";
+      var STORAGE_CUTOFF_KEY = "triple_ndx_cutoff_mode_v1";
+      var STORAGE_CACHE_KEY = "triple_ndx_data_cache_v1";
+
+      var tripleData = null;
+      var budgetYen = loadBudget();
+      var cutoffMode = loadCutoffMode();
+
+      function loadBudget() {
+        try {
+          var v = parseInt(window.localStorage.getItem(STORAGE_BUDGET_KEY) || "300000", 10);
+          return (!isNaN(v) && v >= 0) ? v : 300000;
+        } catch (e) {
+          return 300000;
+        }
+      }
+
+      function saveBudget(v) {
+        try {
+          window.localStorage.setItem(STORAGE_BUDGET_KEY, String(v));
+        } catch (e) {}
+      }
+
+      function loadCutoffMode() {
+        try {
+          var m = window.localStorage.getItem(STORAGE_CUTOFF_KEY);
+          return m === "15:00" ? "15:00" : "15:30";
+        } catch (e) {
+          return "15:30";
+        }
+      }
+
+      function saveCutoffMode(m) {
+        try {
+          window.localStorage.setItem(STORAGE_CUTOFF_KEY, m);
+        } catch (e) {}
+      }
+
+      function formatInt(n) {
+        if (n === null || n === undefined || isNaN(n)) return "---";
+        return Math.round(Number(n)).toLocaleString("ja-JP");
+      }
+
+      function formatSignedPct(n, digits) {
+        if (n === null || n === undefined || isNaN(n)) return "0.00%";
+        var d = digits !== undefined ? digits : 2;
+        var num = Number(n);
+        return (num > 0 ? "+" : "") + num.toFixed(d) + "%";
+      }
+
+      function formatTimeHHMM(isoStr) {
+        if (!isoStr) return "--:--";
+        var d = new Date(isoStr);
+        if (isNaN(d.getTime())) return isoStr;
+        var mo = d.getMonth() + 1;
+        var da = d.getDate();
+        var hh = ("0" + d.getHours()).slice(-2);
+        var mm = ("0" + d.getMinutes()).slice(-2);
+        return mo + "/" + da + " " + hh + ":" + mm;
+      }
+
+      function chgClass(v) {
+        var num = Number(v || 0);
+        if (num > 0.004) return "chg-up";
+        if (num < -0.004) return "chg-down";
+        return "chg-flat";
+      }
+
+      function activeSchedule() {
+        if (!tripleData) return null;
+        return (cutoffMode === "15:00" && tripleData.schedule1500) ? tripleData.schedule1500 : tripleData.schedule;
+      }
+
+      function updateCountdownAndFreshness() {
+        if (!tripleData) return;
+
+        var genIso = tripleData.generatedAt || tripleData.updatedAt;
+        if (genIso) {
+          var dt = new Date(genIso);
+          var now = new Date();
+          var diffMin = (now.getTime() - dt.getTime()) / 60000;
+          var dot = document.getElementById("freshDot");
+          var txt = document.getElementById("updatedAtText");
+          dot.className = "fresh-dot";
+          if (diffMin <= 6.5) {
+            dot.classList.add("ok");
+            txt.textContent = "最終更新 " + formatTimeHHMM(genIso);
+          } else if (diffMin <= 35.0) {
+            dot.classList.add("normal");
+            txt.textContent = "最終更新 " + formatTimeHHMM(genIso) + "（" + Math.floor(diffMin) + "分前）";
+          } else {
+            dot.classList.add("stale");
+            txt.textContent = "最終更新 " + formatTimeHHMM(genIso);
+          }
+        }
+
+        var sched = activeSchedule();
+        if (sched && sched.cutoffAt) {
+          var cutoffDt = new Date(sched.cutoffAt);
+          var diffSec = Math.max(0, Math.floor((cutoffDt.getTime() - Date.now()) / 1000));
+          var days = Math.floor(diffSec / 86400);
+          var hours = Math.floor((diffSec % 86400) / 3600);
+          var mins = Math.floor((diffSec % 3600) / 60);
+          var cdEl = document.getElementById("schedCountdown");
+          if (diffSec <= 0) {
+            cdEl.textContent = "この枠の締切時刻を過ぎました（更新待ち）";
+          } else if (days > 0) {
+            cdEl.textContent = "締切まで あと " + days + "日 " + hours + "時間 " + mins + "分";
+          } else if (hours > 0) {
+            cdEl.textContent = "締切まで あと " + hours + "時間 " + mins + "分";
+          } else {
+            cdEl.textContent = "締切直前！ あと " + mins + "分";
+          }
+        }
+      }
+
+      function renderGauge(score, tone) {
+        var arc = document.getElementById("gaugeArc");
+        var totalLen = 251.3;
+        var clamped = Math.max(0, Math.min(100, Number(score || 0)));
+        var offset = totalLen * (1 - clamped / 100);
+        arc.setAttribute("stroke-dashoffset", offset.toFixed(1));
+
+        var colorMap = {
+          buy_strong: "var(--judge-buy)",
+          watch_buy: "var(--judge-watch)",
+          buy_mild: "var(--judge-mild)",
+          wait: "var(--judge-wait)",
+          danger: "var(--judge-ng)"
+        };
+        arc.setAttribute("stroke", colorMap[tone] || "var(--accent)");
+        document.getElementById("gaugeScoreText").textContent = String(clamped);
+      }
+
+      function renderCalculator() {
+        if (!tripleData) return;
+        var sig = tripleData.signal;
+        var f = tripleData.fund;
+        var pct = Number(sig.recommendedPct || 0);
+        var orderYen = Math.round(budgetYen * pct / 100);
+        var remainYen = Math.max(0, budgetYen - orderYen);
+        var provNav = Number(f.provisionalExecNav || f.launchpadNav || 10000);
+        var estUnits = provNav > 0 ? Math.round((orderYen / provNav) * 10000) : 0;
+
+        document.getElementById("calcOrderYen").textContent = formatInt(orderYen) + "円";
+        document.getElementById("calcOrderSub").textContent = "推奨投入比率 " + pct + "%（待機資金 " + formatInt(budgetYen) + "円）";
+        document.getElementById("calcRemainYen").textContent = formatInt(remainYen) + "円";
+        document.getElementById("calcEstUnits").textContent = orderYen > 0 ? ("約 " + formatInt(estUnits) + "口") : "0口（見送り）";
+
+        var tbody = document.getElementById("scenarioTbody");
+        tbody.textContent = "";
+        (tripleData.scenarios || []).forEach(function (sc) {
+          var tr = document.createElement("tr");
+          if (Math.abs(Number(sc.nqMovePct)) < 0.01) {
+            tr.className = "current-row";
+          }
+
+          var tdLbl = document.createElement("td");
+          tdLbl.textContent = sc.label;
+          tr.appendChild(tdLbl);
+
+          var tdNav = document.createElement("td");
+          tdNav.className = "r num";
+          tdNav.textContent = "約 " + formatInt(sc.estimatedNav) + "円";
+          tr.appendChild(tdNav);
+
+          var tdVs = document.createElement("td");
+          tdVs.className = "r num " + chgClass(sc.vsFridayOrD0Pct);
+          tdVs.textContent = formatSignedPct(sc.vsFridayOrD0Pct);
+          tr.appendChild(tdVs);
+
+          var tdUnits = document.createElement("td");
+          tdUnits.className = "r num";
+          var u = (orderYen > 0 && sc.estimatedNav > 0) ? Math.round((orderYen / sc.estimatedNav) * 10000) : 0;
+          tdUnits.textContent = orderYen > 0 ? ("約 " + formatInt(u) + "口") : "---";
+          tr.appendChild(tdUnits);
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      function renderNdxChart(bars, impliedNdx, high60) {
+        var svg = document.getElementById("ndxChartSvg");
+        svg.textContent = "";
+        if (!Array.isArray(bars) || bars.length < 3) return;
+
+        var ns = "http://www.w3.org/2000/svg";
+        var closes = bars.map(function (b) { return Number(b.close); });
+        var smas = bars.map(function (b) { return Number(b.sma25); });
+        var allVals = closes.concat(smas);
+        if (impliedNdx) allVals.push(Number(impliedNdx));
+        if (high60) allVals.push(Number(high60));
+
+        var minV = Math.min.apply(null, allVals);
+        var maxV = Math.max.apply(null, allVals);
+        var span = (maxV - minV) || 1;
+        var padL = 8;
+        var padR = 54;
+        var padT = 14;
+        var padB = 20;
+        var w = 640 - padL - padR;
+        var h = 165 - padT - padB;
+        var n = bars.length;
+
+        function toX(i) {
+          return padL + (i / (n - 1)) * w;
+        }
+        function toY(v) {
+          return padT + h - ((v - minV) / span) * h;
+        }
+
+        // 60日最高値ライン
+        if (high60) {
+          var yHigh = toY(high60);
+          var hLine = document.createElementNS(ns, "line");
+          hLine.setAttribute("x1", String(padL));
+          hLine.setAttribute("y1", yHigh.toFixed(1));
+          hLine.setAttribute("x2", String(padL + w));
+          hLine.setAttribute("y2", yHigh.toFixed(1));
+          hLine.setAttribute("stroke", "var(--line)");
+          hLine.setAttribute("stroke-width", "1.2");
+          svg.appendChild(hLine);
+
+          var hTxt = document.createElementNS(ns, "text");
+          hTxt.setAttribute("x", String(padL + w + 4));
+          hTxt.setAttribute("y", (yHigh + 4).toFixed(1));
+          hTxt.setAttribute("font-size", "10");
+          hTxt.setAttribute("fill", "var(--text-muted)");
+          hTxt.setAttribute("class", "num");
+          hTxt.textContent = formatInt(high60);
+          svg.appendChild(hTxt);
+        }
+
+        // SMA25 点線
+        var smaPts = smas.map(function (v, idx) {
+          return toX(idx).toFixed(1) + "," + toY(v).toFixed(1);
+        }).join(" ");
+        var smaPoly = document.createElementNS(ns, "polyline");
+        smaPoly.setAttribute("points", smaPts);
+        smaPoly.setAttribute("fill", "none");
+        smaPoly.setAttribute("stroke", "var(--text-muted)");
+        smaPoly.setAttribute("stroke-width", "1.4");
+        smaPoly.setAttribute("stroke-dasharray", "4,3");
+        svg.appendChild(smaPoly);
+
+        // Close 実線
+        var closePts = closes.map(function (v, idx) {
+          return toX(idx).toFixed(1) + "," + toY(v).toFixed(1);
+        }).join(" ");
+        var closePoly = document.createElementNS(ns, "polyline");
+        closePoly.setAttribute("points", closePts);
+        closePoly.setAttribute("fill", "none");
+        closePoly.setAttribute("stroke", "var(--accent)");
+        closePoly.setAttribute("stroke-width", "2.1");
+        closePoly.setAttribute("stroke-linejoin", "round");
+        closePoly.setAttribute("stroke-linecap", "round");
+        svg.appendChild(closePoly);
+
+        // 現在水準ドット
+        var lastVal = impliedNdx || closes[closes.length - 1];
+        var cx = toX(n - 1);
+        var cy = toY(lastVal);
+        var dot = document.createElementNS(ns, "circle");
+        dot.setAttribute("cx", cx.toFixed(1));
+        dot.setAttribute("cy", cy.toFixed(1));
+        dot.setAttribute("r", "4");
+        dot.setAttribute("fill", "var(--judge-buy)");
+        svg.appendChild(dot);
+
+        var curTxt = document.createElementNS(ns, "text");
+        curTxt.setAttribute("x", String(padL + w + 4));
+        curTxt.setAttribute("y", (cy + 4).toFixed(1));
+        curTxt.setAttribute("font-size", "10.5");
+        curTxt.setAttribute("font-weight", "700");
+        curTxt.setAttribute("fill", "var(--text)");
+        curTxt.setAttribute("class", "num");
+        curTxt.textContent = formatInt(lastVal);
+        svg.appendChild(curTxt);
+
+        // 日付ラベル（左端・中央・右端）
+        [0, Math.floor((n - 1) / 2), n - 1].forEach(function (idx) {
+          var dLbl = document.createElementNS(ns, "text");
+          dLbl.setAttribute("x", toX(idx).toFixed(1));
+          dLbl.setAttribute("y", "160");
+          dLbl.setAttribute("text-anchor", idx === 0 ? "start" : (idx === n - 1 ? "end" : "middle"));
+          dLbl.setAttribute("font-size", "10");
+          dLbl.setAttribute("fill", "var(--text-muted)");
+          dLbl.setAttribute("class", "num");
+          dLbl.textContent = (bars[idx].date || "").slice(5);
+          svg.appendChild(dLbl);
+        });
+      }
+
+      function renderAll() {
+        if (!tripleData) return;
+
+        var f = tripleData.fund;
+        var sig = tripleData.signal;
+        var lead = tripleData.intradayLead;
+        var tech = tripleData.technicals;
+        var sched = activeSchedule();
+
+        document.getElementById("fundTitle").textContent = f.name;
+
+        var hero = document.getElementById("heroCard");
+        hero.className = "card hero-card tone-" + (sig.tone || "wait");
+
+        renderGauge(sig.score, sig.tone);
+        document.getElementById("rankChip").textContent = "RANK " + sig.rank + " ・ " + sig.rankLabel;
+        document.getElementById("actionBadge").textContent = sig.actionBadge;
+        document.getElementById("windowLabel").textContent = sched.windowLabel;
+        document.getElementById("verdictHeadline").textContent = sig.headline;
+        document.getElementById("verdictDetail").textContent = sig.detailAdvice;
+
+        document.getElementById("schedCutoffVal").textContent = sched.applicationDateLabel + " " + sched.cutoffTimeStr + " 締切";
+        document.getElementById("schedExecVal").textContent = sched.executionDateLabel + " 夕方基準価額";
+
+        var nightsEl = document.getElementById("schedNightsSub");
+        if (sched.nightsAfterCutoff >= 2) {
+          var holNote = (sched.jpHolidaysBetween && sched.jpHolidaysBetween.length)
+            ? ("（" + sched.jpHolidaysBetween.join("・") + "挟み）")
+            : "";
+          nightsEl.innerHTML = "";
+          var wSpan = document.createElement("span");
+          wSpan.className = "warn-tag";
+          wSpan.textContent = "注意: 米国市場 " + sched.nightsAfterCutoff + "晩分" + holNote;
+          nightsEl.appendChild(wSpan);
+        } else {
+          nightsEl.textContent = "通常の翌営業日約定（米国市場 1晩分）";
+        }
+
+        document.getElementById("schedAllocVal").textContent = "待機資金の " + sig.recommendedPct + "%";
+        document.getElementById("schedAllocSub").textContent =
+          (sig.capReasons && sig.capReasons.length) ? sig.capReasons[0] : "金額指定で分割エントリー";
+
+        // 2-Stage Price Board
+        if (f.accuracy && f.accuracy.days) {
+          document.getElementById("accuracyNote").textContent =
+            "直近" + f.accuracy.days + "営業日の平均予想誤差 ±" + Number(f.accuracy.maePt).toFixed(2) + "pt";
+        }
+        document.getElementById("d0Tag").textContent = "① 前回確定値（" + f.navDateLabel + "）";
+        document.getElementById("d0Price").textContent = formatInt(f.nav) + "円";
+
+        document.getElementById("lpTag").textContent = "② 発射台（" + f.launchpadDateLabel + " 確定見込）";
+        document.getElementById("lpPrice").textContent = formatInt(f.launchpadNav) + "円";
+        var lpChgEl = document.getElementById("lpChg");
+        lpChgEl.className = "step-chg num " + chgClass(f.launchpadChangePct);
+        var diffSign = f.launchpadDiff > 0 ? "+" : "";
+        lpChgEl.textContent = formatSignedPct(f.launchpadChangePct) + "（" + diffSign + formatInt(f.launchpadDiff) + "円）";
+        document.getElementById("lpBreakdownNote").textContent =
+          "内訳: NQ=F " + formatSignedPct(f.breakdown.nqfSettledChangePct) + "×3 ＋ 為替 " + formatSignedPct(f.breakdown.fxLaunchpadChangePct) + "。土台はすでにここまで動いています。";
+
+        document.getElementById("provTag").textContent = "③ 昼間リード反映（" + sched.executionDateLabel + "約定スタート目安）";
+        document.getElementById("provPrice").textContent = "約 " + formatInt(f.provisionalExecNav) + "円";
+        var leadEl = document.getElementById("leadChg");
+        leadEl.className = "step-chg num " + chgClass(lead.totalLeadPct);
+        leadEl.textContent = "時間外リード " + formatSignedPct(lead.totalLeadPct) + "（前回比 " + formatSignedPct(f.provisionalVsD0Pct) + "）";
+        document.getElementById("provNote").textContent =
+          "清算値以降の時間外 NQ=F " + formatSignedPct(lead.nqfLeadPct) + " (×3=" + formatSignedPct(lead.nqfTripleImpactPct) + ") ＋ 為替 " + formatSignedPct(lead.fxLeadPct) + " を反映。";
+
+        // 5-Axis Bars
+        var axesWrap = document.getElementById("axesList");
+        axesWrap.textContent = "";
+        (sig.axes || []).forEach(function (ax) {
+          var row = document.createElement("div");
+          row.className = "axis-row";
+
+          var head = document.createElement("div");
+          head.className = "axis-head";
+
+          var leftSpan = document.createElement("span");
+          leftSpan.className = "axis-name";
+          leftSpan.textContent = ax.label;
+
+          var rightSpan = document.createElement("span");
+          rightSpan.className = "axis-meta num";
+          rightSpan.textContent = ax.summary + " ｜ ";
+          var scStrong = document.createElement("strong");
+          scStrong.className = "axis-score";
+          var scSign = (ax.minScore < 0 && ax.score > 0) ? "+" : "";
+          scStrong.textContent = scSign + Number(ax.score).toFixed(1) + " / " + ax.maxScore + "点";
+          rightSpan.appendChild(scStrong);
+
+          head.appendChild(leftSpan);
+          head.appendChild(rightSpan);
+          row.appendChild(head);
+
+          var track = document.createElement("div");
+          track.className = "bar-track";
+          var fill = document.createElement("div");
+          var ratio = ax.maxScore > 0 ? Math.max(0, Math.min(100, (Number(ax.score) / Number(ax.maxScore)) * 100)) : 0;
+          var colorCls = Number(ax.score) < 0 ? "bad" : (ratio >= 65 ? "good" : (ratio >= 35 ? "" : "warn"));
+          fill.className = "bar-fill" + (colorCls ? (" " + colorCls) : "");
+          fill.style.width = (Number(ax.score) < 0 ? 15 : ratio).toFixed(1) + "%";
+          track.appendChild(fill);
+          row.appendChild(track);
+
+          axesWrap.appendChild(row);
+        });
+
+        // Reasons
+        var rList = document.getElementById("reasonsList");
+        rList.textContent = "";
+        (sig.reasons || []).forEach(function (r) {
+          var li = document.createElement("li");
+          li.textContent = r;
+          rList.appendChild(li);
+        });
+
+        // Technicals & Chart
+        document.getElementById("techAsOfSub").textContent = "先物換算 NASDAQ100: " + formatInt(tech.impliedNdx);
+        document.getElementById("techDd").textContent = formatSignedPct(tech.drawdownNdxPct) + " (3倍 " + formatSignedPct(tech.drawdownTripleEquivPct, 1) + ")";
+        document.getElementById("techRsi").textContent = Number(tech.rsi14).toFixed(1);
+        document.getElementById("techSmaDev").textContent = formatSignedPct(tech.sma25DevPct);
+        document.getElementById("techVix").textContent = Number(tech.vix).toFixed(2) + " (" + (tech.vixChange >= 0 ? "+" : "") + Number(tech.vixChange).toFixed(2) + ")";
+
+        renderNdxChart(tripleData.charts && tripleData.charts.ndx60d, tech.impliedNdx, tech.ndxHigh60d);
+
+        // Discord Status
+        var dsRow = document.getElementById("discordStatusRow");
+        dsRow.textContent = "";
+        var ns = tripleData.notificationStatus || {};
+        var chip1 = document.createElement("span");
+        chip1.className = "status-chip" + (ns.webhookConfigured ? " ok" : "");
+        chip1.textContent = ns.webhookConfigured ? "Discord Webhook: 連携有効" : "Discord Webhook: GitHub Secrets 設定待ち";
+        dsRow.appendChild(chip1);
+
+        if (ns.lastSentAt) {
+          var chip2 = document.createElement("span");
+          chip2.className = "status-chip num";
+          chip2.textContent = "前回通知: " + formatTimeHHMM(ns.lastSentAt) + " (" + (ns.lastSentKind || "-") + ")";
+          dsRow.appendChild(chip2);
+        }
+
+        renderCalculator();
+        updateCountdownAndFreshness();
+      }
+
+      function fetchJsonNoCache(url) {
+        return fetch(url + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        });
+      }
+
+      function fetchLatest() {
+        fetchJsonNoCache(DATA_BRANCH_URL)
+          .catch(function () {
+            return fetchJsonNoCache(DATA_LOCAL_URL);
+          })
+          .then(function (json) {
+            tripleData = json;
+            try {
+              window.localStorage.setItem(STORAGE_CACHE_KEY, JSON.stringify(json));
+            } catch (e) {}
+            renderAll();
+          })
+          .catch(function () {
+            updateCountdownAndFreshness();
+          });
+      }
+
+      // Init controls
+      var budgetInput = document.getElementById("budgetInput");
+      budgetInput.value = String(budgetYen);
+      budgetInput.addEventListener("input", function () {
+        var v = parseInt(budgetInput.value || "0", 10);
+        budgetYen = (!isNaN(v) && v >= 0) ? v : 0;
+        saveBudget(budgetYen);
+        renderCalculator();
+      });
+
+      var presets = document.querySelectorAll(".preset-btn");
+      for (var i = 0; i < presets.length; i++) {
+        presets[i].addEventListener("click", function () {
+          var v = parseInt(this.getAttribute("data-budget") || "300000", 10);
+          budgetYen = v;
+          budgetInput.value = String(v);
+          saveBudget(v);
+          renderCalculator();
+        });
+      }
+
+      function syncCutoffButtons() {
+        document.getElementById("btnCutoff1530").classList.toggle("active", cutoffMode === "15:30");
+        document.getElementById("btnCutoff1500").classList.toggle("active", cutoffMode === "15:00");
+      }
+      syncCutoffButtons();
+
+      document.getElementById("btnCutoff1530").addEventListener("click", function () {
+        cutoffMode = "15:30";
+        saveCutoffMode(cutoffMode);
+        syncCutoffButtons();
+        renderAll();
+      });
+      document.getElementById("btnCutoff1500").addEventListener("click", function () {
+        cutoffMode = "15:00";
+        saveCutoffMode(cutoffMode);
+        syncCutoffButtons();
+        renderAll();
+      });
+
+      try {
+        var cachedRaw = window.localStorage.getItem(STORAGE_CACHE_KEY);
+        if (cachedRaw) {
+          tripleData = JSON.parse(cachedRaw);
+          renderAll();
+        }
+      } catch (e) {}
+
+      fetchLatest();
+      setInterval(fetchLatest, 60000);
+      setInterval(updateCountdownAndFreshness, 10000);
+    })();
+  </script>
+</body>
+</html>

@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
+    inputs:
+      test_discord_notify:
+        description: "Discordへテスト通知を1回即時送信する"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -31,4 +37,6 @@ jobs:
       - name: Run continuous forecast data updater
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          FORCE_DISCORD_TEST: ${{ inputs.test_discord_notify }}
         run: python scripts/loop_update.py --interval 300 --max-minutes 345

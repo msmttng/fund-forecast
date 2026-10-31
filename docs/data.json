@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-31T17:42:46+09:00",
+  "updatedAt": "2026-10-31T20:21:23+09:00",
   "baseDate": "2026-10-30",
   "targetDate": "2026-11-02",
   "topixBeta": 0.5331,
@@ -10508,6 +10508,6 @@
       ]
     }
   ],
-  "updateIntervalSec": 300,
-  "nextUpdateAt": "2026-10-31T17:47:46+09:00"
+  "updateIntervalSec": 1800,
+  "nextUpdateAt": "2026-10-31T20:51:23+09:00"
 }

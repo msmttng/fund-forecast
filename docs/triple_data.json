@@ -1,0 +1,586 @@
+{
+  "updatedAt": "2026-10-31T20:21:23+09:00",
+  "generatedAt": "2026-10-31T20:22:10+09:00",
+  "updateIntervalSec": 1800,
+  "nextUpdateAt": "2026-10-31T20:51:23+09:00",
+  "fund": {
+    "id": "auam-triple-ndx",
+    "name": "auAMトリプル・NASDAQ100 為替ヘッジ無し",
+    "isinCd": "JP90C000T9H5",
+    "associFundCd": "AY31226A",
+    "navDate": "2026-10-30",
+    "navDateLabel": "10/30(金)",
+    "nav": 9347,
+    "launchpadDate": "2026-11-02",
+    "launchpadDateLabel": "11/2(月)",
+    "launchpadNav": 8367,
+    "launchpadDiff": -980,
+    "launchpadChangePct": -10.48,
+    "provisionalExecNav": 8373,
+    "provisionalVsD0Pct": -10.42,
+    "accuracy": {
+      "days": 11,
+      "maePt": 0.11,
+      "biasPt": -0.07,
+      "latest": {
+        "date": "2026-10-30",
+        "forecast": 9355,
+        "actual": 9347,
+        "errorYen": 8,
+        "errorPt": 0.08
+      }
+    },
+    "history": [
+      [
+        "2026-10-15",
+        10000
+      ],
+      [
+        "2026-10-16",
+        9993
+      ],
+      [
+        "2026-10-19",
+        9233
+      ],
+      [
+        "2026-10-20",
+        9601
+      ],
+      [
+        "2026-10-21",
+        9543
+      ],
+      [
+        "2026-10-22",
+        9855
+      ],
+      [
+        "2026-10-23",
+        8908
+      ],
+      [
+        "2026-10-26",
+        8927
+      ],
+      [
+        "2026-10-27",
+        9245
+      ],
+      [
+        "2026-10-28",
+        9610
+      ],
+      [
+        "2026-10-29",
+        9783
+      ],
+      [
+        "2026-10-30",
+        9347
+      ]
+    ],
+    "breakdown": {
+      "nqfBase": 29562.0,
+      "nqfSettled": 28527.25,
+      "nqfSettledChangePct": -3.5,
+      "fxBase": 157.54,
+      "fxLaunchpad": 157.57,
+      "fxLaunchpadChangePct": 0.02
+    }
+  },
+  "intradayLead": {
+    "nqfSettled": 28527.25,
+    "nqfLive": 28534.0,
+    "nqfLeadPct": 0.02,
+    "nqfTripleImpactPct": 0.07,
+    "nqfAsOf": "2026-10-31T05:59:59+09:00",
+    "fxBaseForNext": 157.57,
+    "fxLiveMid": 157.57,
+    "fxLeadPct": 0.0,
+    "fxLockedAtTtm": false,
+    "fxAsOf": "2026-10-31T05:59:33+09:00",
+    "totalLeadRaw": 0.0007098476018543673,
+    "totalLeadPct": 0.07
+  },
+  "schedule": {
+    "applicationDate": "2026-11-02",
+    "applicationDateLabel": "11/2(月)",
+    "cutoffAt": "2026-11-02T15:30:00+09:00",
+    "cutoffTimeStr": "15:30",
+    "minutesToCutoff": 2587,
+    "executionDate": "2026-11-04",
+    "executionDateLabel": "11/4(水)",
+    "nightsAfterCutoff": 2,
+    "nightsAfterCutoffDates": [
+      "2026-11-02",
+      "2026-11-03"
+    ],
+    "unsettledUsNights": 2,
+    "unsettledUsNightDates": [
+      "2026-11-02",
+      "2026-11-03"
+    ],
+    "jpHolidaysBetween": [
+      "11/3 文化の日"
+    ],
+    "fomcDatesHit": [],
+    "windowState": "holiday_or_weekend",
+    "windowLabel": "休場日（次回営業日申込扱い）",
+    "isOrderDayToday": false
+  },
+  "schedule1500": {
+    "applicationDate": "2026-11-02",
+    "applicationDateLabel": "11/2(月)",
+    "cutoffAt": "2026-11-02T15:00:00+09:00",
+    "cutoffTimeStr": "15:00",
+    "minutesToCutoff": 2557,
+    "executionDate": "2026-11-04",
+    "executionDateLabel": "11/4(水)",
+    "nightsAfterCutoff": 2,
+    "nightsAfterCutoffDates": [
+      "2026-11-02",
+      "2026-11-03"
+    ],
+    "unsettledUsNights": 2,
+    "unsettledUsNightDates": [
+      "2026-11-02",
+      "2026-11-03"
+    ],
+    "jpHolidaysBetween": [
+      "11/3 文化の日"
+    ],
+    "fomcDatesHit": [],
+    "windowState": "holiday_or_weekend",
+    "windowLabel": "休場日（次回営業日申込扱い）",
+    "isOrderDayToday": false
+  },
+  "signal": {
+    "score": 75,
+    "rank": "A",
+    "rankLabel": "押し目買い好機（分割買い推奨）",
+    "tone": "watch_buy",
+    "actionBadge": "11/2(月) 15:05まで待機",
+    "orderReadyNow": false,
+    "orderOkLevel": true,
+    "intradayBounceTrap": false,
+    "recommendedPct": 20,
+    "baseRecommendedPct": 30,
+    "capReasons": [
+      "祝日挟みで米国市場2晩分をまたぐため上限20%に抑制"
+    ],
+    "headline": "【買い圏到達（75点）】確定注文は 11/2(月) 15:05 の最終通知後がベスト",
+    "detailAdvice": "発射台が 8,367円（前営業日比 -10.48%）まで下がり、待機資金の 20% 投入目安の買い圏に入っています。ただし今注文しても 11/2(月) 15:15 に注文しても同じ 11/4(水) 約定になるため、11/2(月) 15:05 の最終ジャッジ（昼間の先物急反発がないかの確認）を見てから発注するのが最も安全です。",
+    "reasons": [
+      "発射台（11/2(月)見込）: 9,347円 → 8,367円（-10.48% / 3日累積 -12.93%）",
+      "昼間の時間外リード: NQ=F +0.02% (×3=+0.07%) ＋ 為替 +0.00% ＝ 合計 +0.07%",
+      "NASDAQ100 テクニカル: 60日高値比 -9.08%（3倍換算 約-25.9%） / RSI(14) 34.9 / 25日線乖離 -5.49%",
+      "ボラティリティ & 日程: VIX 19.42（前日比 +2.22） / 11/2(月)申込 → 11/4(水)約定（米国市場 2晩分）",
+      "ロット抑制ルール適用: 祝日挟みで米国市場2晩分をまたぐため上限20%に抑制",
+      "国内祝日挟み注意: 11/3 文化の日 を挟むため通常より約定までの米国市場日数が長くなります"
+    ],
+    "axes": [
+      {
+        "id": "launchpad_dip",
+        "label": "① 発射台の押し目度（前夜・3日下落）",
+        "score": 28.2,
+        "maxScore": 30,
+        "minScore": 0,
+        "summary": "1日 -10.48% / 3日 -12.93%"
+      },
+      {
+        "id": "drawdown_depth",
+        "label": "② NASDAQ100 高値からの調整深さ",
+        "score": 20.8,
+        "maxScore": 25,
+        "minScore": 0,
+        "summary": "60日高値(31,224)比 -9.08%"
+      },
+      {
+        "id": "technical_oversold",
+        "label": "③ テクニカル売られすぎ度（RSI・25日線）",
+        "score": 17.2,
+        "maxScore": 20,
+        "minScore": 0,
+        "summary": "RSI(14)=34.9 / 25日線乖離 -5.49%"
+      },
+      {
+        "id": "intraday_lead",
+        "label": "④ 昼間の時間外リード（高値掴み回避）",
+        "score": 7.9,
+        "maxScore": 15,
+        "minScore": -20,
+        "summary": "時間外3倍+為替リード +0.07%"
+      },
+      {
+        "id": "vix_and_schedule",
+        "label": "⑤ VIX恐怖指数 & 日程リスク補正",
+        "score": 0.7,
+        "maxScore": 10,
+        "minScore": -15,
+        "summary": "VIX 19.4 / 約定まで米国 2晩"
+      }
+    ]
+  },
+  "technicals": {
+    "impliedNdx": 28390.53,
+    "ndxHigh60d": 31224.47,
+    "drawdownNdxPct": -9.08,
+    "drawdownTripleEquivPct": -25.9,
+    "rsi14": 34.9,
+    "sma25": 30039.84,
+    "sma25DevPct": -5.49,
+    "cum3dChangePct": -12.93,
+    "vix": 19.42,
+    "vixChange": 2.22
+  },
+  "scenarios": [
+    {
+      "label": "さらに急落 (NQ -4% → 3倍 -12%)",
+      "nqMovePct": -4.0,
+      "tripleMovePct": -12.0,
+      "estimatedNav": 7368,
+      "vsFridayOrD0Pct": -21.17
+    },
+    {
+      "label": "続落 (NQ -2% → 3倍 -6%)",
+      "nqMovePct": -2.0,
+      "tripleMovePct": -6.0,
+      "estimatedNav": 7871,
+      "vsFridayOrD0Pct": -15.79
+    },
+    {
+      "label": "ここから横ばい (NQ ±0%)",
+      "nqMovePct": 0.0,
+      "tripleMovePct": 0.0,
+      "estimatedNav": 8373,
+      "vsFridayOrD0Pct": -10.42
+    },
+    {
+      "label": "半分程度反発 (NQ +2% → 3倍 +6%)",
+      "nqMovePct": 2.0,
+      "tripleMovePct": 6.0,
+      "estimatedNav": 8875,
+      "vsFridayOrD0Pct": -5.05
+    },
+    {
+      "label": "急反発 (NQ +4% → 3倍 +12%)",
+      "nqMovePct": 4.0,
+      "tripleMovePct": 12.0,
+      "estimatedNav": 9378,
+      "vsFridayOrD0Pct": 0.33
+    }
+  ],
+  "charts": {
+    "ndx60d": [
+      {
+        "date": "2026-08-07",
+        "close": 29722.3,
+        "sma25": 28938.25
+      },
+      {
+        "date": "2026-08-10",
+        "close": 29621.8,
+        "sma25": 28935.21
+      },
+      {
+        "date": "2026-08-11",
+        "close": 29525.48,
+        "sma25": 28949.31
+      },
+      {
+        "date": "2026-08-12",
+        "close": 29742.6,
+        "sma25": 28968.91
+      },
+      {
+        "date": "2026-08-13",
+        "close": 30084.5,
+        "sma25": 28983.21
+      },
+      {
+        "date": "2026-08-14",
+        "close": 30046.14,
+        "sma25": 28992.05
+      },
+      {
+        "date": "2026-08-17",
+        "close": 29995.38,
+        "sma25": 29021.3
+      },
+      {
+        "date": "2026-08-18",
+        "close": 29490.96,
+        "sma25": 29017.49
+      },
+      {
+        "date": "2026-08-19",
+        "close": 29426.02,
+        "sma25": 29014.42
+      },
+      {
+        "date": "2026-08-20",
+        "close": 29213.16,
+        "sma25": 29021.92
+      },
+      {
+        "date": "2026-08-21",
+        "close": 29308.86,
+        "sma25": 29050.57
+      },
+      {
+        "date": "2026-08-24",
+        "close": 29023.18,
+        "sma25": 29067.32
+      },
+      {
+        "date": "2026-08-25",
+        "close": 29209.23,
+        "sma25": 29069.49
+      },
+      {
+        "date": "2026-08-26",
+        "close": 29224.52,
+        "sma25": 29078.54
+      },
+      {
+        "date": "2026-08-27",
+        "close": 29641.56,
+        "sma25": 29126.01
+      },
+      {
+        "date": "2026-08-28",
+        "close": 29433.43,
+        "sma25": 29178.22
+      },
+      {
+        "date": "2026-08-31",
+        "close": 29456.97,
+        "sma25": 29234.93
+      },
+      {
+        "date": "2026-09-01",
+        "close": 29077.22,
+        "sma25": 29287.49
+      },
+      {
+        "date": "2026-09-02",
+        "close": 29143.33,
+        "sma25": 29365.53
+      },
+      {
+        "date": "2026-09-03",
+        "close": 29482.32,
+        "sma25": 29420.57
+      },
+      {
+        "date": "2026-09-04",
+        "close": 29544.15,
+        "sma25": 29471.37
+      },
+      {
+        "date": "2026-09-08",
+        "close": 29507.7,
+        "sma25": 29500.6
+      },
+      {
+        "date": "2026-09-09",
+        "close": 29421.55,
+        "sma25": 29488.14
+      },
+      {
+        "date": "2026-09-10",
+        "close": 29103.51,
+        "sma25": 29472.77
+      },
+      {
+        "date": "2026-09-11",
+        "close": 29368.44,
+        "sma25": 29472.57
+      },
+      {
+        "date": "2026-09-14",
+        "close": 29127.16,
+        "sma25": 29448.77
+      },
+      {
+        "date": "2026-09-15",
+        "close": 28937.84,
+        "sma25": 29421.41
+      },
+      {
+        "date": "2026-09-16",
+        "close": 28945.06,
+        "sma25": 29398.19
+      },
+      {
+        "date": "2026-09-17",
+        "close": 29446.98,
+        "sma25": 29386.37
+      },
+      {
+        "date": "2026-09-18",
+        "close": 29644.17,
+        "sma25": 29368.75
+      },
+      {
+        "date": "2026-09-21",
+        "close": 30482.35,
+        "sma25": 29386.2
+      },
+      {
+        "date": "2026-09-22",
+        "close": 30732.4,
+        "sma25": 29415.68
+      },
+      {
+        "date": "2026-09-23",
+        "close": 30470.29,
+        "sma25": 29454.86
+      },
+      {
+        "date": "2026-09-24",
+        "close": 30478.86,
+        "sma25": 29496.97
+      },
+      {
+        "date": "2026-09-25",
+        "close": 30608.13,
+        "sma25": 29552.77
+      },
+      {
+        "date": "2026-09-28",
+        "close": 30276.81,
+        "sma25": 29591.49
+      },
+      {
+        "date": "2026-09-29",
+        "close": 30339.33,
+        "sma25": 29644.13
+      },
+      {
+        "date": "2026-09-30",
+        "close": 30408.5,
+        "sma25": 29692.1
+      },
+      {
+        "date": "2026-10-01",
+        "close": 30501.56,
+        "sma25": 29743.18
+      },
+      {
+        "date": "2026-10-02",
+        "close": 30807.93,
+        "sma25": 29789.84
+      },
+      {
+        "date": "2026-10-05",
+        "close": 31076.44,
+        "sma25": 29855.56
+      },
+      {
+        "date": "2026-10-06",
+        "close": 31224.47,
+        "sma25": 29926.26
+      },
+      {
+        "date": "2026-10-07",
+        "close": 31160.08,
+        "sma25": 30009.57
+      },
+      {
+        "date": "2026-10-08",
+        "close": 30725.81,
+        "sma25": 30072.87
+      },
+      {
+        "date": "2026-10-09",
+        "close": 30883.15,
+        "sma25": 30128.91
+      },
+      {
+        "date": "2026-10-12",
+        "close": 30664.7,
+        "sma25": 30173.73
+      },
+      {
+        "date": "2026-10-13",
+        "close": 30569.48,
+        "sma25": 30216.2
+      },
+      {
+        "date": "2026-10-14",
+        "close": 29950.82,
+        "sma25": 30237.37
+      },
+      {
+        "date": "2026-10-15",
+        "close": 29935.6,
+        "sma25": 30270.65
+      },
+      {
+        "date": "2026-10-16",
+        "close": 29187.55,
+        "sma25": 30263.42
+      },
+      {
+        "date": "2026-10-19",
+        "close": 29529.35,
+        "sma25": 30279.51
+      },
+      {
+        "date": "2026-10-20",
+        "close": 29490.28,
+        "sma25": 30301.6
+      },
+      {
+        "date": "2026-10-21",
+        "close": 29822.52,
+        "sma25": 30336.7
+      },
+      {
+        "date": "2026-10-22",
+        "close": 28958.69,
+        "sma25": 30317.17
+      },
+      {
+        "date": "2026-10-23",
+        "close": 28957.53,
+        "sma25": 30289.71
+      },
+      {
+        "date": "2026-10-26",
+        "close": 29273.4,
+        "sma25": 30241.35
+      },
+      {
+        "date": "2026-10-27",
+        "close": 29651.44,
+        "sma25": 30198.11
+      },
+      {
+        "date": "2026-10-28",
+        "close": 29813.16,
+        "sma25": 30171.82
+      },
+      {
+        "date": "2026-10-29",
+        "close": 29402.51,
+        "sma25": 30128.77
+      },
+      {
+        "date": "2026-10-30",
+        "close": 28384.85,
+        "sma25": 30039.84
+      }
+    ]
+  },
+  "notificationStatus": {
+    "webhookConfigured": false,
+    "lastMorningDate": null,
+    "lastFinalDate": null,
+    "lastOpportunityAlertDate": null,
+    "lastSentAt": null,
+    "lastSentKind": null
+  }
+}

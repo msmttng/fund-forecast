@@ -15,6 +15,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import build_data  # noqa: E402
+import triple_advisor  # noqa: E402
 
 JST = build_data.JST
 
@@ -160,6 +161,12 @@ def restore_state_from_data_branch(remote: str, branch: str) -> None:
         build_data.save_anchor_cache(remote_anchor)
         print(f"[INFO] Restored market_anchor_cache.json from {remote}/{branch}.")
 
+    # 4. triple_notify_state.json の引き継ぎ（Discord通知の重複送信防止ステート）
+    remote_triple_state = read_blob_from_fetch_head("triple_notify_state.json")
+    if remote_triple_state:
+        triple_advisor.save_notify_state(remote_triple_state)
+        print(f"[INFO] Restored triple_notify_state.json from {remote}/{branch}.")
+
 
 def push_orphan_data_branch(
     data_json_path: pathlib.Path,
@@ -171,6 +178,8 @@ def push_orphan_data_branch(
     """main の作業ツリーを切り替えずに、履歴を持たない 1 コミットを作成して data ブランチへ force push する。"""
     files_to_pack: List[Tuple[str, pathlib.Path]] = [
         ("data.json", data_json_path),
+        ("triple_data.json", triple_advisor.TRIPLE_DATA_JSON_PATH),
+        ("triple_notify_state.json", triple_advisor.TRIPLE_NOTIFY_STATE_PATH),
         ("nav_cache.json", build_data.NAV_CACHE_PATH),
         ("forecast_log.json", build_data.FORECAST_LOG_PATH),
         ("market_anchor_cache.json", build_data.ANCHOR_CACHE_PATH),
@@ -260,12 +269,31 @@ def main() -> None:
         )
 
         try:
-            build_data.run_build(
+            app_data = build_data.run_build(
                 force_nav=False,
                 nav_ttl_hours=args.nav_ttl_hours,
                 next_update_in_sec=current_interval,
                 output_path=build_data.DATA_JSON_PATH,
             )
+            advisor_dt = datetime.datetime.now(JST)
+            t_data = triple_advisor.build_triple_advisor_data(
+                app_data=app_data,
+                now_jst=advisor_dt,
+                output_path=triple_advisor.TRIPLE_DATA_JSON_PATH,
+            )
+            force_discord_test = (
+                iteration == 1 and os.environ.get("FORCE_DISCORD_TEST", "").strip().lower() == "true"
+            )
+            try:
+                triple_advisor.evaluate_and_notify_discord(
+                    triple_data=t_data,
+                    now_jst=advisor_dt,
+                    force_test=force_discord_test,
+                    dry_run=args.dry_run,
+                )
+            except Exception as notify_err:
+                print(f"[WARN] Discord notification failed: {notify_err}", file=sys.stderr, flush=True)
+
             push_dt = datetime.datetime.now(JST)
             push_orphan_data_branch(
                 data_json_path=build_data.DATA_JSON_PATH,
