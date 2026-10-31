@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>トリプルNASDAQ 購入ジャッジ | auAMトリプル・NASDAQ100 専用アドバイザー</title>
-  <meta name="description" content="auAMトリプル・NASDAQ100 為替ヘッジ無し専用の購入指示指数（0〜100点）・注文タイミング判定・分割ロット計算ダッシュボード。">
-  <meta property="og:title" content="トリプルNASDAQ 購入ジャッジ">
-  <meta property="og:description" content="発射台基準価額・時間外先物リード・RSI・60日高値比・VIX・祝日またぎリスクから「今注文してよいか」と推奨投入額をリアルタイム判定。">
+  <title>トリプルNASDAQ リバランス＆購入ジャッジ | auAMトリプル・NASDAQ100 専用アドバイザー</title>
+  <meta name="description" content="auAMトリプル・NASDAQ100 為替ヘッジ無し専用の購入指示指数（0〜100点）・投信/現金リバランス売買指示（金額指定買付・口数指定利確売却）ダッシュボード。">
+  <meta property="og:title" content="トリプルNASDAQ リバランス＆購入ジャッジ">
+  <meta property="og:description" content="保有投信と待機現金のリアルタイム実質比率から、押し目買い増し（金額指定）・反発時の利確売却（口数指定）・ホールドを自動判定。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://msmttng.github.io/fund-forecast/triple.html">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2316325c'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='monospace' font-weight='700' font-size='15' fill='%234cc38a'%3E3x%3C/text%3E%3C/svg%3E">
@@ -450,22 +450,122 @@
       line-height: 1.45;
     }
 
-    /* Budget Calculator */
-    .calc-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: flex-end;
+    /* Portfolio & Rebalance Panel */
+    .alloc-meter-box {
+      background-color: var(--surface-subtle);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 11px 12px;
       margin-bottom: 12px;
     }
 
+    .alloc-summary-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+      font-size: 12.5px;
+    }
+
+    .alloc-total-lbl {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .alloc-d0-ref {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .alloc-bar-wrap {
+      position: relative;
+      padding: 8px 0 4px;
+    }
+
+    .alloc-bar-track {
+      width: 100%;
+      height: 18px;
+      border-radius: 999px;
+      overflow: hidden;
+      display: flex;
+      background-color: var(--bg);
+      border: 1px solid var(--line);
+    }
+
+    .alloc-seg-fund {
+      height: 100%;
+      background-color: var(--accent);
+      transition: width 0.25s ease;
+    }
+
+    .alloc-seg-cash {
+      height: 100%;
+      background-color: var(--judge-buy-bg);
+      flex: 1;
+    }
+
+    .alloc-target-pin {
+      position: absolute;
+      top: 3px;
+      bottom: 0;
+      width: 2px;
+      background-color: var(--mkt-up);
+      transform: translateX(-1px);
+      pointer-events: none;
+      transition: left 0.25s ease;
+    }
+
+    .alloc-target-tag {
+      position: absolute;
+      top: -6px;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--mkt-up);
+      background-color: var(--surface);
+      border: 1px solid var(--mkt-up);
+      border-radius: 4px;
+      padding: 0 4px;
+      line-height: 1.3;
+      white-space: nowrap;
+    }
+
+    .alloc-legend-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+      font-size: 12px;
+    }
+
+    .alloc-leg-fund {
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .alloc-leg-cash {
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .calc-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
     .field-group {
-      flex: 1 1 220px;
+      min-width: 0;
     }
 
     .field-label {
       display: block;
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 600;
       color: var(--text-muted);
       margin-bottom: 4px;
@@ -479,8 +579,8 @@
 
     .budget-input {
       width: 100%;
-      padding: 8px 10px;
-      font-size: 15px;
+      padding: 7px 9px;
+      font-size: 14.5px;
       font-weight: 600;
       color: var(--text);
       background-color: var(--bg);
@@ -492,11 +592,27 @@
       border-color: var(--accent);
     }
 
+    .field-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .rebalance-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--line);
+    }
+
     .preset-btns {
       display: flex;
       flex-wrap: wrap;
-      gap: 5px;
-      margin-top: 6px;
+      gap: 6px;
     }
 
     .preset-btn {
@@ -505,12 +621,17 @@
       color: var(--text);
       font-size: 11.5px;
       font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 4px;
+      padding: 5px 9px;
+      border-radius: 5px;
       cursor: pointer;
     }
     .preset-btn:hover {
       border-color: var(--accent);
+    }
+    .preset-btn.accent-btn {
+      background-color: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
     .cutoff-toggle {
@@ -525,9 +646,9 @@
       border: none;
       background: none;
       color: var(--text-muted);
-      font-size: 12.5px;
+      font-size: 12px;
       font-weight: 600;
-      padding: 8px 12px;
+      padding: 7px 10px;
       cursor: pointer;
     }
     .cutoff-btn.active {
@@ -557,6 +678,21 @@
       background-color: var(--accent-soft);
       border-color: var(--accent);
     }
+    .calc-box.action-buy {
+      background-color: var(--judge-buy-bg);
+      border-color: var(--judge-buy-border);
+      border-width: 1.5px;
+    }
+    .calc-box.action-sell {
+      background-color: var(--judge-mild-bg);
+      border-color: var(--judge-mild-border);
+      border-width: 1.5px;
+    }
+    .calc-box.action-danger {
+      background-color: var(--judge-ng-bg);
+      border-color: var(--judge-ng-border);
+      border-width: 1.5px;
+    }
 
     .calc-box-lbl {
       font-size: 11.5px;
@@ -564,16 +700,21 @@
     }
 
     .calc-box-val {
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 700;
       color: var(--text);
       margin-top: 2px;
+      line-height: 1.3;
     }
+    .calc-box.action-buy .calc-box-val { color: var(--judge-buy); }
+    .calc-box.action-sell .calc-box-val { color: var(--judge-mild); }
+    .calc-box.action-danger .calc-box-val { color: var(--judge-ng); }
 
     .calc-box-sub {
       font-size: 11px;
       color: var(--text-muted);
-      margin-top: 2px;
+      margin-top: 3px;
+      line-height: 1.45;
     }
 
     /* Scenario Table */
@@ -776,6 +917,7 @@
       }
       .schedule-strip,
       .price-flow-grid,
+      .calc-controls,
       .calc-result-grid {
         grid-template-columns: 1fr;
       }
@@ -797,7 +939,7 @@
       <div class="header-top">
         <div class="brand-wrap">
           <span class="brand-badge num">3x NASDAQ</span>
-          <span class="site-title">トリプルNASDAQ 購入ジャッジ</span>
+          <span class="site-title">トリプルNASDAQ リバランス＆購入ジャッジ</span>
         </div>
         <a href="./index.html" class="back-link">全ファンド予報へ →</a>
       </div>
@@ -850,9 +992,9 @@
           <div class="sched-sub" id="schedNightsSub">米国市場 --晩分</div>
         </div>
         <div class="sched-item">
-          <div class="sched-lbl">推奨投入ロット（金額指定）</div>
-          <div class="sched-val num" id="schedAllocVal">待機資金の --%</div>
-          <div class="sched-sub" id="schedAllocSub">一括投入禁止・分割エントリー</div>
+          <div class="sched-lbl">今回のリバランス指示</div>
+          <div class="sched-val num" id="schedAllocVal">計算中...</div>
+          <div class="sched-sub" id="schedAllocSub">投信7万円 : 現金7万円 バランス運用</div>
         </div>
       </div>
     </section>
@@ -887,51 +1029,112 @@
       </div>
     </section>
 
-    <!-- 3. Personal Order Calculator & Scenario Simulator -->
-    <section class="card" aria-label="注文金額シミュレーター">
+    <!-- 3. Portfolio & Rebalance Simulator (Default: 70,000 Fund + 70,000 Cash) -->
+    <section class="card" aria-label="ポートフォリオ＆リバランス運用パネル">
       <div class="card-title">
-        <span>あなた専用の分割注文シミュレーター</span>
-        <span class="card-subtitle">ブラウザ内のみに保存（外部送信なし）</span>
+        <span>ポートフォリオ ＆ リバランス運用ジャッジ（投信・現金バランス）</span>
+        <span class="card-subtitle">初期値: 投信7万円＋現金7万円（ブラウザ保存・外部送信なし）</span>
       </div>
 
+      <!-- Visual Current vs Target Allocation Meter -->
+      <div class="alloc-meter-box">
+        <div class="alloc-summary-top">
+          <span class="alloc-total-lbl num" id="allocSummaryTotal">現在実質資産: 計算中...</span>
+          <span class="alloc-d0-ref num" id="allocD0Ref">前回確定時: ---</span>
+        </div>
+        <div class="alloc-bar-wrap">
+          <div class="alloc-bar-track" aria-label="現在の投信と現金の比率バー">
+            <div class="alloc-seg-fund" id="allocSegFund" style="width: 50%;"></div>
+            <div class="alloc-seg-cash"></div>
+          </div>
+          <div class="alloc-target-pin" id="allocTargetPin" style="left: 50%;">
+            <span class="alloc-target-tag num" id="allocTargetTag">目標 50%</span>
+          </div>
+        </div>
+        <div class="alloc-legend-row">
+          <span class="alloc-leg-fund num" id="allocLegFund">■ 投信時価: ---円 (--%)</span>
+          <span class="alloc-leg-cash num" id="allocLegCash">□ 待機現金: ---円 (--%)</span>
+        </div>
+      </div>
+
+      <!-- 3-Box Rebalance Verdict -->
+      <div class="calc-result-grid">
+        <div class="calc-box primary" id="rebActionBox">
+          <div class="calc-box-lbl" id="rebActionLbl">今回の推奨リバランス注文</div>
+          <div class="calc-box-val num" id="calcOrderYen">---</div>
+          <div class="calc-box-sub num" id="calcOrderSub">判定中...</div>
+        </div>
+        <div class="calc-box">
+          <div class="calc-box-lbl">推奨売買後の想定バランス</div>
+          <div class="calc-box-val num" id="calcRemainYen">---</div>
+          <div class="calc-box-sub num" id="calcAfterSub">---</div>
+        </div>
+        <div class="calc-box">
+          <div class="calc-box-lbl">次回の利確売り／買い増し目安</div>
+          <div class="calc-box-val num" id="calcEstUnits">---</div>
+          <div class="calc-box-sub num" id="calcTriggersSub">反発時は「口数指定」で利確し現金補充</div>
+        </div>
+      </div>
+
+      <!-- Portfolio Inputs -->
       <div class="calc-controls">
         <div class="field-group">
-          <label class="field-label" for="budgetInput">トリプルNASDAQ用 買付待機資金（円）</label>
+          <label class="field-label" for="setupFundYenInput" id="setupFundYenLabel">前回確定時の投信評価額（円）</label>
           <div class="budget-input-row">
-            <input type="number" id="budgetInput" class="budget-input num" min="0" step="10000" value="300000">
+            <input type="number" id="setupFundYenInput" class="budget-input num" min="0" step="1000" value="70000">
           </div>
-          <div class="preset-btns">
-            <button type="button" class="preset-btn num" data-budget="100000">10万円</button>
-            <button type="button" class="preset-btn num" data-budget="300000">30万円</button>
-            <button type="button" class="preset-btn num" data-budget="500000">50万円</button>
-            <button type="button" class="preset-btn num" data-budget="1000000">100万円</button>
+          <div class="field-hint">金額を入れると保有口数を自動換算</div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="holdingUnitsInput">保有口数（口）※日々の時価連動基準</label>
+          <div class="budget-input-row">
+            <input type="number" id="holdingUnitsInput" class="budget-input num" min="0" step="100" value="74890">
+          </div>
+          <div class="field-hint">約定後は証券画面の保有口数入力でもOK</div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="cashYenInput">待機現金（キャッシュ）残高（円）</label>
+          <div class="budget-input-row">
+            <input type="number" id="cashYenInput" class="budget-input num" min="0" step="1000" value="70000">
+          </div>
+          <div class="field-hint">暴落時の買い増し弾＆利確の受け皿</div>
+        </div>
+      </div>
+
+      <!-- Strategy Mode, Base Ratio, Cutoff & Quick Actions -->
+      <div class="rebalance-toolbar">
+        <div>
+          <span class="field-label">リバランス方式（許容バンド ±4%）</span>
+          <div class="cutoff-toggle" role="group" aria-label="リバランス方式の選択">
+            <button type="button" class="cutoff-btn active" id="btnModeDynamic" data-mode="dynamic">動的（推奨: 押し目厚め・反発利確）</button>
+            <button type="button" class="cutoff-btn" id="btnModeFixed" data-mode="fixed">固定比率（常に基準維持）</button>
           </div>
         </div>
 
         <div>
-          <span class="field-label">証券会社の注文締切時刻</span>
+          <label class="field-label" for="baseTargetSelect">平常時の基準比率</label>
+          <select id="baseTargetSelect" class="budget-input num" style="padding: 6px 8px; font-size: 12.5px; width: auto;">
+            <option value="30">投信 30% : 現金 70%</option>
+            <option value="40">投信 40% : 現金 60%</option>
+            <option value="50" selected>投信 50% : 現金 50%（7万:7万）</option>
+            <option value="60">投信 60% : 現金 40%</option>
+            <option value="70">投信 70% : 現金 30%</option>
+          </select>
+        </div>
+
+        <div>
+          <span class="field-label">注文締切時刻</span>
           <div class="cutoff-toggle" role="group" aria-label="注文締切時刻の選択">
-            <button type="button" class="cutoff-btn num active" id="btnCutoff1530" data-cutoff="15:30">15:30（SBI・楽天等）</button>
+            <button type="button" class="cutoff-btn num active" id="btnCutoff1530" data-cutoff="15:30">15:30</button>
             <button type="button" class="cutoff-btn num" id="btnCutoff1500" data-cutoff="15:00">15:00</button>
           </div>
         </div>
-      </div>
 
-      <div class="calc-result-grid">
-        <div class="calc-box primary">
-          <div class="calc-box-lbl">今回の推奨注文額（金額指定）</div>
-          <div class="calc-box-val num" id="calcOrderYen">---円</div>
-          <div class="calc-box-sub num" id="calcOrderSub">推奨比率 --%</div>
-        </div>
-        <div class="calc-box">
-          <div class="calc-box-lbl">注文後の残り待機資金</div>
-          <div class="calc-box-val num" id="calcRemainYen">---円</div>
-          <div class="calc-box-sub">続落時の第2弾・第3弾として温存</div>
-        </div>
-        <div class="calc-box">
-          <div class="calc-box-lbl">横ばい時の想定取得口数</div>
-          <div class="calc-box-val num" id="calcEstUnits">---口</div>
-          <div class="calc-box-sub">※売却時は「口数指定」が鉄則</div>
+        <div class="preset-btns">
+          <button type="button" class="preset-btn accent-btn" id="btnApplyAfterTrade">推奨売買後の残高を反映</button>
+          <button type="button" class="preset-btn" id="btnReset70k">初期値(7万:7万)に戻す</button>
         </div>
       </div>
 
@@ -942,7 +1145,8 @@
               <th>約定までの米国市場シナリオ</th>
               <th class="r">想定約定価額</th>
               <th class="r">前回確定比</th>
-              <th class="r">推奨額での取得口数</th>
+              <th class="r">今回注文の約定結果</th>
+              <th class="r">約定後の合計資産（投信比率）</th>
             </tr>
           </thead>
           <tbody id="scenarioTbody"></tbody>
@@ -1008,9 +1212,9 @@
       </div>
       <div class="discord-status-row" id="discordStatusRow"></div>
       <ul class="bullet-list">
-        <li><strong>営業日 10:15頃（着地速報）</strong>：三菱UFJ銀行の公示仲値（10:00）反映後、その日夕方に確定する発射台基準価額と暫定スコアを通知します。</li>
-        <li><strong>営業日 15:05頃（締切直前の最終注文ジャッジ）</strong>：昼間の時間外 <code>NQ=F</code> 先物（×3倍）と為替の動きまで織り込み、「今なら何％注文してよいか／見送るべきか／朝の注文を取り消すべきか」を最終通知します。</li>
-        <li><strong>営業日 13:00〜14:55（買い好機急浮上アラート）</strong>：昼間の時間外取引で米国株先物やドル円が急落し、購入指示指数が買い好機（68点以上かつ昼間リード−1.5%以下、または朝比+10点以上急上昇）に入った瞬間に先行通知します。</li>
+        <li><strong>営業日 10:15頃（着地＆時価バランス速報）</strong>：三菱UFJ銀行の公示仲値（10:00）反映後、その日夕方に確定する発射台基準価額と現在のポートフォリオ実質比率（投信：現金）を通知します。</li>
+        <li><strong>営業日 15:05頃（締切直前の最終リバランスジャッジ）</strong>：昼間の時間外 <code>NQ=F</code> 先物（×3倍）と為替の動きまで織り込み、「金額指定で何円買い増すか／口数指定で何口利確売却するか／ホールドか」を具体的に最終通知します。</li>
+        <li><strong>営業日 13:00〜14:55（リバランス好機急浮上アラート）</strong>：昼間の時間外取引で急落（買い増し好機急浮上）または急伸（利確売りライン到達）が発生した瞬間に先行通知します。</li>
       </ul>
     </section>
   </main>
@@ -1027,26 +1231,54 @@
 
       var DATA_BRANCH_URL = "https://raw.githubusercontent.com/msmttng/fund-forecast/data/triple_data.json";
       var DATA_LOCAL_URL = "./triple_data.json";
-      var STORAGE_BUDGET_KEY = "triple_ndx_budget_yen_v1";
+      var STORAGE_PORTFOLIO_KEY = "triple_ndx_portfolio_v2";
       var STORAGE_CUTOFF_KEY = "triple_ndx_cutoff_mode_v1";
       var STORAGE_CACHE_KEY = "triple_ndx_data_cache_v1";
 
-      var tripleData = null;
-      var budgetYen = loadBudget();
-      var cutoffMode = loadCutoffMode();
+      var DEFAULT_PORTFOLIO = {
+        holdingUnits: 74890,
+        cashYen: 70000,
+        baseTargetPct: 50,
+        mode: "dynamic",
+        customized: false
+      };
 
-      function loadBudget() {
+      var tripleData = null;
+      var portfolioState = loadPortfolioState();
+      var cutoffMode = loadCutoffMode();
+      var lastComputedPlan = null;
+
+      function cloneDefaultPortfolio() {
+        return {
+          holdingUnits: DEFAULT_PORTFOLIO.holdingUnits,
+          cashYen: DEFAULT_PORTFOLIO.cashYen,
+          baseTargetPct: DEFAULT_PORTFOLIO.baseTargetPct,
+          mode: DEFAULT_PORTFOLIO.mode,
+          customized: false
+        };
+      }
+
+      function loadPortfolioState() {
         try {
-          var v = parseInt(window.localStorage.getItem(STORAGE_BUDGET_KEY) || "300000", 10);
-          return (!isNaN(v) && v >= 0) ? v : 300000;
+          var raw = window.localStorage.getItem(STORAGE_PORTFOLIO_KEY);
+          if (!raw) return cloneDefaultPortfolio();
+          var obj = JSON.parse(raw);
+          if (!obj || typeof obj !== "object") return cloneDefaultPortfolio();
+          return {
+            holdingUnits: (!isNaN(obj.holdingUnits) && obj.holdingUnits >= 0) ? Math.round(Number(obj.holdingUnits)) : DEFAULT_PORTFOLIO.holdingUnits,
+            cashYen: (!isNaN(obj.cashYen) && obj.cashYen >= 0) ? Math.round(Number(obj.cashYen)) : DEFAULT_PORTFOLIO.cashYen,
+            baseTargetPct: (!isNaN(obj.baseTargetPct) && obj.baseTargetPct >= 10 && obj.baseTargetPct <= 90) ? Number(obj.baseTargetPct) : DEFAULT_PORTFOLIO.baseTargetPct,
+            mode: obj.mode === "fixed" ? "fixed" : "dynamic",
+            customized: Boolean(obj.customized)
+          };
         } catch (e) {
-          return 300000;
+          return cloneDefaultPortfolio();
         }
       }
 
-      function saveBudget(v) {
+      function savePortfolioState() {
         try {
-          window.localStorage.setItem(STORAGE_BUDGET_KEY, String(v));
+          window.localStorage.setItem(STORAGE_PORTFOLIO_KEY, JSON.stringify(portfolioState));
         } catch (e) {}
       }
 
@@ -1161,21 +1393,343 @@
         document.getElementById("gaugeScoreText").textContent = String(clamped);
       }
 
-      function renderCalculator() {
+      function interpLinear(x, knots) {
+        if (x <= knots[0][0]) return knots[0][1];
+        if (x >= knots[knots.length - 1][0]) return knots[knots.length - 1][1];
+        for (var i = 1; i < knots.length; i++) {
+          var x0 = knots[i - 1][0], y0 = knots[i - 1][1];
+          var x1 = knots[i][0], y1 = knots[i][1];
+          if (x0 <= x && x <= x1) {
+            if (Math.abs(x1 - x0) < 1e-12) return y1;
+            return y0 + ((x - x0) / (x1 - x0)) * (y1 - y0);
+          }
+        }
+        return knots[knots.length - 1][1];
+      }
+
+      function calcDynamicTargetPct(baseTargetPct, score) {
+        var tilt = interpLinear(Number(score || 50), [
+          [0, -15],
+          [15, -14],
+          [25, -8.5],
+          [35, -3],
+          [45, 0],
+          [55, 0],
+          [65, 8],
+          [75, 14],
+          [85, 19],
+          [100, 22]
+        ]);
+        return Math.round(Math.max(25, Math.min(78, baseTargetPct + tilt)) * 10) / 10;
+      }
+
+      function solveRebalance(targetPct, holdingUnits, cashYen, provNav, leadPct, nightsCnt, vixCur, fomcHit) {
+        var bandPt = 4.0;
+        var minTradeYen = 3000;
+        var curFundYen = Math.round((holdingUnits * provNav) / 10000);
+        var totalYen = curFundYen + cashYen;
+        var curWeightPct = totalYen > 0 ? Math.round((curFundYen / totalYen) * 10000) / 100 : 0;
+        var targetFundYen = Math.round(totalYen * (targetPct / 100));
+        var rawDiffYen = targetFundYen - curFundYen;
+        var driftPt = Math.round((curWeightPct - targetPct) * 100) / 100;
+
+        var action = "HOLD";
+        var orderMethod = "なし";
+        var tradeYen = 0;
+        var tradeUnits = 0;
+        var capNote = null;
+
+        if (driftPt <= -bandPt && rawDiffYen >= minTradeYen && cashYen >= minTradeYen) {
+          if (leadPct >= 4.5) {
+            action = "HOLD_BOUNCE_TRAP";
+            capNote = "昼間の時間外リードが " + formatSignedPct(leadPct) + " 急反発中のため本日の買い増しは見送り推奨";
+          } else {
+            var maxCashFrac = 0.45;
+            if (fomcHit) {
+              maxCashFrac = 0.15;
+              capNote = "FOMC発表またぎのため1回の買付上限を現金の15%に抑制";
+            } else if (nightsCnt >= 3 || vixCur >= 35.0) {
+              maxCashFrac = 0.18;
+              capNote = "米国市場" + nightsCnt + "晩またぎ/高ボラのため1回の買付上限を現金の18%に抑制";
+            } else if (nightsCnt === 2) {
+              maxCashFrac = 0.25;
+              capNote = "祝日挟み（米国市場2晩分）のため1回の買付上限を現金の25%に抑制";
+            }
+            var cashCapYen = Math.floor(cashYen * maxCashFrac);
+            var desiredYen = rawDiffYen;
+            if (cashCapYen >= minTradeYen && desiredYen > cashCapYen) {
+              desiredYen = cashCapYen;
+            } else {
+              capNote = null;
+            }
+            var roundedBuy = Math.min(cashYen, Math.max(0, Math.round(desiredYen / 1000) * 1000));
+            if (roundedBuy >= minTradeYen) {
+              action = "BUY";
+              orderMethod = "金額指定買付";
+              tradeYen = roundedBuy;
+              tradeUnits = provNav > 0 ? Math.round((roundedBuy / provNav) * 10000) : 0;
+            }
+          }
+        } else if (driftPt >= bandPt && (-rawDiffYen) >= minTradeYen && holdingUnits > 0) {
+          if (leadPct <= -4.5) {
+            action = "HOLD_CRASH_GUARD";
+            capNote = "昼間の時間外リードが " + formatSignedPct(leadPct) + " 急落中のため本日の売却は見送り推奨";
+          } else {
+            var excessYen = -rawDiffYen;
+            if (nightsCnt >= 2) {
+              excessYen = Math.round(excessYen * 0.75);
+              capNote = "祝日挟み（米国市場" + nightsCnt + "晩分）のため1回の利確売却を超過分の75%に調整";
+            }
+            var rawSellUnits = provNav > 0 ? ((excessYen / provNav) * 10000) : 0;
+            var roundedUnits = Math.min(holdingUnits, Math.max(0, Math.round(rawSellUnits / 100) * 100));
+            var estSellYen = Math.round((roundedUnits * provNav) / 10000);
+            if (estSellYen >= minTradeYen && roundedUnits >= 100) {
+              action = "SELL";
+              orderMethod = "口数指定売却";
+              tradeUnits = roundedUnits;
+              tradeYen = estSellYen;
+            }
+          }
+        }
+
+        var afterFundYen = curFundYen;
+        var afterCashYen = cashYen;
+        var afterUnits = holdingUnits;
+        if (action === "BUY") {
+          afterFundYen = curFundYen + tradeYen;
+          afterCashYen = cashYen - tradeYen;
+          afterUnits = holdingUnits + tradeUnits;
+        } else if (action === "SELL") {
+          afterFundYen = Math.max(0, curFundYen - tradeYen);
+          afterCashYen = cashYen + tradeYen;
+          afterUnits = Math.max(0, holdingUnits - tradeUnits);
+        }
+        var afterTotal = afterFundYen + afterCashYen;
+        var afterWeightPct = afterTotal > 0 ? Math.round((afterFundYen / afterTotal) * 10000) / 100 : 0;
+
+        return {
+          curFundYen: curFundYen,
+          cashYen: cashYen,
+          totalYen: totalYen,
+          curWeightPct: curWeightPct,
+          targetWeightPct: targetPct,
+          targetFundYen: targetFundYen,
+          rawDiffYen: rawDiffYen,
+          driftPt: driftPt,
+          bandPt: bandPt,
+          action: action,
+          orderMethod: orderMethod,
+          tradeYen: tradeYen,
+          tradeUnits: tradeUnits,
+          capNote: capNote,
+          afterFundYen: afterFundYen,
+          afterCashYen: afterCashYen,
+          afterUnits: afterUnits,
+          afterWeightPct: afterWeightPct
+        };
+      }
+
+      function syncInputsFromPortfolioState() {
+        var d0Nav = (tripleData && tripleData.fund && tripleData.fund.nav) ? Number(tripleData.fund.nav) : 9347;
+        var setupYen = Math.round((portfolioState.holdingUnits * d0Nav) / 10000);
+        document.getElementById("setupFundYenInput").value = String(setupYen);
+        document.getElementById("holdingUnitsInput").value = String(portfolioState.holdingUnits);
+        document.getElementById("cashYenInput").value = String(portfolioState.cashYen);
+        var sel = document.getElementById("baseTargetSelect");
+        sel.value = String(Math.round(portfolioState.baseTargetPct));
+        document.getElementById("btnModeDynamic").classList.toggle("active", portfolioState.mode === "dynamic");
+        document.getElementById("btnModeFixed").classList.toggle("active", portfolioState.mode === "fixed");
+      }
+
+      function renderPortfolioRebalance() {
         if (!tripleData) return;
         var sig = tripleData.signal;
         var f = tripleData.fund;
-        var pct = Number(sig.recommendedPct || 0);
-        var orderYen = Math.round(budgetYen * pct / 100);
-        var remainYen = Math.max(0, budgetYen - orderYen);
-        var provNav = Number(f.provisionalExecNav || f.launchpadNav || 10000);
-        var estUnits = provNav > 0 ? Math.round((orderYen / provNav) * 10000) : 0;
+        var lead = tripleData.intradayLead;
+        var tech = tripleData.technicals;
+        var sched = activeSchedule();
 
-        document.getElementById("calcOrderYen").textContent = formatInt(orderYen) + "円";
-        document.getElementById("calcOrderSub").textContent = "推奨投入比率 " + pct + "%（待機資金 " + formatInt(budgetYen) + "円）";
-        document.getElementById("calcRemainYen").textContent = formatInt(remainYen) + "円";
-        document.getElementById("calcEstUnits").textContent = orderYen > 0 ? ("約 " + formatInt(estUnits) + "口") : "0口（見送り）";
+        var d0Nav = Number(f.nav || 9347);
+        var provNav = Number(f.provisionalExecNav || f.launchpadNav || d0Nav);
+        var leadPct = Number(lead.totalLeadPct || 0);
+        var nightsCnt = Number(sched.nightsAfterCutoff || 1);
+        var vixCur = Number(tech.vix || 18);
+        var fomcHit = Boolean(sched.fomcDatesHit && sched.fomcDatesHit.length > 0);
 
+        document.getElementById("setupFundYenLabel").textContent =
+          "前回確定時（" + f.navDateLabel + " " + formatInt(d0Nav) + "円）の評価額";
+
+        var targetPct = portfolioState.mode === "dynamic"
+          ? calcDynamicTargetPct(portfolioState.baseTargetPct, sig.score)
+          : Number(portfolioState.baseTargetPct);
+
+        var plan = solveRebalance(
+          targetPct,
+          portfolioState.holdingUnits,
+          portfolioState.cashYen,
+          provNav,
+          leadPct,
+          nightsCnt,
+          vixCur,
+          fomcHit
+        );
+        lastComputedPlan = plan;
+
+        // 前回確定時 vs 現在実質資産バー更新
+        var d0FundYen = Math.round((portfolioState.holdingUnits * d0Nav) / 10000);
+        var d0TotalYen = d0FundYen + portfolioState.cashYen;
+        var diffTotal = plan.totalYen - d0TotalYen;
+        var diffStr = (diffTotal > 0 ? "+" : "") + formatInt(diffTotal) + "円";
+
+        document.getElementById("allocSummaryTotal").textContent =
+          "現在実質合計: " + formatInt(plan.totalYen) + "円（前回比 " + diffStr + "）";
+        document.getElementById("allocD0Ref").textContent =
+          "前回(" + f.navDateLabel + "): 投信 " + formatInt(d0FundYen) + "円 + 現金 " + formatInt(portfolioState.cashYen) + "円";
+
+        var barW = Math.max(0, Math.min(100, plan.curWeightPct));
+        document.getElementById("allocSegFund").style.width = barW.toFixed(1) + "%";
+        var pinLeft = Math.max(4, Math.min(96, plan.targetWeightPct));
+        document.getElementById("allocTargetPin").style.left = pinLeft.toFixed(1) + "%";
+        document.getElementById("allocTargetTag").textContent =
+          (portfolioState.mode === "dynamic" ? "動的目標 " : "固定目標 ") + plan.targetWeightPct.toFixed(1) + "%";
+
+        var cashPct = Math.max(0, 100 - plan.curWeightPct);
+        document.getElementById("allocLegFund").textContent =
+          "■ 投信時価: " + formatInt(plan.curFundYen) + "円（" + plan.curWeightPct.toFixed(1) + "% / " + formatInt(portfolioState.holdingUnits) + "口）";
+        document.getElementById("allocLegCash").textContent =
+          "□ 待機現金: " + formatInt(plan.cashYen) + "円（" + cashPct.toFixed(1) + "%）";
+
+        // 3ボックス ＆ Heroカードのリアルタイム連動更新
+        var actBox = document.getElementById("rebActionBox");
+        var actLbl = document.getElementById("rebActionLbl");
+        var orderEl = document.getElementById("calcOrderYen");
+        var orderSub = document.getElementById("calcOrderSub");
+        var afterEl = document.getElementById("calcRemainYen");
+        var afterSub = document.getElementById("calcAfterSub");
+        var trigEl = document.getElementById("calcEstUnits");
+        var trigSub = document.getElementById("calcTriggersSub");
+        var applyBtn = document.getElementById("btnApplyAfterTrade");
+
+        var wState = sched.windowState;
+        var appLbl = sched.applicationDateLabel;
+        var execLbl = sched.executionDateLabel;
+        var heroTone = sig.tone || "wait";
+        var heroBadge = sig.actionBadge;
+        var heroHead = sig.headline;
+        var heroDet = sig.detailAdvice;
+
+        if (plan.action === "BUY") {
+          actBox.className = "calc-box action-buy";
+          actLbl.textContent = "今回の推奨注文（買い増しリバランス）";
+          orderEl.textContent = "金額指定 +" + formatInt(plan.tradeYen) + "円";
+          orderSub.textContent =
+            "想定 +" + formatInt(plan.tradeUnits) + "口 ｜ " +
+            (plan.capNote ? plan.capNote : ("目標 " + plan.targetWeightPct.toFixed(1) + "% へ不足分を補充"));
+          applyBtn.disabled = false;
+          applyBtn.style.opacity = "1";
+
+          document.getElementById("schedAllocVal").textContent = "金額指定 +" + formatInt(plan.tradeYen) + "円 買付";
+          document.getElementById("schedAllocSub").textContent =
+            "投信 " + plan.curWeightPct.toFixed(1) + "% → 買付後 " + plan.afterWeightPct.toFixed(1) + "%（現金残 " + formatInt(plan.afterCashYen) + "円）";
+
+          if (wState === "golden_window") {
+            heroTone = sig.score >= 65 ? "buy_strong" : "buy_mild";
+            heroBadge = "買付OK（" + formatInt(plan.tradeYen) + "円）";
+            heroHead = "【今なら買い増しOK】金額指定で " + formatInt(plan.tradeYen) + "円 買付リバランス推奨";
+            heroDet = "締切（" + sched.cutoffTimeStr + "）前チェック完了。現在バランスは 投信 " + formatInt(plan.curFundYen) + "円（" + plan.curWeightPct.toFixed(1) + "%）：現金 " + formatInt(plan.cashYen) + "円 です。目標比率 " + plan.targetWeightPct.toFixed(1) + "% に基づき、現金から「金額指定で " + formatInt(plan.tradeYen) + "円」買い増し推奨（買付後：現金残り " + formatInt(plan.afterCashYen) + "円、約定日: " + execLbl + "）。";
+          } else {
+            heroTone = "watch_buy";
+            heroBadge = appLbl + " 15:05まで待機";
+            heroHead = "【買い増しリバランス圏（+" + formatInt(plan.tradeYen) + "円目安）】発注は " + appLbl + " 15:05 の最終確認後";
+            heroDet = "下落により現在バランスが 投信 " + formatInt(plan.curFundYen) + "円（" + plan.curWeightPct.toFixed(1) + "%）：現金 " + formatInt(plan.cashYen) + "円 に変化し、目標比率 " + plan.targetWeightPct.toFixed(1) + "% に対して「金額指定 " + formatInt(plan.tradeYen) + "円 の買い増し（残り現金 " + formatInt(plan.afterCashYen) + "円温存）」が適正です。今入れても " + appLbl + " 15:15 に入れても同じ " + execLbl + " 約定になるため、15:05 の最終通知を見てから発注するのが最善です。";
+          }
+        } else if (plan.action === "SELL") {
+          actBox.className = "calc-box action-sell";
+          actLbl.textContent = "今回の推奨注文（利確売却リバランス）";
+          orderEl.textContent = "口数指定 " + formatInt(plan.tradeUnits) + "口 売却";
+          orderSub.textContent =
+            "想定現金回収 +" + formatInt(plan.tradeYen) + "円 ｜ ※必ず金額指定ではなく「口数指定」で発注";
+          applyBtn.disabled = false;
+          applyBtn.style.opacity = "1";
+
+          document.getElementById("schedAllocVal").textContent = "口数指定 " + formatInt(plan.tradeUnits) + "口 利確売";
+          document.getElementById("schedAllocSub").textContent =
+            "約 +" + formatInt(plan.tradeYen) + "円 現金回収 → 現金計 " + formatInt(plan.afterCashYen) + "円";
+
+          heroTone = "buy_mild";
+          if (wState === "golden_window") {
+            heroBadge = "利確売却OK（" + formatInt(plan.tradeUnits) + "口）";
+            heroHead = "【今なら利確売りOK】口数指定で " + formatInt(plan.tradeUnits) + "口（約" + formatInt(plan.tradeYen) + "円分）売却推奨";
+            heroDet = "上昇により投信比率が " + plan.curWeightPct.toFixed(1) + "%（" + formatInt(plan.curFundYen) + "円）へ膨らみ、目標比率 " + plan.targetWeightPct.toFixed(1) + "% を超過しています。必ず「口数指定で " + formatInt(plan.tradeUnits) + "口」売却し、現金残高を " + formatInt(plan.afterCashYen) + "円 に補充してください。";
+          } else {
+            heroBadge = "利確候補（" + appLbl + " 15:05確認）";
+            heroHead = "【利確リバランス圏（" + formatInt(plan.tradeUnits) + "口 売却目安）】発注は " + appLbl + " 15:05 の最終確認後";
+            heroDet = "現在バランスが 投信 " + formatInt(plan.curFundYen) + "円（" + plan.curWeightPct.toFixed(1) + "%）：現金 " + formatInt(plan.cashYen) + "円 と目標（" + plan.targetWeightPct.toFixed(1) + "%）を上回っています。" + appLbl + " 15:05 時点で急落していなければ「口数指定で " + formatInt(plan.tradeUnits) + "口（約" + formatInt(plan.tradeYen) + "円相当）」の利確売却が合理的です。";
+          }
+        } else if (plan.action === "HOLD_BOUNCE_TRAP" || sig.intradayBounceTrap) {
+          actBox.className = "calc-box action-danger";
+          actLbl.textContent = "今回の推奨注文（昼間急反発ガード）";
+          orderEl.textContent = "買い増し見送り／取消";
+          orderSub.textContent = plan.capNote || "時間外先物の急反発による高値掴みを回避";
+          applyBtn.disabled = true;
+          applyBtn.style.opacity = "0.5";
+
+          document.getElementById("schedAllocVal").textContent = "注文NG・見送り";
+          document.getElementById("schedAllocSub").textContent = "昼間時間外リード急反発のため高値掴み警戒";
+          heroTone = "danger";
+        } else {
+          actBox.className = "calc-box";
+          actLbl.textContent = "今回の推奨注文（許容バンド ±4% 内）";
+          orderEl.textContent = "売買不要（ホールド）";
+          orderSub.textContent =
+            "現在 " + plan.curWeightPct.toFixed(1) + "% vs 目標 " + plan.targetWeightPct.toFixed(1) + "%（乖離 " + (plan.driftPt > 0 ? "+" : "") + plan.driftPt.toFixed(1) + "pt）";
+          applyBtn.disabled = true;
+          applyBtn.style.opacity = "0.5";
+
+          document.getElementById("schedAllocVal").textContent = "売買不要（ホールド）";
+          document.getElementById("schedAllocSub").textContent =
+            "現在 投信" + plan.curWeightPct.toFixed(1) + "% : 現金" + cashPct.toFixed(1) + "%（目標バンド内）";
+
+          heroTone = "wait";
+          heroBadge = "売買不要（ホールド）";
+          heroHead = "【リバランス不要・ホールド（現在 投信" + plan.curWeightPct.toFixed(1) + "% : 現金" + cashPct.toFixed(1) + "%）】";
+          heroDet = "現在の資産配分（投信 " + formatInt(plan.curFundYen) + "円 / 現金 " + formatInt(plan.cashYen) + "円）は、目標比率 " + plan.targetWeightPct.toFixed(1) + "%（許容バンド ±4.0%）の範囲内です。無理に売買せず保有継続が合理的です。";
+        }
+
+        document.getElementById("heroCard").className = "card hero-card tone-" + heroTone;
+        renderGauge(sig.score, heroTone);
+        document.getElementById("actionBadge").textContent = heroBadge;
+        document.getElementById("verdictHeadline").textContent = heroHead;
+        document.getElementById("verdictDetail").textContent = heroDet;
+
+        afterEl.textContent = "投信 " + plan.afterWeightPct.toFixed(1) + "% : 現金 " + formatInt(plan.afterCashYen) + "円";
+        afterSub.textContent =
+          "投信 " + formatInt(plan.afterFundYen) + "円（約 " + formatInt(plan.afterUnits) + "口） / 続落待機キャッシュ " + formatInt(plan.afterCashYen) + "円";
+
+        // 次回の利確売り・買い増し発動目安基準価額（取引後の口数・現金ベース）
+        function navForWeight(wPct) {
+          var w = wPct / 100;
+          if (plan.afterUnits <= 0 || plan.afterCashYen <= 0 || w <= 0.01 || w >= 0.99) return null;
+          return Math.round(((10000 * plan.afterCashYen) / plan.afterUnits) * (w / (1 - w)));
+        }
+        var rawSellNav = navForWeight(Math.min(90, portfolioState.baseTargetPct + 4.0));
+        var sellTriggerNav = rawSellNav
+          ? Math.max(rawSellNav, Math.round(provNav * (plan.action === "BUY" ? 1.115 : 1.04)))
+          : null;
+        var rawBuyNav = navForWeight(Math.max(15, plan.afterWeightPct - 4.0));
+        var buyTriggerNav = rawBuyNav
+          ? Math.min(rawBuyNav, Math.round(provNav * 0.92))
+          : null;
+
+        if (sellTriggerNav && buyTriggerNav) {
+          trigEl.textContent = "利確 " + formatInt(sellTriggerNav) + "円 / 買増 " + formatInt(buyTriggerNav) + "円";
+          trigSub.textContent = "反発で" + formatInt(sellTriggerNav) + "円超なら口数売却で利益を現金化";
+        } else {
+          trigEl.textContent = "---";
+          trigSub.textContent = "反発時は「口数指定」で利確し現金補充";
+        }
+
+        // 5列シナリオ表
         var tbody = document.getElementById("scenarioTbody");
         tbody.textContent = "";
         (tripleData.scenarios || []).forEach(function (sc) {
@@ -1183,6 +1737,7 @@
           if (Math.abs(Number(sc.nqMovePct)) < 0.01) {
             tr.className = "current-row";
           }
+          var pSc = Number(sc.estimatedNav || provNav);
 
           var tdLbl = document.createElement("td");
           tdLbl.textContent = sc.label;
@@ -1190,7 +1745,7 @@
 
           var tdNav = document.createElement("td");
           tdNav.className = "r num";
-          tdNav.textContent = "約 " + formatInt(sc.estimatedNav) + "円";
+          tdNav.textContent = "約 " + formatInt(pSc) + "円";
           tr.appendChild(tdNav);
 
           var tdVs = document.createElement("td");
@@ -1198,11 +1753,35 @@
           tdVs.textContent = formatSignedPct(sc.vsFridayOrD0Pct);
           tr.appendChild(tdVs);
 
-          var tdUnits = document.createElement("td");
-          tdUnits.className = "r num";
-          var u = (orderYen > 0 && sc.estimatedNav > 0) ? Math.round((orderYen / sc.estimatedNav) * 10000) : 0;
-          tdUnits.textContent = orderYen > 0 ? ("約 " + formatInt(u) + "口") : "---";
-          tr.appendChild(tdUnits);
+          var tdTrade = document.createElement("td");
+          tdTrade.className = "r num";
+          var fundSc = 0;
+          var cashSc = portfolioState.cashYen;
+
+          if (plan.action === "BUY" && pSc > 0) {
+            var uBought = Math.round((plan.tradeYen / pSc) * 10000);
+            tdTrade.textContent = "約 +" + formatInt(uBought) + "口 取得";
+            fundSc = Math.round(((portfolioState.holdingUnits + uBought) * pSc) / 10000);
+            cashSc = portfolioState.cashYen - plan.tradeYen;
+          } else if (plan.action === "SELL" && pSc > 0) {
+            var yProceeds = Math.round((plan.tradeUnits * pSc) / 10000);
+            tdTrade.textContent = "約 +" + formatInt(yProceeds) + "円 回収";
+            fundSc = Math.round((Math.max(0, portfolioState.holdingUnits - plan.tradeUnits) * pSc) / 10000);
+            cashSc = portfolioState.cashYen + yProceeds;
+          } else {
+            tdTrade.textContent = "売買なし";
+            fundSc = Math.round((portfolioState.holdingUnits * pSc) / 10000);
+            cashSc = portfolioState.cashYen;
+          }
+          tr.appendChild(tdTrade);
+
+          var totSc = fundSc + cashSc;
+          var wSc = totSc > 0 ? ((fundSc / totSc) * 100) : 0;
+          var tdAfter = document.createElement("td");
+          tdAfter.className = "r num";
+          var profitHint = (wSc >= portfolioState.baseTargetPct + 4.0 && pSc >= (sellTriggerNav || 999999)) ? " ★利確圏" : "";
+          tdAfter.textContent = formatInt(totSc) + "円（投信" + wSc.toFixed(1) + "%" + profitHint + "）";
+          tr.appendChild(tdAfter);
 
           tbody.appendChild(tr);
         });
@@ -1461,7 +2040,16 @@
           dsRow.appendChild(chip2);
         }
 
-        renderCalculator();
+        if (!portfolioState.customized && tripleData.rebalance && tripleData.rebalance.config) {
+          var rCfg = tripleData.rebalance.config;
+          if (rCfg.holdingUnits !== undefined) portfolioState.holdingUnits = Math.round(Number(rCfg.holdingUnits));
+          if (rCfg.cashYen !== undefined) portfolioState.cashYen = Math.round(Number(rCfg.cashYen));
+          if (rCfg.baseTargetPct !== undefined) portfolioState.baseTargetPct = Number(rCfg.baseTargetPct);
+          if (rCfg.mode === "fixed" || rCfg.mode === "dynamic") portfolioState.mode = rCfg.mode;
+          syncInputsFromPortfolioState();
+        }
+
+        renderPortfolioRebalance();
         updateCountdownAndFreshness();
       }
 
@@ -1490,25 +2078,90 @@
       }
 
       // Init controls
-      var budgetInput = document.getElementById("budgetInput");
-      budgetInput.value = String(budgetYen);
-      budgetInput.addEventListener("input", function () {
-        var v = parseInt(budgetInput.value || "0", 10);
-        budgetYen = (!isNaN(v) && v >= 0) ? v : 0;
-        saveBudget(budgetYen);
-        renderCalculator();
+      syncInputsFromPortfolioState();
+
+      var setupFundYenInput = document.getElementById("setupFundYenInput");
+      var holdingUnitsInput = document.getElementById("holdingUnitsInput");
+      var cashYenInput = document.getElementById("cashYenInput");
+      var baseTargetSelect = document.getElementById("baseTargetSelect");
+
+      setupFundYenInput.addEventListener("input", function () {
+        var yenVal = parseInt(setupFundYenInput.value || "0", 10);
+        if (isNaN(yenVal) || yenVal < 0) yenVal = 0;
+        var d0Nav = (tripleData && tripleData.fund && tripleData.fund.nav) ? Number(tripleData.fund.nav) : 9347;
+        portfolioState.holdingUnits = d0Nav > 0 ? Math.round((yenVal / d0Nav) * 10000) : 0;
+        portfolioState.customized = true;
+        holdingUnitsInput.value = String(portfolioState.holdingUnits);
+        savePortfolioState();
+        renderPortfolioRebalance();
       });
 
-      var presets = document.querySelectorAll(".preset-btn");
-      for (var i = 0; i < presets.length; i++) {
-        presets[i].addEventListener("click", function () {
-          var v = parseInt(this.getAttribute("data-budget") || "300000", 10);
-          budgetYen = v;
-          budgetInput.value = String(v);
-          saveBudget(v);
-          renderCalculator();
-        });
-      }
+      holdingUnitsInput.addEventListener("input", function () {
+        var uVal = parseInt(holdingUnitsInput.value || "0", 10);
+        if (isNaN(uVal) || uVal < 0) uVal = 0;
+        var d0Nav = (tripleData && tripleData.fund && tripleData.fund.nav) ? Number(tripleData.fund.nav) : 9347;
+        portfolioState.holdingUnits = uVal;
+        portfolioState.customized = true;
+        setupFundYenInput.value = String(Math.round((uVal * d0Nav) / 10000));
+        savePortfolioState();
+        renderPortfolioRebalance();
+      });
+
+      cashYenInput.addEventListener("input", function () {
+        var cVal = parseInt(cashYenInput.value || "0", 10);
+        portfolioState.cashYen = (!isNaN(cVal) && cVal >= 0) ? cVal : 0;
+        portfolioState.customized = true;
+        savePortfolioState();
+        renderPortfolioRebalance();
+      });
+
+      baseTargetSelect.addEventListener("change", function () {
+        var tVal = parseInt(baseTargetSelect.value || "50", 10);
+        portfolioState.baseTargetPct = (!isNaN(tVal) && tVal >= 10 && tVal <= 90) ? tVal : 50;
+        portfolioState.customized = true;
+        savePortfolioState();
+        renderPortfolioRebalance();
+      });
+
+      document.getElementById("btnModeDynamic").addEventListener("click", function () {
+        portfolioState.mode = "dynamic";
+        portfolioState.customized = true;
+        savePortfolioState();
+        syncInputsFromPortfolioState();
+        renderPortfolioRebalance();
+      });
+
+      document.getElementById("btnModeFixed").addEventListener("click", function () {
+        portfolioState.mode = "fixed";
+        portfolioState.customized = true;
+        savePortfolioState();
+        syncInputsFromPortfolioState();
+        renderPortfolioRebalance();
+      });
+
+      document.getElementById("btnApplyAfterTrade").addEventListener("click", function () {
+        if (!lastComputedPlan || (lastComputedPlan.action !== "BUY" && lastComputedPlan.action !== "SELL")) return;
+        portfolioState.holdingUnits = lastComputedPlan.afterUnits;
+        portfolioState.cashYen = lastComputedPlan.afterCashYen;
+        portfolioState.customized = true;
+        savePortfolioState();
+        syncInputsFromPortfolioState();
+        renderPortfolioRebalance();
+      });
+
+      document.getElementById("btnReset70k").addEventListener("click", function () {
+        portfolioState = cloneDefaultPortfolio();
+        if (tripleData && tripleData.rebalance && tripleData.rebalance.config) {
+          var cfg = tripleData.rebalance.config;
+          if (cfg.holdingUnits !== undefined) portfolioState.holdingUnits = Math.round(Number(cfg.holdingUnits));
+          if (cfg.cashYen !== undefined) portfolioState.cashYen = Math.round(Number(cfg.cashYen));
+          if (cfg.baseTargetPct !== undefined) portfolioState.baseTargetPct = Number(cfg.baseTargetPct);
+          if (cfg.mode === "fixed" || cfg.mode === "dynamic") portfolioState.mode = cfg.mode;
+        }
+        savePortfolioState();
+        syncInputsFromPortfolioState();
+        renderPortfolioRebalance();
+      });
 
       function syncCutoffButtons() {
         document.getElementById("btnCutoff1530").classList.toggle("active", cutoffMode === "15:30");

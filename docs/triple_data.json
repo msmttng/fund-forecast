@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-10-31T20:21:23+09:00",
-  "generatedAt": "2026-10-31T20:22:10+09:00",
+  "updatedAt": "2026-10-31T20:51:01+09:00",
+  "generatedAt": "2026-10-31T20:51:48+09:00",
   "updateIntervalSec": 1800,
-  "nextUpdateAt": "2026-10-31T20:51:23+09:00",
+  "nextUpdateAt": "2026-10-31T21:21:01+09:00",
   "fund": {
     "id": "auam-triple-ndx",
     "name": "auAMトリプル・NASDAQ100 為替ヘッジ無し",
@@ -108,7 +108,7 @@
     "applicationDateLabel": "11/2(月)",
     "cutoffAt": "2026-11-02T15:30:00+09:00",
     "cutoffTimeStr": "15:30",
-    "minutesToCutoff": 2587,
+    "minutesToCutoff": 2558,
     "executionDate": "2026-11-04",
     "executionDateLabel": "11/4(水)",
     "nightsAfterCutoff": 2,
@@ -134,7 +134,7 @@
     "applicationDateLabel": "11/2(月)",
     "cutoffAt": "2026-11-02T15:00:00+09:00",
     "cutoffTimeStr": "15:00",
-    "minutesToCutoff": 2557,
+    "minutesToCutoff": 2528,
     "executionDate": "2026-11-04",
     "executionDateLabel": "11/4(水)",
     "nightsAfterCutoff": 2,
@@ -169,8 +169,8 @@
     "capReasons": [
       "祝日挟みで米国市場2晩分をまたぐため上限20%に抑制"
     ],
-    "headline": "【買い圏到達（75点）】確定注文は 11/2(月) 15:05 の最終通知後がベスト",
-    "detailAdvice": "発射台が 8,367円（前営業日比 -10.48%）まで下がり、待機資金の 20% 投入目安の買い圏に入っています。ただし今注文しても 11/2(月) 15:15 に注文しても同じ 11/4(水) 約定になるため、11/2(月) 15:05 の最終ジャッジ（昼間の先物急反発がないかの確認）を見てから発注するのが最も安全です。",
+    "headline": "【買い増しリバランス圏（+18,000円目安）】発注は 11/2(月) 15:05 の最終通知後がベスト",
+    "detailAdvice": "急落により現在バランスが 投信 62,705円（47.2%）：現金 70,000円 に変化し、目標比率 64.0% に対して「金額指定 18,000円 の買い増し（残り現金 52,000円温存）」が適正です。今すぐ入れても 11/2(月) 15:15 に入れても同じ 11/4(水) 約定になるため、11/2(月) 15:05 の最終通知を見てから発注してください。",
     "reasons": [
       "発射台（11/2(月)見込）: 9,347円 → 8,367円（-10.48% / 3日累積 -12.93%）",
       "昼間の時間外リード: NQ=F +0.02% (×3=+0.07%) ＋ 為替 +0.00% ＝ 合計 +0.07%",
@@ -233,6 +233,85 @@
     "cum3dChangePct": -12.93,
     "vix": 19.42,
     "vixChange": 2.22
+  },
+  "rebalance": {
+    "config": {
+      "setupDate": "2026-10-30",
+      "setupNav": 9347,
+      "investedYenAtSetup": 70000,
+      "holdingUnits": 74890,
+      "cashYen": 70000,
+      "baseTargetPct": 50.0,
+      "mode": "dynamic",
+      "rebalanceBandPt": 4.0,
+      "minTradeYen": 3000
+    },
+    "valuation": {
+      "d0FundYen": 70000,
+      "d0TotalYen": 140000,
+      "d0WeightPct": 50.0,
+      "launchpadFundYen": 62660,
+      "launchpadTotalYen": 132660,
+      "launchpadWeightPct": 47.23,
+      "currentFundYen": 62705,
+      "currentCashYen": 70000,
+      "currentTotalYen": 132705,
+      "currentWeightPct": 47.25,
+      "diffFromD0Yen": -7295
+    },
+    "activeMode": "dynamic",
+    "activePlan": {
+      "targetWeightPct": 64.0,
+      "targetFundYen": 84931,
+      "rawDiffYen": 22226,
+      "driftPt": -16.75,
+      "bandPt": 4.0,
+      "action": "BUY",
+      "orderMethod": "金額指定買付",
+      "tradeYen": 18000,
+      "tradeUnits": 21498,
+      "capNote": "祝日挟み（米国市場2晩分）のため1回の買付上限を現金の25%に抑制",
+      "afterFundYen": 80705,
+      "afterCashYen": 52000,
+      "afterUnits": 96388,
+      "afterWeightPct": 60.82
+    },
+    "dynamicPlan": {
+      "targetWeightPct": 64.0,
+      "targetFundYen": 84931,
+      "rawDiffYen": 22226,
+      "driftPt": -16.75,
+      "bandPt": 4.0,
+      "action": "BUY",
+      "orderMethod": "金額指定買付",
+      "tradeYen": 18000,
+      "tradeUnits": 21498,
+      "capNote": "祝日挟み（米国市場2晩分）のため1回の買付上限を現金の25%に抑制",
+      "afterFundYen": 80705,
+      "afterCashYen": 52000,
+      "afterUnits": 96388,
+      "afterWeightPct": 60.82
+    },
+    "fixedPlan": {
+      "targetWeightPct": 50.0,
+      "targetFundYen": 66352,
+      "rawDiffYen": 3647,
+      "driftPt": -2.75,
+      "bandPt": 4.0,
+      "action": "HOLD",
+      "orderMethod": "なし",
+      "tradeYen": 0,
+      "tradeUnits": 0,
+      "capNote": null,
+      "afterFundYen": 62705,
+      "afterCashYen": 70000,
+      "afterUnits": 74890,
+      "afterWeightPct": 47.25
+    },
+    "nextTriggersAfterAction": {
+      "profitTakeNavAtNeutral": 9336,
+      "nextAddBuyNav": 7099
+    }
   },
   "scenarios": [
     {

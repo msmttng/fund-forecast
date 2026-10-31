@@ -1,0 +1,11 @@
+{
+  "setupDate": "2026-10-30",
+  "setupNav": 9347,
+  "investedYenAtSetup": 70000,
+  "holdingUnits": 74890,
+  "cashYen": 70000,
+  "baseTargetPct": 50,
+  "mode": "dynamic",
+  "rebalanceBandPt": 4.0,
+  "minTradeYen": 3000
+}

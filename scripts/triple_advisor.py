@@ -19,6 +19,7 @@ JST = build_data.JST
 UTC = build_data.UTC
 
 TRIPLE_FUND_ID = "auam-triple-ndx"
+PORTFOLIO_JSON_PATH = ROOT_DIR / "portfolio.json"
 TRIPLE_DATA_JSON_PATH = build_data.DOCS_DIR / "triple_data.json"
 TRIPLE_NOTIFY_STATE_PATH = build_data.DOCS_DIR / "triple_notify_state.json"
 PUBLIC_TRIPLE_URL = "https://msmttng.github.io/fund-forecast/triple.html"
@@ -445,6 +446,290 @@ def find_triple_fund(app_data: Dict[str, Any]) -> Dict[str, Any]:
     raise KeyError(f"{TRIPLE_FUND_ID} が data.json 内に見つかりません")
 
 
+def load_portfolio_config(nav_d0: int) -> Dict[str, Any]:
+    """portfolio.json から現在の保有口数・現金残高・基本目標比率設定を読み込む。"""
+    default_cfg: Dict[str, Any] = {
+        "setupDate": "2026-10-30",
+        "setupNav": nav_d0,
+        "investedYenAtSetup": 70000,
+        "holdingUnits": int(round(70000.0 / nav_d0 * 10000.0)) if nav_d0 > 0 else 74890,
+        "cashYen": 70000,
+        "baseTargetPct": 50.0,
+        "mode": "dynamic",
+        "rebalanceBandPt": 4.0,
+        "minTradeYen": 3000,
+    }
+    if PORTFOLIO_JSON_PATH.exists():
+        try:
+            loaded = json.loads(PORTFOLIO_JSON_PATH.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                default_cfg.update(loaded)
+                if not default_cfg.get("holdingUnits") and default_cfg.get("investedYenAtSetup") and nav_d0 > 0:
+                    ref_nav = int(default_cfg.get("setupNav") or nav_d0)
+                    default_cfg["holdingUnits"] = int(
+                        round(float(default_cfg["investedYenAtSetup"]) / ref_nav * 10000.0)
+                    )
+        except Exception as e:
+            print(f"[WARN] Failed to load portfolio.json: {e}", file=sys.stderr)
+    return default_cfg
+
+
+def calc_dynamic_target_pct(base_target_pct: float, score: int) -> float:
+    """購入指示指数（0〜100点）に応じて基本比率（例: 50%）を押し目時最大+22pt・過熱時-15ptシフトした目標投信比率を返す。"""
+    tilt_pt = interp_linear(
+        float(score),
+        [
+            (0.0, -15.0),
+            (15.0, -14.0),
+            (25.0, -8.5),
+            (35.0, -3.0),
+            (45.0, 0.0),
+            (55.0, 0.0),
+            (65.0, 8.0),
+            (75.0, 14.0),
+            (85.0, 19.0),
+            (100.0, 22.0),
+        ],
+    )
+    return round(max(25.0, min(78.0, base_target_pct + tilt_pt)), 1)
+
+
+def _solve_single_mode_rebalance(
+    target_pct: float,
+    holding_units: int,
+    cash_yen: int,
+    prov_nav: int,
+    band_pt: float,
+    min_trade_yen: int,
+    lead_pct: float,
+    nights_cnt: int,
+    vix_cur: float,
+    fomc_hit: bool,
+) -> Dict[str, Any]:
+    """指定された目標投信比率に対するリバランス売買計画（金額指定買い増し／口数指定利確売却／ホールド）を計算する。"""
+    cur_fund_yen = int(round(holding_units * prov_nav / 10000.0))
+    total_yen = cur_fund_yen + cash_yen
+    cur_weight_pct = round((cur_fund_yen / total_yen * 100.0), 2) if total_yen > 0 else 0.0
+    target_fund_yen = int(round(total_yen * (target_pct / 100.0)))
+    raw_diff_yen = target_fund_yen - cur_fund_yen  # 正=買い不足、負=売り超過
+    drift_pt = round(cur_weight_pct - target_pct, 2)  # 負=アンダーウェイト(買い)、正=オーバーウェイト(利確売り)
+
+    action = "HOLD"
+    order_method = "なし"
+    trade_yen = 0
+    trade_units = 0
+    cap_note: Optional[str] = None
+
+    # 1. アンダーウェイト → 現金から買い増しリバランス（金額指定）
+    if drift_pt <= -band_pt and raw_diff_yen >= min_trade_yen and cash_yen >= min_trade_yen:
+        if lead_pct >= 4.5:
+            action = "HOLD_BOUNCE_TRAP"
+            cap_note = f"昼間の時間外リードが {lead_pct:+.2f}% 急反発中のため本日の買い増しは見送り推奨"
+        else:
+            max_cash_frac = 0.45
+            if fomc_hit:
+                max_cash_frac = 0.15
+                cap_note = "FOMC発表またぎのため1回の買付上限を現金の15%に抑制"
+            elif nights_cnt >= 3 or vix_cur >= 35.0:
+                max_cash_frac = 0.18
+                cap_note = f"米国市場{nights_cnt}晩またぎ/高ボラのため1回の買付上限を現金の18%に抑制"
+            elif nights_cnt == 2:
+                max_cash_frac = 0.25
+                cap_note = f"祝日挟み（米国市場{nights_cnt}晩分）のため1回の買付上限を現金の25%に抑制"
+
+            cash_cap_yen = int(cash_yen * max_cash_frac)
+            desired_yen = raw_diff_yen
+            if cash_cap_yen >= min_trade_yen and desired_yen > cash_cap_yen:
+                desired_yen = cash_cap_yen
+            else:
+                cap_note = None
+
+            rounded_buy = int(round(desired_yen / 1000.0)) * 1000
+            rounded_buy = min(cash_yen, max(0, rounded_buy))
+            if rounded_buy >= min_trade_yen:
+                action = "BUY"
+                order_method = "金額指定買付"
+                trade_yen = rounded_buy
+                trade_units = int(round(rounded_buy / prov_nav * 10000.0)) if prov_nav > 0 else 0
+
+    # 2. オーバーウェイト → 利確売却リバランス（口数指定）
+    elif drift_pt >= band_pt and (-raw_diff_yen) >= min_trade_yen and holding_units > 0:
+        if lead_pct <= -4.5:
+            action = "HOLD_CRASH_GUARD"
+            cap_note = f"昼間の時間外リードが {lead_pct:+.2f}% 急落中のため本日の売却は見送り推奨"
+        else:
+            excess_yen = -raw_diff_yen
+            if nights_cnt >= 2:
+                excess_yen = int(round(excess_yen * 0.75))
+                cap_note = f"祝日挟み（米国市場{nights_cnt}晩分）のため1回の利確売却を超過分の75%に調整"
+
+            raw_sell_units = (excess_yen / prov_nav * 10000.0) if prov_nav > 0 else 0.0
+            rounded_units = int(round(raw_sell_units / 100.0)) * 100
+            rounded_units = min(holding_units, max(0, rounded_units))
+            est_sell_yen = int(round(rounded_units * prov_nav / 10000.0))
+            if est_sell_yen >= min_trade_yen and rounded_units >= 100:
+                action = "SELL"
+                order_method = "口数指定売却"
+                trade_units = rounded_units
+                trade_yen = est_sell_yen
+
+    if action == "BUY":
+        after_fund_yen = cur_fund_yen + trade_yen
+        after_cash_yen = cash_yen - trade_yen
+        after_units = holding_units + trade_units
+    elif action == "SELL":
+        after_fund_yen = max(0, cur_fund_yen - trade_yen)
+        after_cash_yen = cash_yen + trade_yen
+        after_units = max(0, holding_units - trade_units)
+    else:
+        after_fund_yen = cur_fund_yen
+        after_cash_yen = cash_yen
+        after_units = holding_units
+
+    after_total = after_fund_yen + after_cash_yen
+    after_weight_pct = round((after_fund_yen / after_total * 100.0), 2) if after_total > 0 else 0.0
+
+    return {
+        "targetWeightPct": target_pct,
+        "targetFundYen": target_fund_yen,
+        "rawDiffYen": raw_diff_yen,
+        "driftPt": drift_pt,
+        "bandPt": band_pt,
+        "action": action,
+        "orderMethod": order_method,
+        "tradeYen": trade_yen,
+        "tradeUnits": trade_units,
+        "capNote": cap_note,
+        "afterFundYen": after_fund_yen,
+        "afterCashYen": after_cash_yen,
+        "afterUnits": after_units,
+        "afterWeightPct": after_weight_pct,
+    }
+
+
+def compute_portfolio_rebalance(
+    portfolio_cfg: Dict[str, Any],
+    nav_d0: int,
+    launchpad_nav: int,
+    prov_nav: int,
+    score: int,
+    lead_pct: float,
+    nights_cnt: int,
+    vix_cur: float,
+    fomc_hit: bool,
+) -> Dict[str, Any]:
+    """現在ポートフォリオの評価額推移と、動的リバランス・固定50:50リバランスの両プランおよび次回発動目安価額を計算する。"""
+    holding_units = int(portfolio_cfg.get("holdingUnits", 74890))
+    cash_yen = int(portfolio_cfg.get("cashYen", 70000))
+    base_target_pct = float(portfolio_cfg.get("baseTargetPct", 50.0))
+    mode = str(portfolio_cfg.get("mode", "dynamic"))
+    band_pt = float(portfolio_cfg.get("rebalanceBandPt", 4.0))
+    min_trade_yen = int(portfolio_cfg.get("minTradeYen", 3000))
+
+    d0_fund_yen = int(round(holding_units * nav_d0 / 10000.0))
+    d0_total_yen = d0_fund_yen + cash_yen
+    d0_weight_pct = round((d0_fund_yen / d0_total_yen * 100.0), 2) if d0_total_yen > 0 else 0.0
+
+    lp_fund_yen = int(round(holding_units * launchpad_nav / 10000.0))
+    lp_total_yen = lp_fund_yen + cash_yen
+    lp_weight_pct = round((lp_fund_yen / lp_total_yen * 100.0), 2) if lp_total_yen > 0 else 0.0
+
+    cur_fund_yen = int(round(holding_units * prov_nav / 10000.0))
+    cur_total_yen = cur_fund_yen + cash_yen
+    cur_weight_pct = round((cur_fund_yen / cur_total_yen * 100.0), 2) if cur_total_yen > 0 else 0.0
+
+    dyn_target_pct = calc_dynamic_target_pct(base_target_pct, score)
+    fix_target_pct = round(max(10.0, min(90.0, base_target_pct)), 1)
+
+    dynamic_plan = _solve_single_mode_rebalance(
+        target_pct=dyn_target_pct,
+        holding_units=holding_units,
+        cash_yen=cash_yen,
+        prov_nav=prov_nav,
+        band_pt=band_pt,
+        min_trade_yen=min_trade_yen,
+        lead_pct=lead_pct,
+        nights_cnt=nights_cnt,
+        vix_cur=vix_cur,
+        fomc_hit=fomc_hit,
+    )
+    fixed_plan = _solve_single_mode_rebalance(
+        target_pct=fix_target_pct,
+        holding_units=holding_units,
+        cash_yen=cash_yen,
+        prov_nav=prov_nav,
+        band_pt=band_pt,
+        min_trade_yen=min_trade_yen,
+        lead_pct=lead_pct,
+        nights_cnt=nights_cnt,
+        vix_cur=vix_cur,
+        fomc_hit=fomc_hit,
+    )
+
+    # 平常中立基準（baseTargetPct ± bandPt）での機械的な次回買い／利確売り発動基準価額の目安
+    # (今回の推奨売買を実行した後の口数・現金を基準に「次にいくらで利確・買い増しになるか」を算出)
+    active_plan = dynamic_plan if mode == "dynamic" else fixed_plan
+    ref_units = active_plan["afterUnits"]
+    ref_cash = active_plan["afterCashYen"]
+
+    def _nav_for_weight(w_pct: float) -> Optional[int]:
+        w = w_pct / 100.0
+        if ref_units <= 0 or ref_cash <= 0 or w <= 0.01 or w >= 0.99:
+            return None
+        return int(round((10000.0 * ref_cash / ref_units) * (w / (1.0 - w))))
+
+    # 買い増し後に相場が反発して押し目解消（中立50%目標）に戻り利確売りが発動する目安基準価額（必ず現在値より上）
+    raw_neutral_sell = _nav_for_weight(min(90.0, base_target_pct + band_pt))
+    if raw_neutral_sell is not None:
+        min_rebound_nav = int(round(prov_nav * 1.115)) if active_plan["action"] == "BUY" else int(round(prov_nav * 1.04))
+        neutral_sell_nav: Optional[int] = max(raw_neutral_sell, min_rebound_nav)
+    else:
+        neutral_sell_nav = None
+
+    # さらに続落して次回（第2弾）買い増しが発動する目安基準価額（必ず現在値より下）
+    next_dip_target = max(15.0, active_plan["afterWeightPct"] - band_pt)
+    raw_next_buy = _nav_for_weight(next_dip_target)
+    if raw_next_buy is not None:
+        next_buy_nav: Optional[int] = min(raw_next_buy, int(round(prov_nav * 0.92)))
+    else:
+        next_buy_nav = None
+
+    return {
+        "config": {
+            "setupDate": portfolio_cfg.get("setupDate"),
+            "setupNav": portfolio_cfg.get("setupNav"),
+            "investedYenAtSetup": portfolio_cfg.get("investedYenAtSetup"),
+            "holdingUnits": holding_units,
+            "cashYen": cash_yen,
+            "baseTargetPct": base_target_pct,
+            "mode": mode,
+            "rebalanceBandPt": band_pt,
+            "minTradeYen": min_trade_yen,
+        },
+        "valuation": {
+            "d0FundYen": d0_fund_yen,
+            "d0TotalYen": d0_total_yen,
+            "d0WeightPct": d0_weight_pct,
+            "launchpadFundYen": lp_fund_yen,
+            "launchpadTotalYen": lp_total_yen,
+            "launchpadWeightPct": lp_weight_pct,
+            "currentFundYen": cur_fund_yen,
+            "currentCashYen": cash_yen,
+            "currentTotalYen": cur_total_yen,
+            "currentWeightPct": cur_weight_pct,
+            "diffFromD0Yen": cur_total_yen - d0_total_yen,
+        },
+        "activeMode": mode,
+        "activePlan": active_plan,
+        "dynamicPlan": dynamic_plan,
+        "fixedPlan": fixed_plan,
+        "nextTriggersAfterAction": {
+            "profitTakeNavAtNeutral": neutral_sell_nav,
+            "nextAddBuyNav": next_buy_nav,
+        },
+    }
+
+
 def build_triple_advisor_data(
     app_data: Optional[Dict[str, Any]] = None,
     now_jst: Optional[datetime.datetime] = None,
@@ -706,65 +991,103 @@ def build_triple_advisor_data(
             alloc_pct = 10
             alloc_cap_reasons.append("FOMC政策金利発表をまたぐため上限10%に抑制")
 
-    # 6. 時間帯×スコアに応じた最終アクション指示文の生成
+    # 5b. ポートフォリオ（初期設定: 投信7万円 + 現金7万円 = 合計14万円・基準50:50）のリバランス計算
+    portfolio_cfg = load_portfolio_config(nav_d0)
+    rebalance_data = compute_portfolio_rebalance(
+        portfolio_cfg=portfolio_cfg,
+        nav_d0=nav_d0,
+        launchpad_nav=launchpad_nav,
+        prov_nav=provisional_exec_nav,
+        score=score,
+        lead_pct=lead_pct,
+        nights_cnt=nights_cnt,
+        vix_cur=vix_cur,
+        fomc_hit=bool(sched_1530["fomcDatesHit"]),
+    )
+    active_reb = rebalance_data["activePlan"]
+    reb_val = rebalance_data["valuation"]
+    reb_action = active_reb["action"]
+
+    # 6. 時間帯×リバランス判定×スコアに応じた最終アクション指示文の生成
     w_state = sched_1530["windowState"]
     app_lbl = sched_1530["applicationDateLabel"]
     exec_lbl = sched_1530["executionDateLabel"]
-    order_ok_level = (score >= 50) and (alloc_pct > 0) and (not intraday_bounce_trap)
+    order_ok_level = reb_action in ("BUY", "SELL")
     order_ready_now = (w_state == "golden_window") and order_ok_level
 
-    if intraday_bounce_trap:
-        headline = "【注文見送り／取消推奨】昼間の先物が急反発しています"
+    if reb_action == "HOLD_BOUNCE_TRAP" or intraday_bounce_trap:
+        headline = "【買い増し見送り／取消推奨】昼間の先物が急反発しています"
         action_badge = "注文NG・取消推奨"
         tone = "danger"
         detail_advice = (
             f"発射台は {launchpad_nav:,}円（{launchpad_chg_pct:+.2f}%）ですが、"
             f"朝以降の時間外リードだけで {lead_pct:+.2f}% も反発しています。"
-            f"今から買うと高値掴みになりやすいため見送り（朝注文済なら締切前に取消）が合理的です。"
+            f"高値掴みを避けるため本日の買い増しリバランスは見送り（朝注文済なら締切前に取消）が合理的です。"
         )
-    elif w_state == "golden_window":
-        if score >= 65 and alloc_pct > 0:
-            headline = f"【今なら注文OK】買付待機資金の {alloc_pct}% を金額指定で発注推奨"
-            action_badge = "今なら注文OK"
-            tone = "buy_strong"
-            detail_advice = (
-                f"締切（{sched_1530['cutoffTimeStr']}）前の最終チェックをクリアしました。"
-                f"発射台 {launchpad_nav:,}円（{launchpad_chg_pct:+.2f}%）・昼間リード {lead_pct:+.2f}% で割安な水準です。"
-                f"一括は避け、待機資金の {alloc_pct}% を「金額指定」で注文するのが理にかなっています（約定日: {exec_lbl}）。"
-            )
-        elif score >= 50 and alloc_pct > 0:
-            headline = f"【少額打診なら注文OK】待機資金の {alloc_pct}% 程度で慎重にエントリー"
-            action_badge = "少額打診OK"
-            tone = "buy_mild"
-            detail_advice = (
-                f"締切直前チェック完了。発射台 {launchpad_nav:,}円（{launchpad_chg_pct:+.2f}%）で押し目圏に入っています。"
-                f"まだ続落余地も残るため、待機資金の {alloc_pct}% だけ金額指定で打診買いし、残りは次の下落に温存してください（約定日: {exec_lbl}）。"
-            )
-        else:
-            headline = "【本日は注文見送り】優位性のある押し目ではありません"
-            action_badge = "本日は見送り"
-            tone = "wait"
-            detail_advice = (
-                f"購入指示指数は {score}点 です。3倍レバレッジは横ばい・高値圏で持つと減価しやすいため、"
-                f"指数が 65点 以上に上がる急落日までキャッシュを温存してください。"
-            )
-    elif order_ok_level:
-        headline = f"【買い圏到達（{score}点）】確定注文は {app_lbl} 15:05 の最終通知後がベスト"
-        action_badge = f"{app_lbl} 15:05まで待機"
-        tone = "watch_buy"
-        detail_advice = (
-            f"発射台が {launchpad_nav:,}円（前営業日比 {launchpad_chg_pct:+.2f}%）まで下がり、"
-            f"待機資金の {alloc_pct}% 投入目安の買い圏に入っています。"
-            f"ただし今注文しても {app_lbl} 15:15 に注文しても同じ {exec_lbl} 約定になるため、"
-            f"{app_lbl} 15:05 の最終ジャッジ（昼間の先物急反発がないかの確認）を見てから発注するのが最も安全です。"
-        )
-    else:
-        headline = f"【様子見・キャッシュ温存（{score}点）】次の急落押し目を待機"
-        action_badge = "押し目待ち"
+    elif reb_action == "HOLD_CRASH_GUARD":
+        headline = "【利確売り見送り】昼間の時間外先物が急落中のため売却待機"
+        action_badge = "売却見送り"
         tone = "wait"
         detail_advice = (
-            f"現在の購入指示指数は {score}点 です。無理にエントリーせず、"
-            f"購入指示指数が 50〜65点 以上に上昇する押し目局面まで待機資金を温存してください。"
+            f"投信比率は目標を上回っていますが、昼間の時間外リードが {lead_pct:+.2f}% と急落しているため、"
+            f"安値投げを避けて本日の売却リバランスは見送るのが安全です。"
+        )
+    elif reb_action == "BUY":
+        buy_yen = active_reb["tradeYen"]
+        tgt_w = active_reb["targetWeightPct"]
+        cur_w = reb_val["currentWeightPct"]
+        aft_cash = active_reb["afterCashYen"]
+        aft_w = active_reb["afterWeightPct"]
+        if w_state == "golden_window":
+            headline = f"【今なら買い増しOK】金額指定で {buy_yen:,}円 買付リバランス推奨"
+            action_badge = f"買付OK（{buy_yen:,}円）"
+            tone = "buy_strong" if score >= 65 else "buy_mild"
+            detail_advice = (
+                f"締切（{sched_1530['cutoffTimeStr']}）前チェック完了。現在バランスは 投信 {reb_val['currentFundYen']:,}円（{cur_w:.1f}%）：現金 {reb_val['currentCashYen']:,}円 です。"
+                f"押し目スコア {score}点（目標投信比率 {tgt_w:.1f}%）に基づき、現金から「金額指定で {buy_yen:,}円」買い増し推奨"
+                f"（注文後：投信 {aft_w:.1f}% / 現金残り {aft_cash:,}円、約定日: {exec_lbl}）。"
+            )
+        else:
+            headline = f"【買い増しリバランス圏（+{buy_yen:,}円目安）】発注は {app_lbl} 15:05 の最終通知後がベスト"
+            action_badge = f"{app_lbl} 15:05まで待機"
+            tone = "watch_buy"
+            detail_advice = (
+                f"急落により現在バランスが 投信 {reb_val['currentFundYen']:,}円（{cur_w:.1f}%）：現金 {reb_val['currentCashYen']:,}円 に変化し、"
+                f"目標比率 {tgt_w:.1f}% に対して「金額指定 {buy_yen:,}円 の買い増し（残り現金 {aft_cash:,}円温存）」が適正です。"
+                f"今すぐ入れても {app_lbl} 15:15 に入れても同じ {exec_lbl} 約定になるため、{app_lbl} 15:05 の最終通知を見てから発注してください。"
+            )
+    elif reb_action == "SELL":
+        sell_u = active_reb["tradeUnits"]
+        sell_y = active_reb["tradeYen"]
+        tgt_w = active_reb["targetWeightPct"]
+        cur_w = reb_val["currentWeightPct"]
+        aft_cash = active_reb["afterCashYen"]
+        aft_w = active_reb["afterWeightPct"]
+        if w_state == "golden_window":
+            headline = f"【今なら利確売りOK】口数指定で {sell_u:,}口（約{sell_y:,}円分）売却リバランス推奨"
+            action_badge = f"利確売却OK（{sell_u:,}口）"
+            tone = "buy_mild"
+            detail_advice = (
+                f"上昇により投信比率が {cur_w:.1f}%（{reb_val['currentFundYen']:,}円）へ膨らみ、目標比率 {tgt_w:.1f}% を上回っています。"
+                f"必ず金額指定ではなく「口数指定で {sell_u:,}口」売却し、約 {sell_y:,}円 を現金へ戻して次の急落用キャッシュ（計 {aft_cash:,}円）を補充してください。"
+            )
+        else:
+            headline = f"【利確リバランス圏（{sell_u:,}口 売却目安）】発注は {app_lbl} 15:05 の最終確認後"
+            action_badge = f"利確候補（{app_lbl} 15:05確認）"
+            tone = "buy_mild"
+            detail_advice = (
+                f"現在バランスが 投信 {reb_val['currentFundYen']:,}円（{cur_w:.1f}%）：現金 {reb_val['currentCashYen']:,}円 と目標（{tgt_w:.1f}%）を超過しています。"
+                f"{app_lbl} 15:05 時点で相場が崩れていなければ「口数指定で {sell_u:,}口（約{sell_y:,}円相当）」の利確売却が合理的です。"
+            )
+    else:
+        cur_w = reb_val["currentWeightPct"]
+        tgt_w = active_reb["targetWeightPct"]
+        headline = f"【リバランス不要・ホールド（現在 投信{cur_w:.1f}% : 現金{100.0 - cur_w:.1f}%）】"
+        action_badge = "売買不要（ホールド）"
+        tone = "wait"
+        detail_advice = (
+            f"現在の資産配分（投信 {reb_val['currentFundYen']:,}円 / 現金 {reb_val['currentCashYen']:,}円、投信比率 {cur_w:.1f}%）は、"
+            f"現在の目標比率 {tgt_w:.1f}%（許容バンド ±{active_reb['bandPt']:.1f}%）の範囲内です。無理に動かずこのまま保有継続でOKです。"
         )
 
     reasons: List[str] = [
@@ -914,6 +1237,7 @@ def build_triple_advisor_data(
             "vix": round(vix_cur, 2),
             "vixChange": vix_chg,
         },
+        "rebalance": rebalance_data,
         "scenarios": scenarios,
         "charts": {
             "ndx60d": chart_ndx_60,
@@ -984,87 +1308,110 @@ def _embed_color_for_signal(sig: Dict[str, Any], kind: str) -> int:
 
 
 def build_discord_payload(triple_data: Dict[str, Any], kind: str) -> Dict[str, Any]:
-    """通知種別ごとの Discord Webhook JSON ペイロードを組み立てる。"""
+    """通知種別ごとの Discord Webhook JSON ペイロード（リバランス売買指示付き）を組み立てる。"""
     f_info = triple_data["fund"]
     sig = triple_data["signal"]
     lead = triple_data["intradayLead"]
     sched = triple_data["schedule"]
     tech = triple_data["technicals"]
+    reb = triple_data.get("rebalance", {})
+    r_val = reb.get("valuation", {})
+    r_plan = reb.get("activePlan", {})
+    r_act = r_plan.get("action", "HOLD")
 
     score = sig["score"]
     rank = sig["rank"]
-    alloc_pct = sig["recommendedPct"]
     lp_nav = f_info["launchpadNav"]
     lp_chg = f_info["launchpadChangePct"]
     d0_nav = f_info["nav"]
     prov_nav = f_info["provisionalExecNav"]
 
     kind_titles = {
-        "morning_landing": f"📊 [10:15 着地速報] 購入指示指数 {score}/100点（ランク{rank}）",
-        "cutoff_final_judge": f"🔔 [15:05 最終注文ジャッジ] {sig['actionBadge']}（{score}/100点）",
-        "intraday_opportunity": f"🚨 [買い好機急浮上] 昼間の下落で指数が {score}/100点 に上昇！",
-        "manual_test": f"✅ [テスト通知] トリプルNASDAQ 購入指示指数 {score}/100点（ランク{rank}）",
+        "morning_landing": f"📊 [10:15 着地＆リバランス速報] 指数 {score}/100点（ランク{rank}）",
+        "cutoff_final_judge": f"🔔 [15:05 最終リバランスジャッジ] {sig['actionBadge']}（{score}/100点）",
+        "intraday_opportunity": f"🚨 [リバランス好機急浮上] 昼間の変動で売買サイン点灯（{score}/100点）",
+        "manual_test": f"✅ [テスト通知] トリプルNASDAQ リバランスジャッジ（{score}/100点）",
     }
-    title = kind_titles.get(kind, f"トリプルNASDAQ 通知（{score}/100点）")
+    title = kind_titles.get(kind, f"トリプルNASDAQ リバランス通知（{score}/100点）")
 
-    # メンション不要でも一目で結論がわかる先頭サマリーテキスト
     if kind == "cutoff_final_judge":
-        if score >= 65 and alloc_pct > 0 and not sig["intradayBounceTrap"]:
-            content_line = f"🟢 **【今なら注文OK】** 購入指示指数 **{score}点** — 締切（15:30）までに待機資金の **{alloc_pct}%** を金額指定で発注推奨！"
-        elif score >= 50 and alloc_pct > 0 and not sig["intradayBounceTrap"]:
-            content_line = f"🟡 **【少額打診ならOK】** 購入指示指数 **{score}点** — 待機資金の **{alloc_pct}%** 程度の打診買い圏（締切 15:30）"
-        elif sig["intradayBounceTrap"]:
-            content_line = f"⛔ **【注文NG・取消推奨】** 昼間の時間外先物が **{lead['totalLeadPct']:+.2f}%** 急反発中！高値掴み注意"
+        if r_act == "BUY":
+            content_line = (
+                f"🟢 **【今なら買い増しOK】** 締切（15:30）までに **金額指定で `{r_plan['tradeYen']:,}円` 買付** 推奨！"
+                f"（買付後：投信 `{r_plan['afterWeightPct']:.1f}%` / 現金残り `{r_plan['afterCashYen']:,}円`）"
+            )
+        elif r_act == "SELL":
+            content_line = (
+                f"🟠 **【今なら利確売りOK】** 締切（15:30）までに **口数指定で `{r_plan['tradeUnits']:,}口`（約`{r_plan['tradeYen']:,}円`分）売却** 推奨！"
+                f"（現金残高を `{r_plan['afterCashYen']:,}円` に補充）"
+            )
+        elif r_act == "HOLD_BOUNCE_TRAP" or sig["intradayBounceTrap"]:
+            content_line = f"⛔ **【買い増し見送り・取消推奨】** 昼間の時間外先物が **{lead['totalLeadPct']:+.2f}%** 急反発中！高値掴み注意"
         else:
-            content_line = f"⚪ **【本日は注文見送り】** 購入指示指数 **{score}点** — 押し目待ち（投入推奨 0%）"
+            content_line = (
+                f"⚪ **【本日は売買不要（ホールド）】** 現在 投信 `{r_val.get('currentFundYen', 0):,}円 ({r_val.get('currentWeightPct', 50):.1f}%)` : "
+                f"現金 `{r_val.get('currentCashYen', 0):,}円` — 目標バンド内のため現状維持"
+            )
     elif kind == "intraday_opportunity":
-        content_line = (
-            f"🚨 **【締切前の買い好機】** 昼間の先物・為替リード（{lead['totalLeadPct']:+.2f}%）により"
-            f"購入指示指数が **{score}点**（推奨投入 **{alloc_pct}%**）に上昇しました！"
-        )
+        if r_act == "SELL":
+            content_line = (
+                f"🟠 **【締切前の利確好機】** 昼間の先物上昇（{lead['totalLeadPct']:+.2f}%）で利確ライン到達！"
+                f"口数指定 **`{r_plan['tradeUnits']:,}口`（約`{r_plan['tradeYen']:,}円`）売却** 候補"
+            )
+        else:
+            content_line = (
+                f"🚨 **【締切前の買い増し好機】** 昼間の先物下落（{lead['totalLeadPct']:+.2f}%）で指数 **{score}点** に上昇！"
+                f"金額指定 **`{r_plan.get('tradeYen', 0):,}円` 買付** 候補"
+            )
     elif kind == "morning_landing":
         content_line = (
-            f"📊 **【10:15 着地速報】** {f_info['launchpadDateLabel']}夕方見込 **{lp_nav:,}円（{lp_chg:+.2f}%）** / "
-            f"現在スコア **{score}点**（確定注文は15:05の最終通知を待ってください）"
+            f"📊 **【10:15 着地速報】** {f_info['launchpadDateLabel']}見込 **{lp_nav:,}円（{lp_chg:+.2f}%）** ｜ "
+            f"保有投信 **{r_val.get('launchpadFundYen', 0):,}円** ＋ 現金 **{r_val.get('currentCashYen', 0):,}円**（確定発注は15:05通知まで待機）"
         )
     else:
         content_line = (
-            f"✅ **【Discord連携テスト成功】** 現在の購入指示指数は **{score}/100点（{sig['actionBadge']}）** です。"
+            f"✅ **【Discord連携テスト成功】** 現在の判定: **{sig['actionBadge']}**（購入指示指数 **{score}/100点**）"
         )
 
+    if r_act == "BUY":
+        reb_action_str = f"🟢 **金額指定で `{r_plan['tradeYen']:,}円` 買い増し**\n（想定 `+{r_plan['tradeUnits']:,}口` → 残り現金 `{r_plan['afterCashYen']:,}円`）"
+    elif r_act == "SELL":
+        reb_action_str = f"🟠 **口数指定で `{r_plan['tradeUnits']:,}口` 利確売却**\n（想定回収 `+{r_plan['tradeYen']:,}円` → 現金計 `{r_plan['afterCashYen']:,}円`）"
+    else:
+        reb_action_str = f"⚪ **売買なし（ホールド）**\n（目標 `{r_plan.get('targetWeightPct', 50):.1f}%` との差 `{r_plan.get('driftPt', 0):+.1f}pt`）"
+
     axes_lines = [f"・{a['label']}: **{a['score']:+.1f}** / {a['maxScore']}点" for a in sig["axes"]]
-    example_300k = int(round(300000 * alloc_pct / 100.0))
 
     fields = [
         {
-            "name": "判定・推奨ロット",
+            "name": "ポートフォリオ & リバランス指示",
             "value": (
-                f"**{sig['rankLabel']}**\n"
-                f"推奨投入: **待機資金の {alloc_pct}%**（金額指定）\n"
-                f"※待機30万円なら **{example_300k:,}円**"
+                f"現在: 投信 `{r_val.get('currentFundYen', 0):,}円` (**{r_val.get('currentWeightPct', 50):.1f}%**) / "
+                f"現金 `{r_val.get('currentCashYen', 0):,}円` (計 `{r_val.get('currentTotalYen', 0):,}円`)\n"
+                f"動的目標比率: **投信 {r_plan.get('targetWeightPct', 50):.1f}%**\n"
+                f"{reb_action_str}"
             ),
-            "inline": True,
+            "inline": False,
         },
         {
             "name": "基準価額（発射台 → 暫定目安）",
             "value": (
                 f"前回({f_info['navDateLabel']}): `{d0_nav:,}円`\n"
                 f"発射台({f_info['launchpadDateLabel']}): **`{lp_nav:,}円` ({lp_chg:+.2f}%)**\n"
-                f"昼間リード反映目安: `{prov_nav:,}円` ({lead['totalLeadPct']:+.2f}%)"
+                f"昼間リード反映: `{prov_nav:,}円` ({lead['totalLeadPct']:+.2f}%)"
             ),
             "inline": True,
         },
         {
-            "name": "約定スケジュール・テクニカル",
+            "name": "約定日 & テクニカル",
             "value": (
-                f"申込枠: **{sched['applicationDateLabel']} 15:30締切** → 約定日: **{sched['executionDateLabel']}**（米国市場 **{sched['nightsAfterCutoff']}晩**）\n"
-                f"60日高値比: `{tech['drawdownNdxPct']:+.2f}%`（3倍換算 `{tech['drawdownTripleEquivPct']:+.1f}%`） / "
-                f"RSI(14): `{tech['rsi14']:.1f}` / 25日線乖離: `{tech['sma25DevPct']:+.2f}%` / VIX: `{tech['vix']:.2f}`"
+                f"申込: **{sched['applicationDateLabel']} 15:30締切** → 約定: **{sched['executionDateLabel']}**（米{sched['nightsAfterCutoff']}晩）\n"
+                f"高値比 `{tech['drawdownNdxPct']:+.2f}%` / RSI `{tech['rsi14']:.1f}` / VIX `{tech['vix']:.2f}`"
             ),
-            "inline": False,
+            "inline": True,
         },
         {
-            "name": "5軸スコア内訳",
+            "name": f"購入指示指数 {score}/100点（5軸内訳）",
             "value": "\n".join(axes_lines),
             "inline": False,
         },
@@ -1077,12 +1424,12 @@ def build_discord_payload(triple_data: Dict[str, Any], kind: str) -> Dict[str, A
         "color": _embed_color_for_signal(sig, kind),
         "fields": fields,
         "footer": {
-            "text": f"auAMトリプル・NASDAQ100 専用アドバイザー | 更新 {triple_data['generatedAt'][:16].replace('T', ' ')} JST"
+            "text": f"auAMトリプル・NASDAQ100 リバランス運用アドバイザー | 更新 {triple_data['generatedAt'][:16].replace('T', ' ')} JST"
         },
     }
 
     return {
-        "username": "トリプルNASDAQ 購入ジャッジ",
+        "username": "トリプルNASDAQ リバランスジャッジ",
         "content": f"{content_line}\n🔗 専用サイト: {PUBLIC_TRIPLE_URL}",
         "embeds": [embed],
     }
@@ -1131,12 +1478,14 @@ def evaluate_and_notify_discord(
         # 2. 営業日 15:05 締切直前の最終注文ジャッジ（15:02〜15:23 JST に1日1回）
         elif (15 * 60 + 2) <= hm <= (15 * 60 + 23) and state.get("lastFinalDate") != today_str:
             kind_to_send = "cutoff_final_judge"
-        # 3. 営業日 13:00〜14:55 の買い好機急浮上アラート（1日1回）
+        # 3. 営業日 13:00〜14:55 のリバランス好機急浮上アラート（買い増し急浮上 または 利確売り急浮上、1日1回）
         elif (13 * 60) <= hm <= (14 * 60 + 55) and state.get("lastOpportunityAlertDate") != today_str:
+            reb_act = triple_data.get("rebalance", {}).get("activePlan", {}).get("action", "HOLD")
             morning_score = state.get("morningScore") if state.get("lastMorningDate") == today_str else None
             jumped_from_morning = (morning_score is not None) and (score - int(morning_score) >= 10) and (score >= 65)
-            afternoon_bargain = (score >= 68) and (lead_pct <= -1.5)
-            if jumped_from_morning or afternoon_bargain:
+            afternoon_bargain = (reb_act == "BUY") and (score >= 68) and (lead_pct <= -1.5)
+            afternoon_profit_take = (reb_act == "SELL") and (score <= 30) and (lead_pct >= 2.0)
+            if jumped_from_morning or afternoon_bargain or afternoon_profit_take:
                 kind_to_send = "intraday_opportunity"
 
     if not kind_to_send:
