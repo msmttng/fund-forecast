@@ -226,6 +226,66 @@ def load_or_fetch_msci(index_code: str, start_ymd: str = "20260501", end_ymd: st
     return out
 
 
+def decode_astro_devalue(arr: Any) -> Any:
+    """Solactive 公式サイト (Astro Actions) の devalue 形式 JSON 配列をデコードする。"""
+    if not isinstance(arr, list) or not arr:
+        return None
+    memo: Dict[int, Any] = {}
+
+    def resolve(idx: int) -> Any:
+        if idx < 0 or idx >= len(arr):
+            return None
+        if idx in memo:
+            return memo[idx]
+        v = arr[idx]
+        if not isinstance(v, (list, dict)):
+            memo[idx] = v
+            return v
+        if isinstance(v, list):
+            res: Any = [resolve(x) if isinstance(x, int) else x for x in v]
+            memo[idx] = res
+            return res
+        res_dict = {k: (resolve(val) if isinstance(val, int) else val) for k, val in v.items()}
+        memo[idx] = res_dict
+        return res_dict
+
+    return resolve(0)
+
+
+def load_or_fetch_solactive(isin: str) -> Dict[str, float]:
+    """Solactive 公式エンドポイントから指定 ISIN の日足終値を取得（キャッシュ利用）する。"""
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cpath = CACHE_DIR / f"solactive_{isin}.json"
+    if cpath.exists():
+        return json.loads(cpath.read_text(encoding="utf-8"))
+
+    now_ms = int(time.time() * 1000)
+    start_ms = int((time.time() - 86400 * 220) * 1000)
+    resp = requests.post(
+        "https://www.solactive.com/_actions/getDayHistoryChartData/",
+        headers={
+            "User-Agent": USER_AGENT,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+        data=json.dumps({"isin": isin, "indexCreatingTimeStamp": start_ms, "dayDate": now_ms}),
+        timeout=20,
+    )
+    resp.raise_for_status()
+    rows = decode_astro_devalue(resp.json())
+    out: Dict[str, float] = {}
+    if isinstance(rows, list):
+        for row in rows:
+            if isinstance(row, dict) and row.get("timestamp") is not None and row.get("value") is not None:
+                ts_sec = float(row["timestamp"]) / 1000.0
+                d_str = datetime.datetime.fromtimestamp(ts_sec + 6 * 3600, UTC).strftime("%Y-%m-%d")
+                out[d_str] = float(row["value"])
+
+    cpath.write_text(json.dumps(dict(sorted(out.items())), ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    time.sleep(1.2)
+    return out
+
+
 def parse_daily_series(chart: Dict[str, Any]) -> Tuple[List[Tuple[str, float]], Dict[str, float]]:
     meta = chart["meta"]
     tz_name = meta.get("exchangeTimezoneName", "America/New_York")
@@ -348,6 +408,7 @@ def simulate_fund_day(
     n225_map: Dict[str, float],
     msci_acwi_map: Dict[str, float],
     msci_kokusai_map: Dict[str, float],
+    solactive_maps: Optional[Dict[str, Dict[str, float]]] = None,
     auam_formula: str = "additive",
     gold_plus_formula: str = "additive",
 ) -> Optional[int]:
@@ -411,9 +472,16 @@ def simulate_fund_day(
                 r_idx = (1.0 + r_msci) * (1.0 + r_rem) - 1.0
             else:
                 r_idx = r_msci
+        elif sym.startswith("SOLACTIVE:"):
+            sol_isin = sym.split(":", 1)[1]
+            sol_bars = sorted((solactive_maps or {}).get(sol_isin, {}).items())
+            r_idx, _, _, _, _ = get_series_change_between(sol_bars, {}, d0_str, d1_str, adjust_div=False)
         else:
-            adj = (model == "standard_div") or (mode == "after" and sym in ("VOO", "VTI", "QQQ", "VT", "SCHD"))
-            bars, divs = daily_series[sym]
+            eval_sym = "^GSPC" if (mode == "before" and fund.get("id") == "sbi-v-sp500") else sym
+            adj = False if (mode == "before" and fund.get("id") == "sbi-v-sp500") else (
+                (model == "standard_div") or (mode == "after" and eval_sym in ("VOO", "VTI", "QQQ", "VT", "SCHD"))
+            )
+            bars, divs = daily_series[eval_sym]
             r_idx, _, _, _, _ = get_series_change_between(bars, divs, d0_str, d1_str, adjust_div=adj)
 
         r_total = (1.0 + r_idx) * (1.0 + r_fx) - 1.0
@@ -475,9 +543,20 @@ def simulate_fund_day(
             f_base = find_hourly_price_at(niy_h, d0_15pm, use_open=False)
             f_cur = find_hourly_price_at(niy_h, d1_8am, use_open=True)
             r_fut = (f_cur - f_base) / f_base if (f_base and f_cur and f_base > 0) else 0.0
-            beta = calc_rolling_beta(topix_map, n225_map, d0_str, lookback=60)
-            r_stock_jpy = beta * r_fut
-            r_total = r_stock_jpy + r_gold
+            if mode == "after":
+                beta = calc_rolling_beta(topix_map, n225_map, d0_str, lookback=60)
+                r_stock_jpy = beta * r_fut
+                gold_etf_sym = fund.get("goldEtfSymbol")
+                if gold_etf_sym and gold_etf_sym in daily_series:
+                    w_etf = float(fund.get("goldEtfWeight", 0.55))
+                    ge_bars, ge_divs = daily_series[gold_etf_sym]
+                    r_ge, _, _, _, _ = get_series_change_between(ge_bars, ge_divs, d0_str, d1_str, adjust_div=False)
+                    r_gold_leg = w_etf * ((1.0 + r_ge) * (1.0 + r_fx) - 1.0) + (1.0 - w_etf) * r_gold
+                else:
+                    r_gold_leg = r_gold
+                r_total = r_stock_jpy + r_gold_leg
+            else:
+                r_total = r_fut + r_gold
         else:
             if mode == "after" and sym == "ACWI":
                 msci_bars = sorted(msci_acwi_map.items())
@@ -528,11 +607,17 @@ def main() -> None:
 
     # 2. 市場データの取得
     yahoo_symbols = {"JPY=X", "NIY=F", "^N225", "1306.T", "1540.T", "^GSPC", "^NDX", "NQ=F", "ACWI", "TOK", "SCHD", "VTI", "IGLN.L", "GC=F"}
+    solactive_isins = set()
     for _, _, f in all_funds:
-        if f.get("symbol") and not str(f["symbol"]).startswith("MSCI:") and f["symbol"] != "TOPIX":
-            yahoo_symbols.add(f["symbol"])
+        sym_val = str(f.get("symbol") or "")
+        if sym_val.startswith("SOLACTIVE:"):
+            solactive_isins.add(sym_val.split(":", 1)[1])
+        elif sym_val and not sym_val.startswith("MSCI:") and sym_val != "TOPIX":
+            yahoo_symbols.add(sym_val)
         if f.get("goldSymbol"):
             yahoo_symbols.add(f["goldSymbol"])
+        if f.get("goldEtfSymbol"):
+            yahoo_symbols.add(f["goldEtfSymbol"])
 
     div_syms = {"SCHD", "VTI", "VOO", "QQQ", "VT", "ACWI", "TOK", "GLD", "IAU", "GLDM"}
     daily_series: Dict[str, Tuple[List[Tuple[str, float]], Dict[str, float]]] = {}
@@ -550,6 +635,7 @@ def main() -> None:
     n225_map = dict(daily_series["^N225"][0])
     msci_acwi_map = load_or_fetch_msci("892400")
     msci_kokusai_map = load_or_fetch_msci("991200")
+    solactive_maps = {isin: load_or_fetch_solactive(isin) for isin in sorted(solactive_isins)}
 
     # 3. auAM 2倍・3倍の加算型 vs 掛け算型 比較（改善後データ条件で比較）
     print(f"=== バックテスト期間: {day_pairs[0][1]} 〜 {day_pairs[-1][1]} ({len(day_pairs)} 営業日) ===\n")
@@ -618,11 +704,13 @@ def main() -> None:
                 fc_bef = simulate_fund_day(
                     f, gid, d0, d1, nav0, "before",
                     daily_series, hourly_series, ttm_map, topix_map, n225_map, msci_acwi_map, msci_kokusai_map,
+                    solactive_maps=solactive_maps,
                     auam_formula="additive",
                 )
                 fc_aft = simulate_fund_day(
                     f, gid, d0, d1, nav0, "after",
                     daily_series, hourly_series, ttm_map, topix_map, n225_map, msci_acwi_map, msci_kokusai_map,
+                    solactive_maps=solactive_maps,
                     auam_formula=chosen_auam,
                 )
                 if fc_bef is None or fc_aft is None:

@@ -19,10 +19,10 @@
           "name": "SBI・V・S&P500インデックス・ファンド",
           "isinCd": "JP90C000J569",
           "associFundCd": "89311199",
-          "symbol": "^GSPC",
+          "symbol": "VOO",
           "leverage": 1,
           "hedged": false,
-          "model": "standard"
+          "model": "standard_div"
         },
         {
           "id": "rakuten-plus-sp500",
@@ -149,6 +149,16 @@
           "leverage": 1,
           "hedged": false,
           "model": "standard"
+        },
+        {
+          "id": "sbi-qqq-ndx",
+          "name": "SBI・インベスコQQQ・NASDAQ100インデックス・ファンド",
+          "isinCd": "JP90C000PVT8",
+          "associFundCd": "89311238",
+          "symbol": "QQQ",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard_div"
         }
       ]
     },
@@ -183,6 +193,17 @@
           "name": "ニッセイ 日経225インデックスファンド",
           "isinCd": "JP90C0001R39",
           "associFundCd": "29311041",
+          "symbol": "^N225",
+          "futuresSymbol": "NIY=F",
+          "leverage": 1,
+          "hedged": false,
+          "model": "domestic"
+        },
+        {
+          "id": "rakuten-plus-n225",
+          "name": "楽天・プラス・日経225インデックス・ファンド",
+          "isinCd": "JP90C000QAU8",
+          "associFundCd": "9I31223C",
           "symbol": "^N225",
           "futuresSymbol": "NIY=F",
           "leverage": 1,
@@ -348,6 +369,26 @@
           "leverage": 1,
           "hedged": false,
           "model": "standard"
+        },
+        {
+          "id": "rakuten-vt",
+          "name": "楽天・全世界株式インデックス・ファンド（楽天・VT）",
+          "isinCd": "JP90C000FHC4",
+          "associFundCd": "9I311179",
+          "symbol": "VT",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard_div"
+        },
+        {
+          "id": "sbi-v-vt",
+          "name": "SBI・V・全世界株式インデックス・ファンド",
+          "isinCd": "JP90C000MWH8",
+          "associFundCd": "89311221",
+          "symbol": "VT",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard_div"
         }
       ]
     },
@@ -410,6 +451,16 @@
           "name": "DCダイワ 外国株式インデックス",
           "isinCd": "JP90C0003RN2",
           "associFundCd": "04313031",
+          "symbol": "TOK",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "nomura-dc-kokusai",
+          "name": "野村外国株式インデックスファンド・MSCI-KOKUSAI（確定拠出年金向け）",
+          "isinCd": "JP90C0002Z87",
+          "associFundCd": "01312022",
           "symbol": "TOK",
           "leverage": 1,
           "hedged": false,
@@ -576,6 +627,26 @@
           "model": "standard"
         },
         {
+          "id": "rakuten-gold",
+          "name": "楽天・ゴールド・ファンド（為替ヘッジなし）",
+          "isinCd": "JP90C000SGQ9",
+          "associFundCd": "9I312261",
+          "symbol": "IAU",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
+          "id": "ssga-gold-open",
+          "name": "ステート・ストリート・ゴールド・オープン（為替ヘッジなし）",
+          "isinCd": "JP90C000RXU8",
+          "associFundCd": "55311258",
+          "symbol": "GLD",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
+        },
+        {
           "id": "mufg-pure-gold",
           "name": "三菱UFJ 純金ファンド",
           "isinCd": "JP90C0007G10",
@@ -620,6 +691,36 @@
           "leverageLabel": "1+1",
           "hedged": false,
           "model": "gold_plus"
+        },
+        {
+          "id": "tracers-topix-gold",
+          "name": "Tracers TOPIXゴールドプラス",
+          "isinCd": "JP90C000T4B9",
+          "associFundCd": "02312267",
+          "symbol": "TOPIX",
+          "goldSymbol": "GC=F",
+          "goldEtfSymbol": "GLD",
+          "goldEtfWeight": 0.55,
+          "leverage": 2,
+          "leverageLabel": "1+1",
+          "hedged": false,
+          "model": "topix_gold_plus"
+        }
+      ]
+    },
+    {
+      "id": "us_growth",
+      "label": "米国グロース",
+      "funds": [
+        {
+          "id": "nissei-us-mega10",
+          "name": "ニッセイ・S米国グロース株式メガ10インデックスファンド＜購入・換金手数料なし＞",
+          "isinCd": "JP90C000S9M6",
+          "associFundCd": "2931225B",
+          "symbol": "SOLACTIVE:DE000SL0R5Q9",
+          "leverage": 1,
+          "hedged": false,
+          "model": "standard"
         }
       ]
     }

@@ -69,6 +69,39 @@ def http_get(
     return resp
 
 
+def http_post_json(
+    url: str,
+    payload: Dict[str, Any],
+    headers: Optional[Dict[str, str]] = None,
+    timeout: int = 20,
+    min_interval: float = 1.05,
+) -> requests.Response:
+    """同一更新内で同じURL+JSONボディは1回までに制限し、外部リクエスト間を1秒以上あけてPOSTする。"""
+    global _LAST_HTTP_TS
+    body_str = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    cache_key = f"POST:{url}:{body_str}"
+    if cache_key in _RUN_HTTP_CACHE:
+        return _RUN_HTTP_CACHE[cache_key]
+
+    elapsed = time.time() - _LAST_HTTP_TS
+    if _LAST_HTTP_TS > 0 and elapsed < min_interval:
+        time.sleep(min_interval - elapsed)
+
+    req_headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    if headers:
+        req_headers.update(headers)
+
+    resp = requests.post(url, headers=req_headers, data=body_str, timeout=timeout)
+    _LAST_HTTP_TS = time.time()
+    resp.raise_for_status()
+    _RUN_HTTP_CACHE[cache_key] = resp
+    return resp
+
+
 def is_jp_business_day(d: datetime.date) -> bool:
     """日本の営業日（土日・祝日・12/31〜1/3を除く）かどうかを判定する。"""
     if d.weekday() >= 5:
@@ -559,6 +592,129 @@ def update_msci_cache(
 
 
 # ============================================================================
+# I: Solactive 公式指数 (US Growth Mega 10 Select Index NTR: DE000SL0R5Q9) 取得
+# ============================================================================
+
+def decode_astro_devalue(arr: Any) -> Any:
+    """Solactive 公式サイト (Astro Actions) の devalue 形式 JSON 配列をデコードする。"""
+    if not isinstance(arr, list) or not arr:
+        return None
+    memo: Dict[int, Any] = {}
+
+    def resolve(idx: int) -> Any:
+        if idx < 0 or idx >= len(arr):
+            return None
+        if idx in memo:
+            return memo[idx]
+        v = arr[idx]
+        if not isinstance(v, (list, dict)):
+            memo[idx] = v
+            return v
+        if isinstance(v, list):
+            if len(v) >= 2 and v[0] == "Date" and isinstance(v[1], str):
+                res: Any = v[1]
+            else:
+                res = [resolve(x) if isinstance(x, int) else x for x in v]
+            memo[idx] = res
+            return res
+        res_dict = {k: (resolve(val) if isinstance(val, int) else val) for k, val in v.items()}
+        memo[idx] = res_dict
+        return res_dict
+
+    return resolve(0)
+
+
+def update_solactive_cache(
+    anchor_cache: Dict[str, Any],
+    isins: Set[str],
+    now_jst: datetime.datetime,
+    rep_d1_str: str,
+) -> Dict[str, Dict[str, Any]]:
+    """Solactive 公式エンドポイントから指定 ISIN の日足終値および米国取引時間中のリアルタイム値を取得する。"""
+    sol_store: Dict[str, Any] = anchor_cache.setdefault("solactive", {})
+    out: Dict[str, Dict[str, Any]] = {}
+    if not isins:
+        return out
+
+    d_check = datetime.datetime.strptime(rep_d1_str, "%Y-%m-%d").date() - datetime.timedelta(days=1)
+    while d_check.weekday() >= 5:
+        d_check -= datetime.timedelta(days=1)
+    expected_us_date = d_check.strftime("%Y-%m-%d")
+
+    tz_et = resolve_tz("America/New_York")
+    now_et = now_jst.astimezone(tz_et)
+    in_us_cash_hours = (
+        now_et.weekday() < 5
+        and ((now_et.hour == 9 and now_et.minute >= 30) or (10 <= now_et.hour < 17))
+    )
+
+    now_ms = int(now_jst.timestamp() * 1000)
+    start_45d_ms = int((now_jst.timestamp() - 86400 * 45) * 1000)
+
+    for isin in sorted(isins):
+        entry: Dict[str, Any] = sol_store.setdefault(isin, {})
+        daily_map: Dict[str, float] = entry.setdefault("daily", {})
+
+        need_daily = expected_us_date not in daily_map
+        last_fetched_str = entry.get("fetchedAt")
+        if need_daily and last_fetched_str and daily_map:
+            try:
+                last_dt = datetime.datetime.fromisoformat(str(last_fetched_str))
+                if (now_jst - last_dt).total_seconds() < 1800:
+                    need_daily = False
+            except Exception:
+                pass
+
+        if need_daily:
+            try:
+                resp = http_post_json(
+                    "https://www.solactive.com/_actions/getDayHistoryChartData/",
+                    {"isin": isin, "indexCreatingTimeStamp": start_45d_ms, "dayDate": now_ms},
+                    timeout=20,
+                )
+                rows = decode_astro_devalue(resp.json())
+                if isinstance(rows, list):
+                    for row in rows:
+                        if isinstance(row, dict) and row.get("timestamp") is not None and row.get("value") is not None:
+                            # 00:00 CET/CEST (UTC+1/+2) のタイムスタンプに +6h して暦日 YYYY-MM-DD を得る
+                            ts_sec = float(row["timestamp"]) / 1000.0
+                            d_str = datetime.datetime.fromtimestamp(ts_sec + 6 * 3600, UTC).strftime("%Y-%m-%d")
+                            daily_map[d_str] = float(row["value"])
+                entry["fetchedAt"] = now_jst.isoformat(timespec="seconds")
+            except Exception as e:
+                print(f"[WARN] Solactive daily fetch failed ({isin}): {e}", file=sys.stderr)
+
+        # 米国市場取引時間中で当日（D1より前）の日足が未確定の場合のみ分足APIから最新値を補完
+        live_info: Optional[Dict[str, Any]] = None
+        us_today_str = now_et.strftime("%Y-%m-%d")
+        if in_us_cash_hours and us_today_str < rep_d1_str and us_today_str not in daily_map:
+            try:
+                start_18h_ms = int((now_jst.timestamp() - 3600 * 18) * 1000)
+                resp_m = http_post_json(
+                    "https://www.solactive.com/_actions/getMinuteHistoryChartData/",
+                    {"isin": isin, "startOfDayCET": start_18h_ms, "dayDate": now_ms},
+                    timeout=20,
+                )
+                m_rows = decode_astro_devalue(resp_m.json())
+                if isinstance(m_rows, list) and m_rows:
+                    last_r = m_rows[-1]
+                    if isinstance(last_r, dict) and last_r.get("timestamp") and last_r.get("value"):
+                        ts_s = float(last_r["timestamp"]) / 1000.0
+                        live_info = {
+                            "price": float(last_r["value"]),
+                            "date": datetime.datetime.fromtimestamp(ts_s, tz_et).strftime("%Y-%m-%d"),
+                            "asOf": datetime.datetime.fromtimestamp(ts_s, JST).isoformat(timespec="seconds"),
+                        }
+                        entry["live"] = live_info
+            except Exception as e:
+                print(f"[WARN] Solactive intraday fetch failed ({isin}): {e}", file=sys.stderr)
+
+        out[isin] = {"daily": daily_map, "live": live_info}
+
+    return out
+
+
+# ============================================================================
 # F: COMEX 金先物 中心限月（偶数月限月）解決
 # ============================================================================
 
@@ -620,7 +776,7 @@ def build_market_cache(symbols: List[str], active_gold_sym: str) -> Dict[str, Di
 
     all_syms = set(symbols) | {active_gold_sym}
     for sym in sorted(all_syms):
-        if not sym or sym.startswith("MSCI:") or sym == "TOPIX":
+        if not sym or sym.startswith("MSCI:") or sym.startswith("SOLACTIVE:") or sym == "TOPIX":
             continue
         entry: Dict[str, Any] = {}
         # ^N225 は直近60営業日の回帰係数 β 計算にも使うため 6mo 日足を取得
@@ -968,6 +1124,49 @@ def get_msci_index_change(
     if etf_supplement:
         res["etfSupplement"] = etf_supplement
     return res
+
+
+def get_solactive_index_change(
+    sol_entry: Dict[str, Any],
+    isin: str,
+    label: str,
+    d0_str: str,
+    d1_str: str,
+) -> Dict[str, Any]:
+    """Solactive 公式指数の D0 より前の最終終値と D1 より前の最新値から変化率を計算する。"""
+    daily_map: Dict[str, float] = sol_entry.get("daily", {}) if sol_entry else {}
+    if not daily_map:
+        raise ValueError(f"Solactive 指数データが空です: {isin}")
+
+    sorted_bars = sorted(daily_map.items())
+    before_d0 = [(d, v) for d, v in sorted_bars if d < d0_str]
+    before_d1 = [(d, v) for d, v in sorted_bars if d < d1_str]
+    if not before_d0 or not before_d1:
+        raise ValueError(f"Solactive 指数の対象日付が不足しています: {isin}")
+
+    base_date, base_val = before_d0[-1]
+    cur_date, cur_val = before_d1[-1]
+    as_of_iso = f"{cur_date}T06:00:00+09:00"
+
+    live = sol_entry.get("live")
+    if isinstance(live, dict) and live.get("price") and live.get("date"):
+        l_date = str(live["date"])
+        if base_date < l_date < d1_str and l_date >= cur_date:
+            cur_date = l_date
+            cur_val = float(live["price"])
+            as_of_iso = str(live.get("asOf") or as_of_iso)
+
+    r_idx = ((cur_val - base_val) / base_val) if (cur_date > base_date and base_val > 0) else 0.0
+    return {
+        "symbol": label,
+        "base": round(base_val, 2),
+        "baseDate": base_date,
+        "cur": round(cur_val, 2),
+        "curDate": cur_date,
+        "rawChange": r_idx,
+        "change": round(r_idx * 100.0, 2),
+        "asOf": as_of_iso,
+    }
 
 
 def get_cme_niy_futures_change(
@@ -1577,13 +1776,19 @@ def run_build(
         "ACWI", "TOK", "SCHD", "VTI",
         "IGLN.L", "1540.T", "GC=F",
     }
+    solactive_isins: Set[str] = set()
     for _, f in all_funds:
-        if f.get("symbol"):
-            required_symbols.add(f["symbol"])
+        sym_val = str(f.get("symbol") or "")
+        if sym_val.startswith("SOLACTIVE:"):
+            solactive_isins.add(sym_val.split(":", 1)[1])
+        elif sym_val:
+            required_symbols.add(sym_val)
         if f.get("futuresSymbol"):
             required_symbols.add(f["futuresSymbol"])
         if f.get("goldSymbol"):
             required_symbols.add(f["goldSymbol"])
+        if f.get("goldEtfSymbol"):
+            required_symbols.add(f["goldEtfSymbol"])
 
     market_cache = build_market_cache(list(required_symbols), active_gold_sym)
 
@@ -1593,6 +1798,7 @@ def run_build(
     topix_daily = ensure_topix_history_for_beta(anchor_cache, rep_d0_str)
     ose_futures = fetch_ose_futures(anchor_cache, now_jst)
     msci_maps = update_msci_cache(anchor_cache, now_jst, rep_d1_str)
+    solactive_maps = update_solactive_cache(anchor_cache, solactive_isins, now_jst, rep_d1_str)
     save_anchor_cache(anchor_cache)
 
     # 直近60営業日の TOPIX 対 日経平均 回帰係数 β
@@ -1680,6 +1886,12 @@ def run_build(
                     elif sym == "TOK" or model == "msci_kokusai":
                         idx_info = get_msci_index_change(
                             msci_maps["991200"], "MSCI KOKUSAI", "TOK", market_cache, d0_str, d1_str
+                        )
+                    elif sym.startswith("SOLACTIVE:"):
+                        sol_isin = sym.split(":", 1)[1]
+                        sol_lbl = "Solactive Mega10" if sol_isin == "DE000SL0R5Q9" else sol_isin
+                        idx_info = get_solactive_index_change(
+                            solactive_maps.get(sol_isin, {}), sol_isin, sol_lbl, d0_str, d1_str
                         )
                     else:
                         idx_info = get_overseas_index_change(
@@ -1843,7 +2055,28 @@ def run_build(
                         display_symbol=f.get("goldSymbol", "GC=F"),
                     )
                     r_stock = idx_info["rawChange"]
-                    r_gold = gold_info["rawChange"]
+                    gold_etf_sym = f.get("goldEtfSymbol")
+                    if gold_etf_sym and gold_etf_sym in market_cache:
+                        w_etf = float(f.get("goldEtfWeight", 0.55))
+                        g_etf_info = get_overseas_index_change(market_cache, gold_etf_sym, d0_str, d1_str=d1_str)
+                        r_g_etf_jpy = (1.0 + g_etf_info["rawChange"]) * (1.0 + r_fx) - 1.0
+                        r_gold = w_etf * r_g_etf_jpy + (1.0 - w_etf) * gold_info["rawChange"]
+                        gold_disp = {
+                            "symbol": f"{gold_info['symbol']}+{gold_etf_sym}(為替込)",
+                            "base": gold_info["base"],
+                            "cur": gold_info["cur"],
+                            "change": round(r_gold * 100.0, 2),
+                            "asOf": g_etf_info["asOf"],
+                        }
+                    else:
+                        r_gold = gold_info["rawChange"]
+                        gold_disp = {
+                            "symbol": gold_info["symbol"],
+                            "base": gold_info["base"],
+                            "cur": gold_info["cur"],
+                            "change": gold_info["change"],
+                            "asOf": gold_info["asOf"],
+                        }
                     r_total = r_stock + r_gold
                     breakdown = {
                         "index": {
@@ -1853,13 +2086,7 @@ def run_build(
                             "change": idx_info["change"],
                             "asOf": idx_info["asOf"],
                         },
-                        "gold": {
-                            "symbol": gold_info["symbol"],
-                            "base": gold_info["base"],
-                            "cur": gold_info["cur"],
-                            "change": gold_info["change"],
-                            "asOf": gold_info["asOf"],
-                        },
+                        "gold": gold_disp,
                     }
                     if "futures" in idx_info:
                         breakdown["futures"] = idx_info["futures"]
