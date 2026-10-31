@@ -752,11 +752,11 @@
         <h2 class="footer-title">計算方法について</h2>
         <ul class="footer-list">
           <li><strong>対象日</strong>：最新の基準価額日（D0）の翌営業日（土日・日本の祝日・年末年始を除く）の基準価額を試算します。</li>
-          <li><strong>標準（為替ヘッジなし）</strong>：米国・欧州等の指数またはETFの未反映変化率（D0より前の最終終値→最新値）と、ドル円変化率（D0の10:00時点→D1の10:00時点または最新値、仲値の代替）を掛け合わせて <code>(1 + 指数変化率) × (1 + 為替変化率) − 1</code> で算出します。オルカン（ACWI）・MSCIコクサイ（TOK）は対応ETFでの近似値、SCHD・VTIは分配落ち調整を含みます。</li>
-          <li><strong>レバレッジ（為替ヘッジあり）</strong>：先物または指数の未反映変化率 × 倍率（2倍）で算出します。</li>
-          <li><strong>加算型（auAMレバレッジ2倍・トリプル3倍 為替ヘッジ無し）</strong>：NASDAQ100先物（NQ=F）の未反映変化率 × 倍率（2倍または3倍）＋ ドル円変化率 で算出します。</li>
-          <li><strong>国内株式（日経平均・TOPIX・4.3倍ブル）</strong>：東証取引時間中（平日9:00〜15:30）は現物の現在値、夜間・時間外は当日15:30時点からの日経225先物（NIY=F）の変化率で近似します（TOPIXも夜間は日経先物の変化率で近似）。</li>
-          <li><strong>ゴールド・ゴールドプラス</strong>：三菱UFJ純金ファンドは国内ETF（1540.T）の当日終値ベース、Tracersゴールドプラス各ファンドは「株式指数変化率 ＋ 為替変化率 ＋ 金先物（GC=F）変化率」で試算します。</li>
+          <li><strong>標準（為替ヘッジなし）</strong>：海外指数または投資先ETFの未反映変化率（D0より前の最終終値→最新値）と、ドル円変化率（D0の三菱UFJ公示仲値 TTM → D1公示仲値または現在値、仲値未取得日のみ10:00足で代替）を掛け合わせて <code>(1 + 指数変化率) × (1 + 為替変化率) − 1</code> で算出します。オルカン・先進国株式（コクサイ）は公表済みMSCI公式指数（グロス配当込み・USD）を使用し、未公表分のみ対応ETF（ACWI・TOK）で補完します。</li>
+          <li><strong>レバレッジ（為替ヘッジあり）</strong>：先物（CME清算値基準）または指数の未反映変化率 × 倍率（2倍）で算出します。</li>
+          <li><strong>加算型（auAMレバレッジ2倍・トリプル3倍 為替ヘッジ無し）</strong>：NASDAQ100先物（NQ=F、D0前夜のCME清算値基準）の未反映変化率 × 倍率（2倍または3倍）＋ ドル円変化率 で算出します。</li>
+          <li><strong>国内株式（日経平均・TOPIX・4.3倍ブル）</strong>：東証取引時間中（平日9:00〜15:30）は指数現在値、夜間・時間外は大阪取引所の日経225先物・TOPIX先物（15:30比、取得不可時は直近60営業日の回帰係数 β × 日経先物変化率）で試算します。日本株4.3倍ブルは大証日経225先物のD0清算値からの変化率 × 4.3 で算出します。</li>
+          <li><strong>ゴールド・ゴールドプラス</strong>：三菱UFJ純金ファンドは国内ETF（1540.T）の当日終値ベース、金ETF連動ファンドは投資先金ETFベース、Tracersゴールドプラス各ファンドは「株式指数変化率（＋為替変化率）＋ COMEX金先物（株式と同夜の清算値基準）変化率」で試算します。</li>
         </ul>
       </div>
       <div class="footer-sec">
@@ -1130,6 +1130,9 @@
           if (idx.dividendAdjusted) {
             symText += "［分配落ち+" + idx.dividendAdjusted + "調整済］";
           }
+          if (b.etfSupplement) {
+            symText += "［未公表分" + b.etfSupplement.symbol + "補完］";
+          }
           if (f.model === "additive" || f.model === "leveraged_hedged" || f.model === "domestic_leveraged") {
             symText += "×" + f.leverage;
           }
@@ -1137,7 +1140,7 @@
         }
 
         if (fut) {
-          parts.push("夜間先物近似 " + fut.symbol + " " + formatPrice(fut.base) + " → " + formatPrice(fut.cur) + "（" + formatSignedPct(fut.change) + "）");
+          parts.push("先物 " + fut.symbol + " " + formatPrice(fut.base) + " → " + formatPrice(fut.cur) + "（" + formatSignedPct(fut.change) + "）");
         }
 
         if (gold) {
@@ -1145,7 +1148,7 @@
         }
 
         if (fx) {
-          var fxStr = "ドル円 ";
+          var fxStr = fx.estimatedBase ? "ドル円(10:00代替) " : "ドル円(仲値基準) ";
           if (fx.base !== undefined && fx.cur !== undefined) {
             fxStr += formatPrice(fx.base) + " → " + formatPrice(fx.cur) + "（" + formatSignedPct(fx.change) + "）";
           } else {

@@ -28,6 +28,8 @@ USER_AGENT = (
     "Chrome/130.0.0.0 Safari/537.36"
 )
 
+YAHOO_FX_BID_TO_MID_SPREAD = 0.05
+
 
 def resolve_tz(tz_name: Optional[str], gmtoffset: Optional[int] = None) -> datetime.tzinfo:
     if tz_name in ("Asia/Tokyo", "JST"):
@@ -347,7 +349,7 @@ def simulate_fund_day(
     msci_acwi_map: Dict[str, float],
     msci_kokusai_map: Dict[str, float],
     auam_formula: str = "additive",
-    gold_plus_formula: str = "multiplicative",
+    gold_plus_formula: str = "additive",
 ) -> Optional[int]:
     """指定日の朝 8:30 JST 時点で得られたデータから予想基準価額を計算する。"""
     d0_9am = datetime.datetime.strptime(d0_str, "%Y-%m-%d").replace(hour=9, minute=0, tzinfo=JST)
@@ -369,9 +371,11 @@ def simulate_fund_day(
             b_d0 = [c for d, c in jpy_d_bars if d <= d0_str]
             fx_base = b_d0[-1] if b_d0 else fx_cur
     else:
-        # 改善後：D0 の公示仲値 (TTM) を優先し、取れない日のみ 10:00 足へフォールバック
+        # 改善後：D0 の公示仲値 (TTM: Mid) を優先し、Yahoo Bid 現在値には半スプレッド補正 (+0.05円) を適用
         fx_base = ttm_map.get(d0_str)
-        if fx_base is None:
+        if fx_base is not None:
+            fx_cur = fx_cur + YAHOO_FX_BID_TO_MID_SPREAD
+        else:
             fx_base = find_hourly_price_at(jpy_h, d0_9am, use_open=False)
             if fx_base is None:
                 b_d0 = [c for d, c in jpy_d_bars if d <= d0_str]
@@ -497,7 +501,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Backtest fund-forecast for recent 60 business days")
     parser.add_argument("--days", type=int, default=60, help="検証する直近営業日数（デフォルト: 60）")
     parser.add_argument("--seed-log", choices=["none", "before", "after"], default="none", help="forecast_log.json にバックテスト結果を初期投入する")
-    parser.add_argument("--auam-formula", choices=["additive", "multiplicative"], default="multiplicative", help="改善後の auAM 計算式")
+    parser.add_argument("--auam-formula", choices=["additive", "multiplicative"], default="additive", help="改善後の auAM 計算式")
     args = parser.parse_args()
 
     sys.stdout.reconfigure(encoding="utf-8")
