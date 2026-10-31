@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-31T13:25:47+09:00",
+  "updatedAt": "2026-10-31T16:53:49+09:00",
   "baseDate": "2026-10-30",
   "targetDate": "2026-11-02",
   "markets": [
@@ -35,8 +35,8 @@
       "label": "日経平均(先物考慮)",
       "symbol": "^N225",
       "base": 63290.11,
-      "cur": 62248.4,
-      "change": -1.65,
+      "cur": 62402.91,
+      "change": -1.4,
       "asOf": "2026-10-31T05:59:50+09:00"
     },
     {
@@ -80,8 +80,8 @@
       "label": "金先物",
       "symbol": "GC=F",
       "base": 4031.4,
-      "cur": 3884.9,
-      "change": -3.63,
+      "cur": 3898.9,
+      "change": -3.29,
       "asOf": "2026-10-31T05:59:59+09:00"
     }
   ],
@@ -91,6 +91,112 @@
     "change": 0.1,
     "estimated": true,
     "asOf": "2026-10-31T05:59:33+09:00"
+  },
+  "accuracySummary": {
+    "windowDays": 20,
+    "overallMaePt": 0.42,
+    "totalSamples": 1071,
+    "groups": [
+      {
+        "id": "sp500",
+        "label": "S&P500",
+        "fundCount": 6,
+        "evaluatedFundCount": 6,
+        "sampleCount": 120,
+        "maePt": 0.08,
+        "biasPt": -0.01
+      },
+      {
+        "id": "nasdaq100",
+        "label": "NASDAQ100",
+        "fundCount": 8,
+        "evaluatedFundCount": 8,
+        "sampleCount": 151,
+        "maePt": 0.37,
+        "biasPt": -0.06
+      },
+      {
+        "id": "nikkei225",
+        "label": "日経平均",
+        "fundCount": 5,
+        "evaluatedFundCount": 5,
+        "sampleCount": 100,
+        "maePt": 2.08,
+        "biasPt": 0.51
+      },
+      {
+        "id": "topix",
+        "label": "TOPIX",
+        "fundCount": 6,
+        "evaluatedFundCount": 6,
+        "sampleCount": 120,
+        "maePt": 0.83,
+        "biasPt": 0.02
+      },
+      {
+        "id": "allcountry",
+        "label": "オルカン",
+        "fundCount": 6,
+        "evaluatedFundCount": 6,
+        "sampleCount": 120,
+        "maePt": 0.15,
+        "biasPt": -0.0
+      },
+      {
+        "id": "kokusai",
+        "label": "コクサイ",
+        "fundCount": 6,
+        "evaluatedFundCount": 6,
+        "sampleCount": 120,
+        "maePt": 0.1,
+        "biasPt": -0.01
+      },
+      {
+        "id": "schd",
+        "label": "SCHD",
+        "fundCount": 4,
+        "evaluatedFundCount": 4,
+        "sampleCount": 80,
+        "maePt": 0.08,
+        "biasPt": -0.01
+      },
+      {
+        "id": "sox",
+        "label": "SOX",
+        "fundCount": 3,
+        "evaluatedFundCount": 3,
+        "sampleCount": 60,
+        "maePt": 0.07,
+        "biasPt": -0.01
+      },
+      {
+        "id": "fangplus",
+        "label": "FANG+",
+        "fundCount": 3,
+        "evaluatedFundCount": 3,
+        "sampleCount": 60,
+        "maePt": 0.08,
+        "biasPt": 0.02
+      },
+      {
+        "id": "vti",
+        "label": "VTI",
+        "fundCount": 2,
+        "evaluatedFundCount": 2,
+        "sampleCount": 40,
+        "maePt": 0.08,
+        "biasPt": -0.01
+      },
+      {
+        "id": "gold",
+        "label": "ゴールド",
+        "fundCount": 5,
+        "evaluatedFundCount": 5,
+        "sampleCount": 100,
+        "maePt": 0.28,
+        "biasPt": 0.11
+      }
+    ]
   },
   "groups": [
     {
@@ -246,7 +352,19 @@
               "2026-10-30",
               44816
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 44874,
+              "actual": 44816,
+              "errorYen": 58,
+              "errorPt": 0.13
+            }
+          }
         },
         {
           "id": "sbi-v-sp500",
@@ -397,7 +515,19 @@
               "2026-10-30",
               40950
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.09,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 41026,
+              "actual": 40950,
+              "errorYen": 76,
+              "errorPt": 0.18
+            }
+          }
         },
         {
           "id": "rakuten-plus-sp500",
@@ -548,7 +678,19 @@
               "2026-10-30",
               19940
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 19966,
+              "actual": 19940,
+              "errorYen": 26,
+              "errorPt": 0.13
+            }
+          }
         },
         {
           "id": "ifree-sp500",
@@ -699,7 +841,19 @@
               "2026-10-30",
               49635
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 49702,
+              "actual": 49635,
+              "errorYen": 67,
+              "errorPt": 0.13
+            }
+          }
         },
         {
           "id": "tsumitate-sp500",
@@ -850,7 +1004,19 @@
               "2026-10-30",
               38796
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 38847,
+              "actual": 38796,
+              "errorYen": 51,
+              "errorPt": 0.13
+            }
+          }
         },
         {
           "id": "tawara-sp500",
@@ -1001,7 +1167,19 @@
               "2026-10-30",
               23337
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 23366,
+              "actual": 23337,
+              "errorYen": 29,
+              "errorPt": 0.12
+            }
+          }
         }
       ]
     },
@@ -1086,7 +1264,19 @@
               "2026-10-30",
               9347
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 11,
+            "maePt": 1.63,
+            "biasPt": -0.37,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 8860,
+              "actual": 9347,
+              "errorYen": -487,
+              "errorPt": -4.98
+            }
+          }
         },
         {
           "id": "auam-lev-ndx",
@@ -1237,7 +1427,19 @@
               "2026-10-30",
               19966
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.73,
+            "biasPt": -0.11,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 19290,
+              "actual": 19966,
+              "errorYen": -676,
+              "errorPt": -3.28
+            }
+          }
         },
         {
           "id": "ifree-lev-ndx",
@@ -1383,7 +1585,19 @@
               "2026-10-30",
               68729
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.77,
+            "biasPt": -0.09,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 66335,
+              "actual": 68729,
+              "errorYen": -2394,
+              "errorPt": -3.39
+            }
+          }
         },
         {
           "id": "nissei-ndx",
@@ -1534,7 +1748,19 @@
               "2026-10-30",
               27633
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 27670,
+              "actual": 27633,
+              "errorYen": 37,
+              "errorPt": 0.13
+            }
+          }
         },
         {
           "id": "ifreenext-ndx",
@@ -1685,7 +1911,19 @@
               "2026-10-30",
               55204
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 55279,
+              "actual": 55204,
+              "errorYen": 75,
+              "errorPt": 0.13
+            }
+          }
         },
         {
           "id": "rakuten-plus-ndx",
@@ -1836,7 +2074,19 @@
               "2026-10-30",
               18609
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 18633,
+              "actual": 18609,
+              "errorYen": 24,
+              "errorPt": 0.13
+            }
+          }
         },
         {
           "id": "emaxis-ndx",
@@ -1987,7 +2237,19 @@
               "2026-10-30",
               34716
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 34761,
+              "actual": 34716,
+              "errorYen": 45,
+              "errorPt": 0.13
+            }
+          }
         },
         {
           "id": "sbi-ndx",
@@ -2138,7 +2400,19 @@
               "2026-10-30",
               9921
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 9934,
+              "actual": 9921,
+              "errorYen": 13,
+              "errorPt": 0.13
+            }
+          }
         }
       ]
     },
@@ -2154,9 +2428,9 @@
           "nav": 31529,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 31010,
-          "diff": -519,
-          "change": -1.65,
+          "forecast": 31087,
+          "diff": -442,
+          "change": -1.4,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -2164,15 +2438,15 @@
             "index": {
               "symbol": "^N225",
               "base": 63290.11,
-              "cur": 62248.4,
-              "change": -1.65,
+              "cur": 62402.91,
+              "change": -1.4,
               "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
               "base": 63490.0,
-              "cur": 62445.0,
-              "change": -1.65
+              "cur": 62600.0,
+              "change": -1.4
             }
           },
           "history": [
@@ -2296,7 +2570,19 @@
               "2026-10-30",
               31529
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.93,
+            "biasPt": 0.23,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 31736,
+              "actual": 31529,
+              "errorYen": 207,
+              "errorPt": 0.64
+            }
+          }
         },
         {
           "id": "tawara-n225",
@@ -2306,9 +2592,9 @@
           "nav": 38651,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 38015,
-          "diff": -636,
-          "change": -1.65,
+          "forecast": 38109,
+          "diff": -542,
+          "change": -1.4,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -2316,15 +2602,15 @@
             "index": {
               "symbol": "^N225",
               "base": 63290.11,
-              "cur": 62248.4,
-              "change": -1.65,
+              "cur": 62402.91,
+              "change": -1.4,
               "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
               "base": 63490.0,
-              "cur": 62445.0,
-              "change": -1.65
+              "cur": 62600.0,
+              "change": -1.4
             }
           },
           "history": [
@@ -2448,7 +2734,19 @@
               "2026-10-30",
               38651
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.93,
+            "biasPt": 0.23,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 38907,
+              "actual": 38651,
+              "errorYen": 256,
+              "errorPt": 0.65
+            }
+          }
         },
         {
           "id": "nissei-n225",
@@ -2458,9 +2756,9 @@
           "nav": 80917,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 79585,
-          "diff": -1332,
-          "change": -1.65,
+          "forecast": 79783,
+          "diff": -1134,
+          "change": -1.4,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -2468,15 +2766,15 @@
             "index": {
               "symbol": "^N225",
               "base": 63290.11,
-              "cur": 62248.4,
-              "change": -1.65,
+              "cur": 62402.91,
+              "change": -1.4,
               "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
               "base": 63490.0,
-              "cur": 62445.0,
-              "change": -1.65
+              "cur": 62600.0,
+              "change": -1.4
             }
           },
           "history": [
@@ -2600,7 +2898,19 @@
               "2026-10-30",
               80917
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.93,
+            "biasPt": 0.23,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 81447,
+              "actual": 80917,
+              "errorYen": 530,
+              "errorPt": 0.64
+            }
+          }
         },
         {
           "id": "rakuten-jp-43bull",
@@ -2610,9 +2920,9 @@
           "nav": 78134,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 72604,
-          "diff": -5530,
-          "change": -7.08,
+          "forecast": 73424,
+          "diff": -4710,
+          "change": -6.03,
           "leverage": 4.3,
           "hedged": false,
           "model": "domestic_leveraged",
@@ -2620,15 +2930,15 @@
             "index": {
               "symbol": "^N225",
               "base": 63290.11,
-              "cur": 62248.4,
-              "change": -1.65,
+              "cur": 62402.91,
+              "change": -1.4,
               "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
               "base": 63490.0,
-              "cur": 62445.0,
-              "change": -1.65
+              "cur": 62600.0,
+              "change": -1.4
             }
           },
           "history": [
@@ -2752,7 +3062,19 @@
               "2026-10-30",
               78134
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 3.83,
+            "biasPt": 0.93,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 79808,
+              "actual": 78134,
+              "errorYen": 1674,
+              "errorPt": 1.97
+            }
+          }
         },
         {
           "id": "sbi-jp-43bull",
@@ -2762,9 +3084,9 @@
           "nav": 53329,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 49555,
-          "diff": -3774,
-          "change": -7.08,
+          "forecast": 50114,
+          "diff": -3215,
+          "change": -6.03,
           "leverage": 4.3,
           "hedged": false,
           "model": "domestic_leveraged",
@@ -2772,15 +3094,15 @@
             "index": {
               "symbol": "^N225",
               "base": 63290.11,
-              "cur": 62248.4,
-              "change": -1.65,
+              "cur": 62402.91,
+              "change": -1.4,
               "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
               "base": 63490.0,
-              "cur": 62445.0,
-              "change": -1.65
+              "cur": 62600.0,
+              "change": -1.4
             }
           },
           "history": [
@@ -2904,7 +3226,19 @@
               "2026-10-30",
               53329
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 3.81,
+            "biasPt": 0.93,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 54435,
+              "actual": 53329,
+              "errorYen": 1106,
+              "errorPt": 1.9
+            }
+          }
         }
       ]
     },
@@ -2920,9 +3254,9 @@
           "nav": 31851,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 31327,
-          "diff": -524,
-          "change": -1.65,
+          "forecast": 31405,
+          "diff": -446,
+          "change": -1.4,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -2930,15 +3264,15 @@
             "index": {
               "symbol": "1306.T",
               "base": 416.4,
-              "cur": 409.55,
-              "change": -1.65,
+              "cur": 410.56,
+              "change": -1.4,
               "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
               "base": 63490.0,
-              "cur": 62445.0,
-              "change": -1.65
+              "cur": 62600.0,
+              "change": -1.4
             }
           },
           "history": [
@@ -3062,7 +3396,19 @@
               "2026-10-30",
               31851
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.83,
+            "biasPt": 0.02,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 31690,
+              "actual": 31851,
+              "errorYen": -161,
+              "errorPt": -0.5
+            }
+          }
         },
         {
           "id": "nissei-topix",
@@ -3072,9 +3418,9 @@
           "nav": 31234,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 30720,
-          "diff": -514,
-          "change": -1.65,
+          "forecast": 30796,
+          "diff": -438,
+          "change": -1.4,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -3082,15 +3428,15 @@
             "index": {
               "symbol": "1306.T",
               "base": 416.4,
-              "cur": 409.55,
-              "change": -1.65,
+              "cur": 410.56,
+              "change": -1.4,
               "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
               "base": 63490.0,
-              "cur": 62445.0,
-              "change": -1.65
+              "cur": 62600.0,
+              "change": -1.4
             }
           },
           "history": [
@@ -3214,7 +3560,19 @@
               "2026-10-30",
               31234
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.83,
+            "biasPt": 0.02,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 31080,
+              "actual": 31234,
+              "errorYen": -154,
+              "errorPt": -0.49
+            }
+          }
         },
         {
           "id": "tsumitate-topix",
@@ -3224,9 +3582,9 @@
           "nav": 30120,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 29624,
-          "diff": -496,
-          "change": -1.65,
+          "forecast": 29698,
+          "diff": -422,
+          "change": -1.4,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -3234,15 +3592,15 @@
             "index": {
               "symbol": "1306.T",
               "base": 416.4,
-              "cur": 409.55,
-              "change": -1.65,
+              "cur": 410.56,
+              "change": -1.4,
               "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
               "base": 63490.0,
-              "cur": 62445.0,
-              "change": -1.65
+              "cur": 62600.0,
+              "change": -1.4
             }
           },
           "history": [
@@ -3366,7 +3724,19 @@
               "2026-10-30",
               30120
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.83,
+            "biasPt": 0.02,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 29968,
+              "actual": 30120,
+              "errorYen": -152,
+              "errorPt": -0.5
+            }
+          }
         },
         {
           "id": "daiwa-fw-topix",
@@ -3376,9 +3746,9 @@
           "nav": 36198,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 35602,
-          "diff": -596,
-          "change": -1.65,
+          "forecast": 35691,
+          "diff": -507,
+          "change": -1.4,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -3386,15 +3756,15 @@
             "index": {
               "symbol": "1306.T",
               "base": 416.4,
-              "cur": 409.55,
-              "change": -1.65,
+              "cur": 410.56,
+              "change": -1.4,
               "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
               "base": 63490.0,
-              "cur": 62445.0,
-              "change": -1.65
+              "cur": 62600.0,
+              "change": -1.4
             }
           },
           "history": [
@@ -3518,7 +3888,19 @@
               "2026-10-30",
               36198
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.83,
+            "biasPt": 0.02,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 36019,
+              "actual": 36198,
+              "errorYen": -179,
+              "errorPt": -0.49
+            }
+          }
         },
         {
           "id": "tokiomarine-topix",
@@ -3528,9 +3910,9 @@
           "nav": 56211,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 55286,
-          "diff": -925,
-          "change": -1.65,
+          "forecast": 55423,
+          "diff": -788,
+          "change": -1.4,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -3538,15 +3920,15 @@
             "index": {
               "symbol": "1306.T",
               "base": 416.4,
-              "cur": 409.55,
-              "change": -1.65,
+              "cur": 410.56,
+              "change": -1.4,
               "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
               "base": 63490.0,
-              "cur": 62445.0,
-              "change": -1.65
+              "cur": 62600.0,
+              "change": -1.4
             }
           },
           "history": [
@@ -3670,7 +4052,19 @@
               "2026-10-30",
               56211
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.83,
+            "biasPt": 0.02,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 55935,
+              "actual": 56211,
+              "errorYen": -276,
+              "errorPt": -0.49
+            }
+          }
         },
         {
           "id": "emaxis-topix",
@@ -3680,9 +4074,9 @@
           "nav": 60461,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 59466,
-          "diff": -995,
-          "change": -1.65,
+          "forecast": 59613,
+          "diff": -848,
+          "change": -1.4,
           "leverage": 1,
           "hedged": false,
           "model": "domestic",
@@ -3690,15 +4084,15 @@
             "index": {
               "symbol": "1306.T",
               "base": 416.4,
-              "cur": 409.55,
-              "change": -1.65,
+              "cur": 410.56,
+              "change": -1.4,
               "asOf": "2026-10-31T05:59:50+09:00"
             },
             "futures": {
               "symbol": "NIY=F",
               "base": 63490.0,
-              "cur": 62445.0,
-              "change": -1.65
+              "cur": 62600.0,
+              "change": -1.4
             }
           },
           "history": [
@@ -3822,7 +4216,19 @@
               "2026-10-30",
               60461
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.83,
+            "biasPt": 0.02,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 60155,
+              "actual": 60461,
+              "errorYen": -306,
+              "errorPt": -0.5
+            }
+          }
         }
       ]
     },
@@ -3979,7 +4385,19 @@
               "2026-10-30",
               37716
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.16,
+            "biasPt": -0.0,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 37736,
+              "actual": 37716,
+              "errorYen": 20,
+              "errorPt": 0.05
+            }
+          }
         },
         {
           "id": "rakuten-plus-acwi",
@@ -4130,7 +4548,19 @@
               "2026-10-30",
               19435
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.15,
+            "biasPt": -0.0,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 19445,
+              "actual": 19435,
+              "errorYen": 10,
+              "errorPt": 0.05
+            }
+          }
         },
         {
           "id": "tawara-acwi",
@@ -4281,7 +4711,19 @@
               "2026-10-30",
               35070
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.15,
+            "biasPt": -0.0,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 35088,
+              "actual": 35070,
+              "errorYen": 18,
+              "errorPt": 0.05
+            }
+          }
         },
         {
           "id": "tsumitate-acwi",
@@ -4432,7 +4874,19 @@
               "2026-10-30",
               34036
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.16,
+            "biasPt": -0.0,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 34054,
+              "actual": 34036,
+              "errorYen": 18,
+              "errorPt": 0.05
+            }
+          }
         },
         {
           "id": "hajimete-nisa-acwi",
@@ -4583,7 +5037,19 @@
               "2026-10-30",
               19554
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.15,
+            "biasPt": -0.0,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 19565,
+              "actual": 19554,
+              "errorYen": 11,
+              "errorPt": 0.06
+            }
+          }
         },
         {
           "id": "nikko-acwi",
@@ -4734,7 +5200,19 @@
               "2026-10-30",
               21590
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.15,
+            "biasPt": -0.0,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 21602,
+              "actual": 21590,
+              "errorYen": 12,
+              "errorPt": 0.06
+            }
+          }
         }
       ]
     },
@@ -4891,7 +5369,19 @@
               "2026-10-30",
               48801
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.1,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 48877,
+              "actual": 48801,
+              "errorYen": 76,
+              "errorPt": 0.16
+            }
+          }
         },
         {
           "id": "emaxis-slim-kokusai",
@@ -5042,7 +5532,19 @@
               "2026-10-30",
               45333
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.1,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 45403,
+              "actual": 45333,
+              "errorYen": 70,
+              "errorPt": 0.15
+            }
+          }
         },
         {
           "id": "nissei-kokusai",
@@ -5193,7 +5695,19 @@
               "2026-10-30",
               59873
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.1,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 59965,
+              "actual": 59873,
+              "errorYen": 92,
+              "errorPt": 0.15
+            }
+          }
         },
         {
           "id": "tsumitate-kokusai",
@@ -5344,7 +5858,19 @@
               "2026-10-30",
               42888
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.1,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 42955,
+              "actual": 42888,
+              "errorYen": 67,
+              "errorPt": 0.16
+            }
+          }
         },
         {
           "id": "smtam-dc-kokusai",
@@ -5495,7 +6021,19 @@
               "2026-10-30",
               108326
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.1,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 108493,
+              "actual": 108326,
+              "errorYen": 167,
+              "errorPt": 0.15
+            }
+          }
         },
         {
           "id": "dc-daiwa-kokusai",
@@ -5646,7 +6184,19 @@
               "2026-10-30",
               132786
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.1,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 132990,
+              "actual": 132786,
+              "errorYen": 204,
+              "errorPt": 0.15
+            }
+          }
         }
       ]
     },
@@ -5803,7 +6353,19 @@
               "2026-10-30",
               14117
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.0,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 14139,
+              "actual": 14117,
+              "errorYen": 22,
+              "errorPt": 0.16
+            }
+          }
         },
         {
           "id": "sbi-schd-4",
@@ -5954,7 +6516,19 @@
               "2026-10-30",
               13188
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 13206,
+              "actual": 13188,
+              "errorYen": 18,
+              "errorPt": 0.14
+            }
+          }
         },
         {
           "id": "rakuten-schd-g",
@@ -6105,7 +6679,19 @@
               "2026-10-30",
               14401
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 14423,
+              "actual": 14401,
+              "errorYen": 22,
+              "errorPt": 0.15
+            }
+          }
         },
         {
           "id": "sbi-schd-1",
@@ -6256,7 +6842,19 @@
               "2026-10-30",
               14332
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 14351,
+              "actual": 14332,
+              "errorYen": 19,
+              "errorPt": 0.13
+            }
+          }
         }
       ]
     },
@@ -6413,7 +7011,19 @@
               "2026-10-30",
               43529
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 43585,
+              "actual": 43529,
+              "errorYen": 56,
+              "errorPt": 0.13
+            }
+          }
         },
         {
           "id": "rakuten-plus-sox",
@@ -6564,7 +7174,19 @@
               "2026-10-30",
               29031
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.07,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 29069,
+              "actual": 29031,
+              "errorYen": 38,
+              "errorPt": 0.13
+            }
+          }
         },
         {
           "id": "nissei-sox",
@@ -6715,7 +7337,19 @@
               "2026-10-30",
               22162
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 22192,
+              "actual": 22162,
+              "errorYen": 30,
+              "errorPt": 0.13
+            }
+          }
         }
       ]
     },
@@ -6872,7 +7506,19 @@
               "2026-10-30",
               95983
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 96107,
+              "actual": 95983,
+              "errorYen": 124,
+              "errorPt": 0.13
+            }
+          }
         },
         {
           "id": "ifreenext-fang-monthly",
@@ -7023,7 +7669,19 @@
               "2026-10-30",
               10416
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.12,
+            "biasPt": 0.04,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 10429,
+              "actual": 10416,
+              "errorYen": 13,
+              "errorPt": 0.12
+            }
+          }
         },
         {
           "id": "ifree-lev-fang",
@@ -7169,7 +7827,19 @@
               "2026-10-30",
               41692
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.05,
+            "biasPt": 0.02,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 41678,
+              "actual": 41692,
+              "errorYen": -14,
+              "errorPt": -0.03
+            }
+          }
         }
       ]
     },
@@ -7326,7 +7996,19 @@
               "2026-10-30",
               45098
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 45157,
+              "actual": 45098,
+              "errorYen": 59,
+              "errorPt": 0.13
+            }
+          }
         },
         {
           "id": "sbi-v-vti",
@@ -7477,7 +8159,19 @@
               "2026-10-30",
               25552
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 25585,
+              "actual": 25552,
+              "errorYen": 33,
+              "errorPt": 0.13
+            }
+          }
         }
       ]
     },
@@ -7634,7 +8328,19 @@
               "2026-10-30",
               22655
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.08,
+            "biasPt": -0.01,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 22683,
+              "actual": 22655,
+              "errorYen": 28,
+              "errorPt": 0.12
+            }
+          }
         },
         {
           "id": "mufg-pure-gold",
@@ -7780,7 +8486,19 @@
               "2026-10-30",
               47138
             ]
-          ]
+          ],
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.7,
+            "biasPt": 0.3,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 47665,
+              "actual": 47138,
+              "errorYen": 527,
+              "errorPt": 1.11
+            }
+          }
         },
         {
           "id": "tracers-sp500-gold",
@@ -7790,9 +8508,9 @@
           "nav": 40009,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 37869,
-          "diff": -2140,
-          "change": -5.35,
+          "forecast": 38008,
+          "diff": -2001,
+          "change": -5.0,
           "leverage": 2,
           "hedged": false,
           "model": "gold_plus",
@@ -7807,8 +8525,8 @@
             "gold": {
               "symbol": "GC=F",
               "base": 4031.4,
-              "cur": 3884.9,
-              "change": -3.63,
+              "cur": 3898.9,
+              "change": -3.29,
               "asOf": "2026-10-31T05:59:59+09:00"
             },
             "fx": {
@@ -7939,7 +8657,19 @@
               40009
             ]
           ],
-          "leverageLabel": "1+1"
+          "leverageLabel": "1+1",
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.19,
+            "biasPt": 0.08,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 40094,
+              "actual": 40009,
+              "errorYen": 85,
+              "errorPt": 0.21
+            }
+          }
         },
         {
           "id": "tracers-ndx-gold",
@@ -7949,9 +8679,9 @@
           "nav": 17406,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 16189,
-          "diff": -1217,
-          "change": -6.99,
+          "forecast": 16249,
+          "diff": -1157,
+          "change": -6.65,
           "leverage": 2,
           "hedged": false,
           "model": "gold_plus",
@@ -7966,8 +8696,8 @@
             "gold": {
               "symbol": "GC=F",
               "base": 4031.4,
-              "cur": 3884.9,
-              "change": -3.63,
+              "cur": 3898.9,
+              "change": -3.29,
               "asOf": "2026-10-31T05:59:59+09:00"
             },
             "fx": {
@@ -8098,7 +8828,19 @@
               17406
             ]
           ],
-          "leverageLabel": "1+1"
+          "leverageLabel": "1+1",
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.2,
+            "biasPt": 0.09,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 17437,
+              "actual": 17406,
+              "errorYen": 31,
+              "errorPt": 0.17
+            }
+          }
         },
         {
           "id": "tracers-acwi-gold",
@@ -8108,9 +8850,9 @@
           "nav": 8376,
           "navDate": "2026-10-30",
           "targetDate": "2026-11-02",
-          "forecast": 7934,
-          "diff": -442,
-          "change": -5.28,
+          "forecast": 7963,
+          "diff": -413,
+          "change": -4.93,
           "leverage": 2,
           "hedged": false,
           "model": "gold_plus",
@@ -8125,8 +8867,8 @@
             "gold": {
               "symbol": "GC=F",
               "base": 4031.4,
-              "cur": 3884.9,
-              "change": -3.63,
+              "cur": 3898.9,
+              "change": -3.29,
               "asOf": "2026-10-31T05:59:59+09:00"
             },
             "fx": {
@@ -8257,7 +8999,19 @@
               8376
             ]
           ],
-          "leverageLabel": "1+1"
+          "leverageLabel": "1+1",
+          "accuracy": {
+            "days": 20,
+            "maePt": 0.2,
+            "biasPt": 0.09,
+            "latest": {
+              "date": "2026-10-30",
+              "forecast": 8394,
+              "actual": 8376,
+              "errorYen": 18,
+              "errorPt": 0.21
+            }
+          }
         }
       ]
     }

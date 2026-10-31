@@ -20,6 +20,7 @@ FUNDS_JSON_PATH = ROOT_DIR / "funds.json"
 DOCS_DIR = ROOT_DIR / "docs"
 DATA_JSON_PATH = DOCS_DIR / "data.json"
 NAV_CACHE_PATH = DOCS_DIR / "nav_cache.json"
+FORECAST_LOG_PATH = DOCS_DIR / "history" / "forecast_log.json"
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -124,12 +125,30 @@ def fetch_yahoo_chart(symbol: str, range_str: str = "10d", interval: str = "1d",
     return res[0]
 
 
-def get_bar_local_date(ts: int, tz_name: Optional[str]) -> str:
+def resolve_tz(tz_name: Optional[str], gmtoffset: Optional[int] = None) -> datetime.tzinfo:
+    """タイムゾーン名または gmtoffset から tzinfo を返す（Windows tzdata 不在環境にも対応）。"""
+    if tz_name in ("Asia/Tokyo", "JST"):
+        return JST
+    if tz_name:
+        try:
+            return zoneinfo.ZoneInfo(tz_name)
+        except Exception:
+            pass
+    if gmtoffset is not None:
+        return datetime.timezone(datetime.timedelta(seconds=int(gmtoffset)))
+    fallback_hours = {
+        "America/New_York": -4,
+        "America/Chicago": -5,
+        "Europe/London": 0,
+    }
+    if tz_name in fallback_hours:
+        return datetime.timezone(datetime.timedelta(hours=fallback_hours[tz_name]))
+    return UTC
+
+
+def get_bar_local_date(ts: int, tz_name: Optional[str], gmtoffset: Optional[int] = None) -> str:
     """タイムスタンプを取引所の現地日付 ('YYYY-MM-DD') に変換する。"""
-    try:
-        tz = zoneinfo.ZoneInfo(tz_name) if tz_name else UTC
-    except Exception:
-        tz = UTC
+    tz = resolve_tz(tz_name, gmtoffset)
     return datetime.datetime.fromtimestamp(ts, tz).strftime("%Y-%m-%d")
 
 
@@ -223,6 +242,7 @@ def get_overseas_index_change(
     daily = entry["daily"]
     meta = daily["meta"]
     tz_name = meta.get("exchangeTimezoneName", "America/New_York")
+    gmtoffset = meta.get("gmtoffset")
     reg_price = float(meta["regularMarketPrice"])
     reg_time = int(meta.get("regularMarketTime", int(time.time())))
     as_of_iso = datetime.datetime.fromtimestamp(reg_time, JST).isoformat()
@@ -232,7 +252,7 @@ def get_overseas_index_change(
     bars: List[Tuple[str, float]] = []
     for t, c in zip(ts_list, cl_list):
         if c is not None:
-            bars.append((get_bar_local_date(int(t), tz_name), float(c)))
+            bars.append((get_bar_local_date(int(t), tz_name, gmtoffset), float(c)))
 
     before_d0 = [(d, c) for d, c in bars if d < d0_str]
     if not before_d0:
@@ -241,7 +261,7 @@ def get_overseas_index_change(
         base_date, base_val = before_d0[-1]
 
     latest_bar_date = bars[-1][0] if bars else base_date
-    reg_local_date = get_bar_local_date(reg_time, tz_name)
+    reg_local_date = get_bar_local_date(reg_time, tz_name, gmtoffset)
     cur_date = max(latest_bar_date, reg_local_date)
 
     # 休場等で D0 より前の取引日から進んでいない場合は未反映変化なし (r_idx = 0)
@@ -256,7 +276,7 @@ def get_overseas_index_change(
             divs = daily.get("events", {}).get("dividends", {})
             for _, div_obj in divs.items():
                 div_ts = int(div_obj.get("date", 0))
-                div_date = get_bar_local_date(div_ts, tz_name)
+                div_date = get_bar_local_date(div_ts, tz_name, gmtoffset)
                 if base_date < div_date <= cur_date:
                     div_adj += float(div_obj.get("amount", 0.0))
         r_idx = ((cur_val + div_adj) - base_val) / base_val if base_val else 0.0
@@ -690,6 +710,8 @@ def main() -> None:
             "funds": out_funds,
         })
 
+    accuracy_summary = update_forecast_log_and_accuracy(out_groups, nav_cache, now_jst, window_days=20)
+
     output_data = {
         "updatedAt": now_jst.isoformat(timespec="seconds"),
         "baseDate": rep_d0_str,
@@ -702,6 +724,7 @@ def main() -> None:
             "estimated": rep_fx["estimated"],
             "asOf": rep_fx["asOf"],
         },
+        "accuracySummary": accuracy_summary,
         "groups": out_groups,
     }
 
@@ -711,6 +734,158 @@ def main() -> None:
         newline="\n",
     )
     print(f"[OK] Wrote {DATA_JSON_PATH} (targetDate={rep_d1_str})")
+
+
+def update_forecast_log_and_accuracy(
+    out_groups: List[Dict[str, Any]],
+    nav_cache: Dict[str, Any],
+    now_jst: datetime.datetime,
+    window_days: int = 20,
+) -> Dict[str, Any]:
+    """朝 8:30 JST 時点の予想値を docs/history/forecast_log.json に記録し、公表基準価額との誤差を集計する。"""
+    FORECAST_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    log_data: Dict[str, Any] = {"version": 1, "entries": {}}
+    if FORECAST_LOG_PATH.exists():
+        try:
+            loaded = json.loads(FORECAST_LOG_PATH.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict) and isinstance(loaded.get("entries"), dict):
+                log_data = loaded
+        except Exception as e:
+            print(f"[WARN] Failed to load forecast_log.json: {e}", file=sys.stderr)
+
+    entries: Dict[str, Dict[str, Any]] = log_data["entries"]
+    changed = False
+    today_str = now_jst.strftime("%Y-%m-%d")
+    in_morning_snapshot_window = (
+        (now_jst.hour > 8 or (now_jst.hour == 8 and now_jst.minute >= 30))
+        and now_jst.hour < 18
+    )
+
+    # 1. 予想対象日当日の朝 8:30 JST 以降（18:00 未満）に 1 日 1 回記録
+    if in_morning_snapshot_window:
+        for g in out_groups:
+            for f in g.get("funds", []):
+                if f.get("stale") or "forecast" not in f or "targetDate" not in f:
+                    continue
+                t_date = f["targetDate"]
+                if t_date != today_str:
+                    continue
+                fid = f["id"]
+                day_bucket = entries.setdefault(t_date, {})
+                existing = day_bucket.get(fid)
+                if existing is None or existing.get("source") == "backtest":
+                    day_bucket[fid] = {
+                        "baseDate": f["navDate"],
+                        "baseNav": int(f["nav"]),
+                        "forecastNav": int(f["forecast"]),
+                        "forecastChange": float(f["change"]),
+                        "recordedAt": now_jst.isoformat(timespec="seconds"),
+                        "source": "live",
+                    }
+                    changed = True
+
+    # 2. 実際の基準価額が出たら答え合わせ（ポイント差・円差を記録）
+    nav_hist_by_fund: Dict[str, Dict[str, int]] = {}
+    for fid, c_entry in nav_cache.items():
+        hist_list = c_entry.get("history", [])
+        h_map: Dict[str, int] = {}
+        for item in hist_list:
+            if isinstance(item, list) and len(item) >= 2:
+                h_map[str(item[0])] = int(item[1])
+        if "navDate" in c_entry and "nav" in c_entry:
+            h_map[str(c_entry["navDate"])] = int(c_entry["nav"])
+        nav_hist_by_fund[fid] = h_map
+
+    for t_date, day_bucket in entries.items():
+        if not isinstance(day_bucket, dict):
+            continue
+        for fid, rec in day_bucket.items():
+            if not isinstance(rec, dict):
+                continue
+            if "actualNav" in rec and rec["actualNav"] is not None:
+                continue
+            act_nav = nav_hist_by_fund.get(fid, {}).get(t_date)
+            if act_nav is not None and rec.get("baseNav"):
+                base_nav = int(rec["baseNav"])
+                fc_nav = int(rec["forecastNav"])
+                act_chg = (act_nav - base_nav) / base_nav * 100.0
+                err_yen = fc_nav - act_nav
+                err_pt = (fc_nav - act_nav) / base_nav * 100.0
+                rec["actualNav"] = int(act_nav)
+                rec["actualChange"] = round(act_chg, 2)
+                rec["errorYen"] = int(err_yen)
+                rec["errorPt"] = round(err_pt, 4)
+                changed = True
+
+    if changed or not FORECAST_LOG_PATH.exists():
+        # 日付順に整列して保存
+        sorted_entries = {k: entries[k] for k in sorted(entries.keys())}
+        log_data["entries"] = sorted_entries
+        log_data["updatedAt"] = now_jst.isoformat(timespec="seconds")
+        FORECAST_LOG_PATH.write_text(
+            json.dumps(log_data, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    # 3. 各ファンドおよびグループ別の直近 window_days 営業日の平均誤差を集計
+    sorted_dates = sorted(entries.keys())
+    group_summaries: List[Dict[str, Any]] = []
+    all_abs_errors: List[float] = []
+
+    for g in out_groups:
+        g_abs_errors: List[float] = []
+        g_signed_errors: List[float] = []
+        g_fund_with_data = 0
+
+        for f in g.get("funds", []):
+            fid = f["id"]
+            matched_recs: List[Tuple[str, Dict[str, Any]]] = []
+            for d_str in sorted_dates:
+                rec = entries.get(d_str, {}).get(fid)
+                if isinstance(rec, dict) and rec.get("errorPt") is not None:
+                    matched_recs.append((d_str, rec))
+
+            recent = matched_recs[-window_days:]
+            if recent:
+                abs_errs = [abs(float(r["errorPt"])) for _, r in recent]
+                sgn_errs = [float(r["errorPt"]) for _, r in recent]
+                mae_pt = sum(abs_errs) / len(abs_errs)
+                bias_pt = sum(sgn_errs) / len(sgn_errs)
+                last_date, last_rec = recent[-1]
+                f["accuracy"] = {
+                    "days": len(recent),
+                    "maePt": round(mae_pt, 2),
+                    "biasPt": round(bias_pt, 2),
+                    "latest": {
+                        "date": last_date,
+                        "forecast": int(last_rec["forecastNav"]),
+                        "actual": int(last_rec["actualNav"]),
+                        "errorYen": int(last_rec["errorYen"]),
+                        "errorPt": round(float(last_rec["errorPt"]), 2),
+                    },
+                }
+                g_abs_errors.extend(abs_errs)
+                g_signed_errors.extend(sgn_errs)
+                all_abs_errors.extend(abs_errs)
+                g_fund_with_data += 1
+
+        group_summaries.append({
+            "id": g["id"],
+            "label": g["label"],
+            "fundCount": len(g.get("funds", [])),
+            "evaluatedFundCount": g_fund_with_data,
+            "sampleCount": len(g_abs_errors),
+            "maePt": round(sum(g_abs_errors) / len(g_abs_errors), 2) if g_abs_errors else None,
+            "biasPt": round(sum(g_signed_errors) / len(g_signed_errors), 2) if g_signed_errors else None,
+        })
+
+    return {
+        "windowDays": window_days,
+        "overallMaePt": round(sum(all_abs_errors) / len(all_abs_errors), 2) if all_abs_errors else None,
+        "totalSamples": len(all_abs_errors),
+        "groups": group_summaries,
+    }
 
 
 if __name__ == "__main__":

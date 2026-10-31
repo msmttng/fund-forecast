@@ -1,5 +1,6 @@
 .venv/
 __pycache__/
+.backtest_cache/
 *.bak
 *.pyc
 fund-forecast_新規構築_改修指示書_*.md

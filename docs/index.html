@@ -585,6 +585,47 @@
       color: var(--text-muted);
     }
 
+    .detail-accuracy {
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .detail-accuracy-sub {
+      color: var(--text-muted);
+      font-size: 11.5px;
+      margin-left: 6px;
+    }
+
+    .accuracy-table {
+      width: 100%;
+      max-width: 560px;
+      border-collapse: collapse;
+      margin-top: 6px;
+      font-size: 12px;
+    }
+    .accuracy-table th,
+    .accuracy-table td {
+      padding: 5px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+    .accuracy-table th {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 11.5px;
+      background-color: var(--bg);
+    }
+    .accuracy-table td.num-col,
+    .accuracy-table th.num-col {
+      text-align: right;
+    }
+    .accuracy-note {
+      margin-top: 6px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
     /* Footer */
     .site-footer {
       border-top: 1px solid var(--line);
@@ -703,6 +744,10 @@
 
   <footer class="site-footer">
     <div class="container">
+      <div class="footer-sec" id="accuracyFooterSec">
+        <h2 class="footer-title">予想精度（答え合わせ）</h2>
+        <div id="accuracyTableWrap"></div>
+      </div>
       <div class="footer-sec">
         <h2 class="footer-title">計算方法について</h2>
         <ul class="footer-list">
@@ -1239,6 +1284,23 @@
         formulaDiv.textContent = "内訳: " + buildFormulaText(f);
         detail.appendChild(formulaDiv);
 
+        if (f.accuracy && f.accuracy.days > 0 && f.accuracy.maePt !== null && f.accuracy.maePt !== undefined) {
+          var accDiv = document.createElement("div");
+          accDiv.className = "detail-accuracy num";
+          var accMain = document.createElement("span");
+          accMain.textContent = "直近 " + f.accuracy.days + " 営業日の平均誤差 ±" + Number(f.accuracy.maePt).toFixed(2) + "pt";
+          accDiv.appendChild(accMain);
+          if (f.accuracy.latest && f.accuracy.latest.actual) {
+            var lat = f.accuracy.latest;
+            var latSign = Number(lat.errorPt) > 0 ? "+" : "";
+            var accSub = document.createElement("span");
+            accSub.className = "detail-accuracy-sub";
+            accSub.textContent = "（前回 " + formatShortMonthDay(lat.date) + ": 予想 " + formatInt(lat.forecast) + "円 / 実績 " + formatInt(lat.actual) + "円, " + latSign + Number(lat.errorPt).toFixed(2) + "pt）";
+            accDiv.appendChild(accSub);
+          }
+          detail.appendChild(accDiv);
+        }
+
         var metaDiv = document.createElement("div");
         metaDiv.className = "detail-meta num";
 
@@ -1391,6 +1453,81 @@
         }
       }
 
+      function renderAccuracyFooter() {
+        var wrap = document.getElementById("accuracyTableWrap");
+        if (!wrap) return;
+        wrap.textContent = "";
+        var summary = appData && appData.accuracySummary;
+        if (!summary || !Array.isArray(summary.groups) || !summary.totalSamples) {
+          var p = document.createElement("p");
+          p.className = "accuracy-note";
+          p.textContent = "毎営業日 8:30（日本時間）時点の予想値と公表基準価額の答え合わせデータを蓄積中です。";
+          wrap.appendChild(p);
+          return;
+        }
+
+        var tbl = document.createElement("table");
+        tbl.className = "accuracy-table";
+
+        var thead = document.createElement("thead");
+        var hr = document.createElement("tr");
+        var cols = [
+          { text: "グループ", cls: "" },
+          { text: "対象", cls: "num-col" },
+          { text: "平均誤差", cls: "num-col" },
+          { text: "平均乖離", cls: "num-col" }
+        ];
+        cols.forEach(function (c) {
+          var th = document.createElement("th");
+          if (c.cls) th.className = c.cls;
+          th.textContent = c.text;
+          hr.appendChild(th);
+        });
+        thead.appendChild(hr);
+        tbl.appendChild(thead);
+
+        var tbody = document.createElement("tbody");
+        summary.groups.forEach(function (g) {
+          var tr = document.createElement("tr");
+
+          var tdLabel = document.createElement("td");
+          tdLabel.textContent = g.label;
+          tr.appendChild(tdLabel);
+
+          var tdCnt = document.createElement("td");
+          tdCnt.className = "num-col num";
+          tdCnt.textContent = (g.evaluatedFundCount || g.fundCount || 0) + "本";
+          tr.appendChild(tdCnt);
+
+          var tdMae = document.createElement("td");
+          tdMae.className = "num-col num";
+          tdMae.textContent = (g.maePt !== null && g.maePt !== undefined) ? ("±" + Number(g.maePt).toFixed(2) + "pt") : "---";
+          tr.appendChild(tdMae);
+
+          var tdBias = document.createElement("td");
+          tdBias.className = "num-col num";
+          if (g.biasPt !== null && g.biasPt !== undefined) {
+            var bNum = Number(g.biasPt);
+            tdBias.textContent = (bNum > 0 ? "+" : "") + bNum.toFixed(2) + "pt";
+          } else {
+            tdBias.textContent = "---";
+          }
+          tr.appendChild(tdBias);
+
+          tbody.appendChild(tr);
+        });
+        tbl.appendChild(tbody);
+        wrap.appendChild(tbl);
+
+        var note = document.createElement("p");
+        note.className = "accuracy-note";
+        var overallTxt = (summary.overallMaePt !== null && summary.overallMaePt !== undefined)
+          ? ("全体平均 ±" + Number(summary.overallMaePt).toFixed(2) + "pt / ")
+          : "";
+        note.textContent = overallTxt + "直近" + (summary.windowDays || 20) + "営業日の朝 8:30（日本時間）時点の予想騰落率と公表基準価額騰落率の差（ポイント）を集計。";
+        wrap.appendChild(note);
+      }
+
       function applyData(data, isCached) {
         appData = data;
         var mainEl = document.getElementById("mainArea");
@@ -1404,6 +1541,7 @@
         renderMarketStrip();
         renderTabs();
         renderMain();
+        renderAccuracyFooter();
       }
 
       function fetchLatestData() {
