@@ -133,8 +133,18 @@
     .freshness {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
+      flex-wrap: wrap;
+      gap: 4px 6px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .next-update {
+      color: var(--text-muted);
+    }
+    .next-update::before {
+      content: "・";
+      margin-right: 4px;
       color: var(--text-muted);
     }
 
@@ -711,6 +721,7 @@
         <div class="freshness" id="freshnessBox">
           <span class="fresh-dot" id="freshDot"></span>
           <span id="updatedAtText" class="num">読み込み中...</span>
+          <span id="nextUpdateText" class="next-update num" style="display: none;"></span>
         </div>
       </div>
       <div class="target-heading">
@@ -905,6 +916,13 @@
         return "";
       }
 
+      function formatOnlyHHMM(dateObj) {
+        if (!dateObj || isNaN(dateObj.getTime())) return "--:--";
+        var hh = ("0" + dateObj.getHours()).slice(-2);
+        var mm = ("0" + dateObj.getMinutes()).slice(-2);
+        return hh + ":" + mm;
+      }
+
       function updateFreshness() {
         if (!appData || !appData.updatedAt) return;
         var updatedDate = new Date(appData.updatedAt);
@@ -912,18 +930,37 @@
         var diffMin = (now.getTime() - updatedDate.getTime()) / 60000;
         var dot = document.getElementById("freshDot");
         var txt = document.getElementById("updatedAtText");
+        var nextEl = document.getElementById("nextUpdateText");
         var timeStr = formatTimeHHMM(appData.updatedAt);
 
         dot.className = "fresh-dot";
-        if (diffMin <= 5.5) {
+        if (diffMin <= 6.5) {
           dot.classList.add("ok");
           txt.textContent = "最終更新 " + timeStr;
-        } else if (diffMin <= 30.5) {
+        } else if (diffMin <= 35.0) {
           dot.classList.add("normal");
           txt.textContent = "最終更新 " + timeStr + "（" + Math.floor(diffMin) + "分前）";
         } else {
           dot.classList.add("stale");
           txt.textContent = "最終更新 " + timeStr + "・更新が遅れています";
+        }
+
+        if (nextEl) {
+          var intervalMs = Number(appData.updateIntervalSec || 300) * 1000;
+          var nextDate = appData.nextUpdateAt ? new Date(appData.nextUpdateAt) : new Date(updatedDate.getTime() + intervalMs);
+          if (!isNaN(nextDate.getTime())) {
+            var remainSec = (nextDate.getTime() - now.getTime()) / 1000;
+            nextEl.style.display = "inline";
+            if (remainSec >= -45) {
+              nextEl.textContent = "次の更新予定 " + formatOnlyHHMM(nextDate);
+            } else if (diffMin <= 35.0) {
+              var steps = Math.max(1, Math.ceil((now.getTime() - updatedDate.getTime()) / intervalMs));
+              var estNext = new Date(updatedDate.getTime() + steps * intervalMs);
+              nextEl.textContent = "次の更新予定 " + formatOnlyHHMM(estNext);
+            } else {
+              nextEl.textContent = "次の更新予定 順次更新";
+            }
+          }
         }
       }
 
@@ -1547,12 +1584,20 @@
         renderAccuracyFooter();
       }
 
+      var DATA_BRANCH_URL = "https://raw.githubusercontent.com/msmttng/fund-forecast/data/data.json";
+      var DATA_LOCAL_URL = "./data.json";
+
+      function fetchJsonNoCache(baseUrl) {
+        return fetch(baseUrl + "?t=" + Date.now(), { cache: "no-store" }).then(function (resp) {
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
+          return resp.json();
+        });
+      }
+
       function fetchLatestData() {
-        var url = "./data.json?t=" + Date.now();
-        fetch(url, { cache: "no-store" })
-          .then(function (resp) {
-            if (!resp.ok) throw new Error("HTTP " + resp.status);
-            return resp.json();
+        fetchJsonNoCache(DATA_BRANCH_URL)
+          .catch(function () {
+            return fetchJsonNoCache(DATA_LOCAL_URL);
           })
           .then(function (json) {
             saveCachedData(json);
