@@ -1,33 +1,34 @@
 {
-  "updatedAt": "2026-10-31T20:51:01+09:00",
-  "generatedAt": "2026-10-31T20:51:48+09:00",
+  "updatedAt": "2026-11-03T07:40:02+09:00",
+  "generatedAt": "2026-11-03T07:42:20+09:00",
   "updateIntervalSec": 1800,
-  "nextUpdateAt": "2026-10-31T21:21:01+09:00",
+  "nextUpdateAt": "2026-11-03T08:10:02+09:00",
   "fund": {
     "id": "auam-triple-ndx",
     "name": "auAMトリプル・NASDAQ100 為替ヘッジ無し",
     "isinCd": "JP90C000T9H5",
     "associFundCd": "AY31226A",
-    "navDate": "2026-10-30",
-    "navDateLabel": "10/30(金)",
-    "nav": 9347,
-    "launchpadDate": "2026-11-02",
-    "launchpadDateLabel": "11/2(月)",
-    "launchpadNav": 8367,
-    "launchpadDiff": -980,
-    "launchpadChangePct": -10.48,
-    "provisionalExecNav": 8373,
-    "provisionalVsD0Pct": -10.42,
+    "navDate": "2026-11-02",
+    "navDateLabel": "11/2(月)",
+    "nav": 8378,
+    "launchpadDate": "2026-11-04",
+    "launchpadDateLabel": "11/4(水)",
+    "launchpadNav": 8040,
+    "launchpadDiff": -338,
+    "launchpadChangePct": -4.04,
+    "provisionalExecNav": 8114,
+    "provisionalVsD0Pct": -3.15,
     "accuracy": {
-      "days": 11,
-      "maePt": 0.11,
-      "biasPt": -0.07,
+      "days": 12,
+      "maePt": 0.2,
+      "biasPt": 0.03,
+      "recordTime": "8:30",
       "latest": {
-        "date": "2026-10-30",
-        "forecast": 9355,
-        "actual": 9347,
-        "errorYen": 8,
-        "errorPt": 0.08
+        "date": "2026-11-02",
+        "forecast": 8486,
+        "actual": 8378,
+        "errorYen": 108,
+        "errorPt": 1.16
       }
     },
     "history": [
@@ -78,161 +79,155 @@
       [
         "2026-10-30",
         9347
+      ],
+      [
+        "2026-11-02",
+        8378
       ]
     ],
     "breakdown": {
-      "nqfBase": 29562.0,
-      "nqfSettled": 28527.25,
-      "nqfSettledChangePct": -3.5,
-      "fxBase": 157.54,
-      "fxLaunchpad": 157.57,
-      "fxLaunchpadChangePct": 0.02
+      "nqfBase": 28527.25,
+      "nqfSettled": 28137.25,
+      "nqfSettledChangePct": -1.37,
+      "fxBase": 157.8,
+      "fxLaunchpad": 157.9,
+      "fxLaunchpadChangePct": 0.06
     }
   },
   "intradayLead": {
-    "nqfSettled": 28527.25,
-    "nqfLive": 28534.0,
-    "nqfLeadPct": 0.02,
-    "nqfTripleImpactPct": 0.07,
-    "nqfAsOf": "2026-10-31T05:59:59+09:00",
-    "fxBaseForNext": 157.57,
-    "fxLiveMid": 157.57,
+    "nqfSettled": 28137.25,
+    "nqfLive": 28223.75,
+    "nqfLeadPct": 0.31,
+    "nqfTripleImpactPct": 0.92,
+    "nqfAsOf": "2026-11-03T06:59:59+09:00",
+    "fxBaseForNext": 157.9,
+    "fxLiveMid": 157.9,
     "fxLeadPct": 0.0,
     "fxLockedAtTtm": false,
-    "fxAsOf": "2026-10-31T05:59:33+09:00",
-    "totalLeadRaw": 0.0007098476018543673,
-    "totalLeadPct": 0.07
+    "fxAsOf": "2026-11-03T07:42:24+09:00",
+    "totalLeadRaw": 0.00922264969035709,
+    "totalLeadPct": 0.92
   },
   "schedule": {
-    "applicationDate": "2026-11-02",
-    "applicationDateLabel": "11/2(月)",
-    "cutoffAt": "2026-11-02T15:30:00+09:00",
+    "applicationDate": "2026-11-04",
+    "applicationDateLabel": "11/4(水)",
+    "cutoffAt": "2026-11-04T15:30:00+09:00",
     "cutoffTimeStr": "15:30",
-    "minutesToCutoff": 2558,
-    "executionDate": "2026-11-04",
-    "executionDateLabel": "11/4(水)",
-    "nightsAfterCutoff": 2,
+    "minutesToCutoff": 1907,
+    "executionDate": "2026-11-05",
+    "executionDateLabel": "11/5(木)",
+    "nightsAfterCutoff": 1,
     "nightsAfterCutoffDates": [
-      "2026-11-02",
-      "2026-11-03"
+      "2026-11-04"
     ],
     "unsettledUsNights": 2,
     "unsettledUsNightDates": [
-      "2026-11-02",
-      "2026-11-03"
+      "2026-11-03",
+      "2026-11-04"
     ],
-    "jpHolidaysBetween": [
-      "11/3 文化の日"
-    ],
+    "jpHolidaysBetween": [],
     "fomcDatesHit": [],
     "windowState": "holiday_or_weekend",
     "windowLabel": "休場日（次回営業日申込扱い）",
     "isOrderDayToday": false
   },
   "schedule1500": {
-    "applicationDate": "2026-11-02",
-    "applicationDateLabel": "11/2(月)",
-    "cutoffAt": "2026-11-02T15:00:00+09:00",
+    "applicationDate": "2026-11-04",
+    "applicationDateLabel": "11/4(水)",
+    "cutoffAt": "2026-11-04T15:00:00+09:00",
     "cutoffTimeStr": "15:00",
-    "minutesToCutoff": 2528,
-    "executionDate": "2026-11-04",
-    "executionDateLabel": "11/4(水)",
-    "nightsAfterCutoff": 2,
+    "minutesToCutoff": 1877,
+    "executionDate": "2026-11-05",
+    "executionDateLabel": "11/5(木)",
+    "nightsAfterCutoff": 1,
     "nightsAfterCutoffDates": [
-      "2026-11-02",
-      "2026-11-03"
+      "2026-11-04"
     ],
     "unsettledUsNights": 2,
     "unsettledUsNightDates": [
-      "2026-11-02",
-      "2026-11-03"
+      "2026-11-03",
+      "2026-11-04"
     ],
-    "jpHolidaysBetween": [
-      "11/3 文化の日"
-    ],
+    "jpHolidaysBetween": [],
     "fomcDatesHit": [],
     "windowState": "holiday_or_weekend",
     "windowLabel": "休場日（次回営業日申込扱い）",
     "isOrderDayToday": false
   },
   "signal": {
-    "score": 75,
-    "rank": "A",
-    "rankLabel": "押し目買い好機（分割買い推奨）",
+    "score": 83,
+    "rank": "S",
+    "rankLabel": "大口押し目好機（強い買い）",
     "tone": "watch_buy",
-    "actionBadge": "11/2(月) 15:05まで待機",
+    "actionBadge": "11/4(水) 15:05まで待機",
     "orderReadyNow": false,
     "orderOkLevel": true,
     "intradayBounceTrap": false,
-    "recommendedPct": 20,
-    "baseRecommendedPct": 30,
-    "capReasons": [
-      "祝日挟みで米国市場2晩分をまたぐため上限20%に抑制"
-    ],
-    "headline": "【買い増しリバランス圏（+18,000円目安）】発注は 11/2(月) 15:05 の最終通知後がベスト",
-    "detailAdvice": "急落により現在バランスが 投信 62,705円（47.2%）：現金 70,000円 に変化し、目標比率 64.0% に対して「金額指定 18,000円 の買い増し（残り現金 52,000円温存）」が適正です。今すぐ入れても 11/2(月) 15:15 に入れても同じ 11/4(水) 約定になるため、11/2(月) 15:05 の最終通知を見てから発注してください。",
+    "recommendedPct": 35,
+    "baseRecommendedPct": 35,
+    "capReasons": [],
+    "headline": "【買い増しリバランス圏（+28,000円目安）】発注は 11/4(水) 15:05 の最終通知後がベスト",
+    "detailAdvice": "急落により現在バランスが 投信 60,766円（46.5%）：現金 70,000円 に変化し、目標比率 68.0% に対して「金額指定 28,000円 の買い増し（残り現金 42,000円温存）」が適正です。今すぐ入れても 11/4(水) 15:15 に入れても同じ 11/5(木) 約定になるため、11/4(水) 15:05 の最終通知を見てから発注してください。",
     "reasons": [
-      "発射台（11/2(月)見込）: 9,347円 → 8,367円（-10.48% / 3日累積 -12.93%）",
-      "昼間の時間外リード: NQ=F +0.02% (×3=+0.07%) ＋ 為替 +0.00% ＝ 合計 +0.07%",
-      "NASDAQ100 テクニカル: 60日高値比 -9.08%（3倍換算 約-25.9%） / RSI(14) 34.9 / 25日線乖離 -5.49%",
-      "ボラティリティ & 日程: VIX 19.42（前日比 +2.22） / 11/2(月)申込 → 11/4(水)約定（米国市場 2晩分）",
-      "ロット抑制ルール適用: 祝日挟みで米国市場2晩分をまたぐため上限20%に抑制",
-      "国内祝日挟み注意: 11/3 文化の日 を挟むため通常より約定までの米国市場日数が長くなります"
+      "発射台（11/4(水)見込）: 8,378円 → 8,040円（-4.04% / 3日累積 -17.82%）",
+      "昼間の時間外リード: NQ=F +0.31% (×3=+0.92%) ＋ 為替 +0.00% ＝ 合計 +0.92%",
+      "NASDAQ100 テクニカル: 60日高値比 -10.08%（3倍換算 約-28.7%） / RSI(14) 33.3 / 25日線乖離 -5.97%",
+      "ボラティリティ & 日程: VIX 21.15（前日比 +1.73） / 11/4(水)申込 → 11/5(木)約定（米国市場 1晩分）"
     ],
     "axes": [
       {
         "id": "launchpad_dip",
         "label": "① 発射台の押し目度（前夜・3日下落）",
-        "score": 28.2,
+        "score": 29.1,
         "maxScore": 30,
         "minScore": 0,
-        "summary": "1日 -10.48% / 3日 -12.93%"
+        "summary": "1日 -4.04% / 3日 -17.82%"
       },
       {
         "id": "drawdown_depth",
         "label": "② NASDAQ100 高値からの調整深さ",
-        "score": 20.8,
+        "score": 22.0,
         "maxScore": 25,
         "minScore": 0,
-        "summary": "60日高値(31,224)比 -9.08%"
+        "summary": "60日高値(31,224)比 -10.08%"
       },
       {
         "id": "technical_oversold",
         "label": "③ テクニカル売られすぎ度（RSI・25日線）",
-        "score": 17.2,
+        "score": 17.8,
         "maxScore": 20,
         "minScore": 0,
-        "summary": "RSI(14)=34.9 / 25日線乖離 -5.49%"
+        "summary": "RSI(14)=33.3 / 25日線乖離 -5.97%"
       },
       {
         "id": "intraday_lead",
         "label": "④ 昼間の時間外リード（高値掴み回避）",
-        "score": 7.9,
+        "score": 6.2,
         "maxScore": 15,
         "minScore": -20,
-        "summary": "時間外3倍+為替リード +0.07%"
+        "summary": "時間外3倍+為替リード +0.92%"
       },
       {
         "id": "vix_and_schedule",
         "label": "⑤ VIX恐怖指数 & 日程リスク補正",
-        "score": 0.7,
+        "score": 7.6,
         "maxScore": 10,
         "minScore": -15,
-        "summary": "VIX 19.4 / 約定まで米国 2晩"
+        "summary": "VIX 21.1 / 約定まで米国 1晩"
       }
     ]
   },
   "technicals": {
-    "impliedNdx": 28390.53,
+    "impliedNdx": 28076.59,
     "ndxHigh60d": 31224.47,
-    "drawdownNdxPct": -9.08,
-    "drawdownTripleEquivPct": -25.9,
-    "rsi14": 34.9,
-    "sma25": 30039.84,
-    "sma25DevPct": -5.49,
-    "cum3dChangePct": -12.93,
-    "vix": 19.42,
-    "vixChange": 2.22
+    "drawdownNdxPct": -10.08,
+    "drawdownTripleEquivPct": -28.7,
+    "rsi14": 33.3,
+    "sma25": 29857.85,
+    "sma25DevPct": -5.97,
+    "cum3dChangePct": -17.82,
+    "vix": 21.15,
+    "vixChange": 1.73
   },
   "rebalance": {
     "config": {
@@ -247,70 +242,70 @@
       "minTradeYen": 3000
     },
     "valuation": {
-      "d0FundYen": 70000,
-      "d0TotalYen": 140000,
-      "d0WeightPct": 50.0,
-      "launchpadFundYen": 62660,
-      "launchpadTotalYen": 132660,
-      "launchpadWeightPct": 47.23,
-      "currentFundYen": 62705,
+      "d0FundYen": 62743,
+      "d0TotalYen": 132743,
+      "d0WeightPct": 47.27,
+      "launchpadFundYen": 60212,
+      "launchpadTotalYen": 130212,
+      "launchpadWeightPct": 46.24,
+      "currentFundYen": 60766,
       "currentCashYen": 70000,
-      "currentTotalYen": 132705,
-      "currentWeightPct": 47.25,
-      "diffFromD0Yen": -7295
+      "currentTotalYen": 130766,
+      "currentWeightPct": 46.47,
+      "diffFromD0Yen": -1977
     },
     "activeMode": "dynamic",
     "activePlan": {
-      "targetWeightPct": 64.0,
-      "targetFundYen": 84931,
-      "rawDiffYen": 22226,
-      "driftPt": -16.75,
+      "targetWeightPct": 68.0,
+      "targetFundYen": 88921,
+      "rawDiffYen": 28155,
+      "driftPt": -21.53,
       "bandPt": 4.0,
       "action": "BUY",
       "orderMethod": "金額指定買付",
-      "tradeYen": 18000,
-      "tradeUnits": 21498,
-      "capNote": "祝日挟み（米国市場2晩分）のため1回の買付上限を現金の25%に抑制",
-      "afterFundYen": 80705,
-      "afterCashYen": 52000,
-      "afterUnits": 96388,
-      "afterWeightPct": 60.82
+      "tradeYen": 28000,
+      "tradeUnits": 34508,
+      "capNote": null,
+      "afterFundYen": 88766,
+      "afterCashYen": 42000,
+      "afterUnits": 109398,
+      "afterWeightPct": 67.88
     },
     "dynamicPlan": {
-      "targetWeightPct": 64.0,
-      "targetFundYen": 84931,
-      "rawDiffYen": 22226,
-      "driftPt": -16.75,
+      "targetWeightPct": 68.0,
+      "targetFundYen": 88921,
+      "rawDiffYen": 28155,
+      "driftPt": -21.53,
       "bandPt": 4.0,
       "action": "BUY",
       "orderMethod": "金額指定買付",
-      "tradeYen": 18000,
-      "tradeUnits": 21498,
-      "capNote": "祝日挟み（米国市場2晩分）のため1回の買付上限を現金の25%に抑制",
-      "afterFundYen": 80705,
-      "afterCashYen": 52000,
-      "afterUnits": 96388,
-      "afterWeightPct": 60.82
+      "tradeYen": 28000,
+      "tradeUnits": 34508,
+      "capNote": null,
+      "afterFundYen": 88766,
+      "afterCashYen": 42000,
+      "afterUnits": 109398,
+      "afterWeightPct": 67.88
     },
     "fixedPlan": {
       "targetWeightPct": 50.0,
-      "targetFundYen": 66352,
-      "rawDiffYen": 3647,
-      "driftPt": -2.75,
+      "targetFundYen": 65383,
+      "rawDiffYen": 4617,
+      "driftPt": -3.53,
       "bandPt": 4.0,
       "action": "HOLD",
       "orderMethod": "なし",
       "tradeYen": 0,
       "tradeUnits": 0,
       "capNote": null,
-      "afterFundYen": 62705,
+      "afterFundYen": 60766,
       "afterCashYen": 70000,
       "afterUnits": 74890,
-      "afterWeightPct": 47.25
+      "afterWeightPct": 46.47
     },
     "nextTriggersAfterAction": {
-      "profitTakeNavAtNeutral": 9336,
-      "nextAddBuyNav": 7099
+      "profitTakeNavAtNeutral": 9047,
+      "nextAddBuyNav": 6790
     }
   },
   "scenarios": [
@@ -318,45 +313,40 @@
       "label": "さらに急落 (NQ -4% → 3倍 -12%)",
       "nqMovePct": -4.0,
       "tripleMovePct": -12.0,
-      "estimatedNav": 7368,
-      "vsFridayOrD0Pct": -21.17
+      "estimatedNav": 7140,
+      "vsFridayOrD0Pct": -14.78
     },
     {
       "label": "続落 (NQ -2% → 3倍 -6%)",
       "nqMovePct": -2.0,
       "tripleMovePct": -6.0,
-      "estimatedNav": 7871,
-      "vsFridayOrD0Pct": -15.79
+      "estimatedNav": 7627,
+      "vsFridayOrD0Pct": -8.96
     },
     {
       "label": "ここから横ばい (NQ ±0%)",
       "nqMovePct": 0.0,
       "tripleMovePct": 0.0,
-      "estimatedNav": 8373,
-      "vsFridayOrD0Pct": -10.42
+      "estimatedNav": 8114,
+      "vsFridayOrD0Pct": -3.15
     },
     {
       "label": "半分程度反発 (NQ +2% → 3倍 +6%)",
       "nqMovePct": 2.0,
       "tripleMovePct": 6.0,
-      "estimatedNav": 8875,
-      "vsFridayOrD0Pct": -5.05
+      "estimatedNav": 8601,
+      "vsFridayOrD0Pct": 2.66
     },
     {
       "label": "急反発 (NQ +4% → 3倍 +12%)",
       "nqMovePct": 4.0,
       "tripleMovePct": 12.0,
-      "estimatedNav": 9378,
-      "vsFridayOrD0Pct": 0.33
+      "estimatedNav": 9088,
+      "vsFridayOrD0Pct": 8.47
     }
   ],
   "charts": {
     "ndx60d": [
-      {
-        "date": "2026-08-07",
-        "close": 29722.3,
-        "sma25": 28938.25
-      },
       {
         "date": "2026-08-10",
         "close": 29621.8,
@@ -651,15 +641,20 @@
         "date": "2026-10-30",
         "close": 28384.85,
         "sma25": 30039.84
+      },
+      {
+        "date": "2026-11-02",
+        "close": 27989.82,
+        "sma25": 29948.36
       }
     ]
   },
   "notificationStatus": {
     "webhookConfigured": false,
-    "lastMorningDate": null,
-    "lastFinalDate": null,
+    "lastMorningDate": "2026-11-02",
+    "lastFinalDate": "2026-11-02",
     "lastOpportunityAlertDate": null,
-    "lastSentAt": null,
-    "lastSentKind": null
+    "lastSentAt": "2026-11-02T15:03:16+09:00",
+    "lastSentKind": "cutoff_final_judge"
   }
 }

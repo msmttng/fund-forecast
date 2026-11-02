@@ -137,6 +137,92 @@ def should_fetch_nav_window(now_jst: datetime.datetime) -> bool:
     return (18 <= now_jst.hour <= 23) or (6 <= now_jst.hour < 9)
 
 
+DOMESTIC_SNAPSHOT_MODELS: Set[str] = {
+    "domestic",
+    "domestic_leveraged",
+    "domestic_close",
+    "topix_gold_plus",
+}
+
+
+def is_domestic_snapshot_fund(fund: Dict[str, Any]) -> bool:
+    """答え合わせ記録を 14:50 JST に行う国内株系ファンドかどうかを判定する。"""
+    return str(fund.get("model", "")) in DOMESTIC_SNAPSHOT_MODELS
+
+
+def is_recorded_at_1450_or_later(recorded_at_str: Any) -> bool:
+    """recordedAt ('YYYY-MM-DDTHH:MM:SS+09:00') の時刻部分が 14:50 JST 以降か判定する。"""
+    if not recorded_at_str:
+        return False
+    m = re.search(r"T(\d{2}):(\d{2})", str(recorded_at_str))
+    if not m:
+        return False
+    hh, mm = int(m.group(1)), int(m.group(2))
+    return (hh * 60 + mm) >= (14 * 60 + 50)
+
+
+def determine_update_interval_sec(
+    now_jst: datetime.datetime,
+    base_interval: int = 300,
+    offhours_interval: int = 1800,
+) -> int:
+    """現在時刻（JST）に応じて更新間隔（通常5分、休場時30分、平日15:40〜16:20は5分）を返す。"""
+    wd = now_jst.weekday()  # 0=月 ... 5=土, 6=日
+    hm = now_jst.hour * 60 + now_jst.minute
+
+    # 4-1 例外: 平日 15:40〜16:20 は、休場判定に関係なく 5 分間隔で動かす
+    if wd < 5 and (15 * 60 + 40 <= hm <= 16 * 60 + 20):
+        return base_interval
+
+    # 日曜終日
+    if wd == 6:
+        return offhours_interval
+    # 土曜 07:15 以降（米国金曜市場・大証夜間終了後）
+    if wd == 5 and hm >= 7 * 60 + 15:
+        return offhours_interval
+    # 月曜 06:45 未満（週明け市場開始前）
+    if wd == 0 and hm < 6 * 60 + 45:
+        return offhours_interval
+    # 日本の祝日・年末年始（平日）で米国市場も開いていない日中〜夜（07:15〜21:30 JST）
+    if not is_jp_business_day(now_jst.date()) and (7 * 60 + 15 <= hm < 21 * 60 + 30):
+        return offhours_interval
+    # 平日の日米市場幕間（06:15〜07:45 JST：米国・大証夜間終了後〜東京開場前）
+    if 6 * 60 + 15 <= hm < 7 * 60 + 45:
+        return offhours_interval
+
+    return base_interval
+
+
+def compute_next_update_plan(
+    now_jst: datetime.datetime,
+    base_interval: int = 300,
+    offhours_interval: int = 1800,
+) -> Tuple[int, datetime.datetime]:
+    """実際に次に動く時刻 (nextUpdateAt) と間隔秒数 (updateIntervalSec) を算出する。"""
+    interval_sec = determine_update_interval_sec(
+        now_jst, base_interval=base_interval, offhours_interval=offhours_interval
+    )
+    next_dt = now_jst + datetime.timedelta(seconds=interval_sec)
+
+    wd = now_jst.weekday()
+    hm = now_jst.hour * 60 + now_jst.minute
+
+    if wd < 5:
+        # 平日の休場時間帯（祝日日中など）で 15:40 より前に 30分間隔で動いた場合、15:40 から 5分間隔に切り替える
+        win_1540 = now_jst.replace(hour=15, minute=40, second=0, microsecond=0)
+        if now_jst < win_1540 < next_dt:
+            next_dt = win_1540
+            interval_sec = max(60, int(round((next_dt - now_jst).total_seconds())))
+
+        # 平日 15:40〜15:45 に動いた場合、15分ディレイの 15:30 大証先物値が配信される 15:45:05 JST に合わせて次回を実行する
+        win_1545 = now_jst.replace(hour=15, minute=45, second=5, microsecond=0)
+        if (15 * 60 + 40 <= hm < 15 * 60 + 45) and now_jst < win_1545 < next_dt:
+            next_dt = win_1545
+            interval_sec = max(30, int(round((next_dt - now_jst).total_seconds())))
+
+    return interval_sec, next_dt
+
+
 def parse_jp_date(date_str: str) -> Optional[str]:
     """'2026年10月27日' または '2026/10/27' を '2026-10-27' に変換する。"""
     s = date_str.strip()
@@ -451,10 +537,27 @@ def resolve_mmdd_to_ymd(mmdd: str, ref_year: int, ref_month: int) -> Optional[st
         return None
 
 
+def _extract_ose_1530_price(entry: Any) -> Tuple[Optional[float], Optional[str]]:
+    """market_anchor_cache['ose_1530'][key][date] から (price, anchorSource) を取り出す。"""
+    if isinstance(entry, (int, float)):
+        return float(entry), "cached_value"
+    if isinstance(entry, dict):
+        p = parse_num_str(entry.get("price"))
+        src = str(entry.get("anchorSource") or "api_time<=15:30")
+        return p, src
+    return None, None
+
+
 def fetch_ose_futures(anchor_cache: Dict[str, Any], now_jst: datetime.datetime) -> Dict[str, Dict[str, Any]]:
     """大阪取引所（JPX/QUICK 日通しAPI）から日経225先物・TOPIX先物の中心限月データを取得する。"""
     ose_settle_cache: Dict[str, Dict[str, float]] = anchor_cache.setdefault("ose_settlements", {})
+    ose_1530_cache: Dict[str, Dict[str, Any]] = anchor_cache.setdefault("ose_1530", {})
     out: Dict[str, Dict[str, Any]] = {}
+
+    today_str = now_jst.strftime("%Y-%m-%d")
+    now_hm = now_jst.hour * 60 + now_jst.minute
+    in_1545_1615 = (15 * 60 + 45) <= now_hm <= (16 * 60 + 15)
+    in_1545_1550 = (15 * 60 + 45) <= now_hm <= (15 * 60 + 50)
 
     url = "https://port.jpx.co.jp/jpxhp/jcgi/wrap/qjsonp.aspx?F=ctl/future&DISPTYPE=day_through"
     headers = {"Referer": "https://port.jpx.co.jp/jpxhp/main/index.aspx?F=future&disptype=day_through"}
@@ -509,6 +612,39 @@ def fetch_ose_futures(anchor_cache: Dict[str, Any], now_jst: datetime.datetime) 
             if st_val is not None and stt_ymd:
                 ose_settle_cache.setdefault(key, {})[stt_ymd] = st_val
 
+            # 4-1: 営業日の 15:45〜16:15 に取得した値のうち、データ時刻が 15:30 以前で最も新しいものを 15:30 値として保存
+            if in_1545_1615 and dpp is not None and dpp > 0 and is_jp_business_day(now_jst.date()):
+                target_day = dpp_ymd if (dpp_ymd == today_str) else today_str
+                key_1530_map = ose_1530_cache.setdefault(key, {})
+                existing_1530 = key_1530_map.get(target_day)
+                existing_time = (
+                    str(existing_1530.get("dataTime") or "")
+                    if isinstance(existing_1530, dict)
+                    else ""
+                )
+                m_time = re.match(r"^(\d{1,2}):(\d{2})$", dppt)
+                if m_time:
+                    dppt_norm = f"{int(m_time.group(1)):02d}:{int(m_time.group(2)):02d}"
+                    if (dpp_ymd is None or dpp_ymd == today_str) and ("09:00" <= dppt_norm <= "15:30"):
+                        if not existing_time or dppt_norm >= existing_time:
+                            key_1530_map[target_day] = {
+                                "price": dpp,
+                                "dataTime": dppt_norm,
+                                "fetchedAt": now_jst.isoformat(timespec="seconds"),
+                                "contract": str(best_row.get("DELIE") or best_row.get("DELI") or ""),
+                                "anchorSource": "api_time<=15:30",
+                            }
+                else:
+                    # 時刻項目が無い場合は 15:45〜15:50 に取得した値を 15:30 値とみなす
+                    if in_1545_1550 and existing_1530 is None:
+                        key_1530_map[target_day] = {
+                            "price": dpp,
+                            "dataTime": None,
+                            "fetchedAt": now_jst.isoformat(timespec="seconds"),
+                            "contract": str(best_row.get("DELIE") or best_row.get("DELI") or ""),
+                            "anchorSource": "fetched_1545_1550_no_time_field",
+                        }
+
             as_of_iso = now_jst.isoformat(timespec="seconds")
             if dpp_ymd and ":" in dppt:
                 hh, mm = (dppt.split(":") + ["00"])[:2]
@@ -518,13 +654,15 @@ def fetch_ose_futures(anchor_cache: Dict[str, Any], now_jst: datetime.datetime) 
                     ).isoformat()
 
             out[key] = {
-                "contract": str(best_row.get("DELI", "")),
+                "contract": str(best_row.get("DELIE") or best_row.get("DELI") or ""),
                 "cur": dpp,
                 "dywp": dywp,
-                "base1530": (dpp - dywp) if (dpp is not None and dywp is not None) else st_val,
+                "baseSettlement": (dpp - dywp) if (dpp is not None and dywp is not None) else st_val,
                 "settle": st_val,
                 "settleDate": stt_ymd,
                 "tradingDate": ztd_ymd,
+                "dataDate": dpp_ymd,
+                "dataTime": dppt,
                 "asOf": as_of_iso,
             }
     except Exception as e:
@@ -1200,69 +1338,97 @@ def get_cme_niy_futures_change(
         return None
 
     fut_1530 = best_f[1]
-    r_fut = (fut_cur - fut_1530) / fut_1530
+    r_fut = (fut_cur / fut_1530) - 1.0
     return {
         "symbol": "NIY=F",
         "base": round(fut_1530, 2),
         "cur": round(fut_cur, 2),
         "rawChange": r_fut,
         "change": round(r_fut * 100.0, 2),
+        "baseSource": "15:30",
         "asOf": as_of_iso,
     }
 
 
 def get_ose_session_futures_change(
     ose_futures: Dict[str, Dict[str, Any]],
+    anchor_cache: Dict[str, Any],
     key: str,
     label: str,
     d0_str: str,
     d1_str: str,
 ) -> Optional[Dict[str, Any]]:
-    """大証先物（nikkei225 または topix）の 15:30（日中終値）からの変化率を返す。"""
+    """大証先物（nikkei225 または topix）の D0 15:30 先物値（欠損時は清算値）からの変化率を返す。"""
     f_obj = ose_futures.get(key)
     if not f_obj:
         return None
     t_date = f_obj.get("tradingDate")
     s_date = f_obj.get("settleDate")
     cur_v = f_obj.get("cur")
-    base_v = f_obj.get("base1530")
 
-    # 夜間取引開始前（まだ D0 日中セッション表示中）の場合は変化率 0
+    # 4-1: D0 の 15:30 値があれば起点に使用し、無い日は清算値基準に戻して baseSource: "settlement" を付ける
+    ose_1530_entry = anchor_cache.get("ose_1530", {}).get(key, {}).get(d0_str)
+    base_1530_val, anchor_src = _extract_ose_1530_price(ose_1530_entry)
+
+    if base_1530_val is not None and base_1530_val > 0:
+        base_v: Optional[float] = base_1530_val
+        base_source = "15:30"
+    else:
+        base_source = "settlement"
+        anchor_src = None
+        cached_st = anchor_cache.get("ose_settlements", {}).get(key, {}).get(d0_str)
+        if cached_st is not None and float(cached_st) > 0:
+            base_v = float(cached_st)
+        else:
+            base_v = f_obj.get("settle") or f_obj.get("baseSettlement")
+
+    # D0 日中セッション表示中（夜間取引開始前）の場合
     if t_date == d0_str:
         val = cur_v or f_obj.get("settle")
         if val and val > 0:
-            return {
+            b_use = base_v if (base_v and base_v > 0) else val
+            r_fut = (val / b_use) - 1.0
+            res_d0: Dict[str, Any] = {
                 "symbol": label,
-                "base": round(val, 2),
+                "base": round(b_use, 2),
                 "cur": round(val, 2),
-                "rawChange": 0.0,
-                "change": 0.0,
+                "rawChange": r_fut,
+                "change": round(r_fut * 100.0, 2),
+                "baseSource": base_source,
                 "asOf": f_obj["asOf"],
             }
+            if anchor_src:
+                res_d0["anchorSource"] = anchor_src
+            return res_d0
         return None
 
     # D1 セッション（夜間〜D1 日中）の取引値がある場合
     if (t_date == d1_str or s_date == d0_str) and cur_v and base_v and base_v > 0:
-        r_fut = (cur_v - base_v) / base_v
-        return {
+        r_fut = (cur_v / base_v) - 1.0
+        res_d1: Dict[str, Any] = {
             "symbol": label,
             "base": round(base_v, 2),
             "cur": round(cur_v, 2),
             "rawChange": r_fut,
             "change": round(r_fut * 100.0, 2),
+            "baseSource": base_source,
             "asOf": f_obj["asOf"],
         }
+        if anchor_src:
+            res_d1["anchorSource"] = anchor_src
+        return res_d1
     return None
 
 
 def get_nikkei_index_change(
     market_cache: Dict[str, Dict[str, Any]],
     ose_futures: Dict[str, Dict[str, Any]],
+    anchor_cache: Dict[str, Any],
     d0_str: str,
     d1_str: str,
     now_jst: datetime.datetime,
 ) -> Dict[str, Any]:
-    """日経平均 (^N225) の D0 終値からの変化率を計算する（夜間は大証日経225先物を優先し NIY=F にフォールバック）。"""
+    """日経平均 (^N225) の D0 終値からの変化率を計算する（夜間は現物終値×(先物現在値÷15:30先物値)）。"""
     entry = market_cache["^N225"]
     daily = entry["daily"]
     meta = daily["meta"]
@@ -1304,17 +1470,26 @@ def get_nikkei_index_change(
     if use_cash_d1:
         cur_val = bars_by_date.get(d1_str, reg_price) if now_jst.hour >= 16 else reg_price
     else:
-        ose_nk = get_ose_session_futures_change(ose_futures, "nikkei225", "日経225先物(大証)", d0_str, d1_str)
+        ose_nk = get_ose_session_futures_change(
+            ose_futures, anchor_cache, "nikkei225", "日経225先物(大証)", d0_str, d1_str
+        )
         fut = ose_nk or get_cme_niy_futures_change(market_cache, d0_str, now_jst)
         if fut:
-            cur_val = base_val * (1.0 + fut["rawChange"])
+            # 4-1: 現物終値 ×（先物の現在値 ÷ 15:30の先物値[または清算値]）
+            if fut.get("base") and float(fut["base"]) > 0 and fut.get("cur"):
+                cur_val = base_val * (float(fut["cur"]) / float(fut["base"]))
+            else:
+                cur_val = base_val * (1.0 + fut["rawChange"])
             as_of_iso = fut["asOf"]
             futures_info = {
                 "symbol": fut["symbol"],
                 "base": fut["base"],
                 "cur": fut["cur"],
                 "change": fut["change"],
+                "baseSource": fut.get("baseSource", "15:30"),
             }
+            if "anchorSource" in fut:
+                futures_info["anchorSource"] = fut["anchorSource"]
 
     r_idx = (cur_val - base_val) / base_val if base_val else 0.0
     res: Dict[str, Any] = {
@@ -1373,7 +1548,7 @@ def get_nikkei_leveraged_change(
             "asOf": as_of_iso,
         }
 
-    return get_nikkei_index_change(market_cache, ose_futures, d0_str, d1_str, now_jst)
+    return get_nikkei_index_change(market_cache, ose_futures, anchor_cache, d0_str, d1_str, now_jst)
 
 
 def get_topix_index_change(
@@ -1381,12 +1556,13 @@ def get_topix_index_change(
     jpx_topix_live: Optional[Dict[str, Any]],
     topix_daily: Dict[str, float],
     ose_futures: Dict[str, Dict[str, Any]],
+    anchor_cache: Dict[str, Any],
     topix_beta: float,
     d0_str: str,
     d1_str: str,
     now_jst: datetime.datetime,
 ) -> Dict[str, Any]:
-    """TOPIX 指数の D0 公式終値からの変化率を計算する（日中: 指数現在値/1306.T、夜間: 大証TOPIX先物/β×日経先物）。"""
+    """TOPIX 指数の D0 公式終値からの変化率を計算する（日中: 指数現在値/1306.T、夜間: 現物終値×(先物現在値÷15:30先物値)）。"""
     # 1306.T フォールバック用データ
     etf_entry = market_cache["1306.T"]
     etf_daily = etf_entry["daily"]
@@ -1432,19 +1608,29 @@ def get_topix_index_change(
             cur_val = base_val * (1.0 + r_1306)
             as_of_iso = etf_as_of
     else:
-        # 夜間・時間外：1. 大証 TOPIX先物 (15:30比) → 2. β × 日経先物変化率
-        ose_tpx = get_ose_session_futures_change(ose_futures, "topix", "TOPIX先物(大証)", d0_str, d1_str)
+        # 夜間・時間外：1. 大証 TOPIX先物 (15:30先物値比、欠損時は清算値比) → 2. β × 日経先物変化率
+        ose_tpx = get_ose_session_futures_change(
+            ose_futures, anchor_cache, "topix", "TOPIX先物(大証)", d0_str, d1_str
+        )
         if ose_tpx:
-            cur_val = base_val * (1.0 + ose_tpx["rawChange"])
+            if ose_tpx.get("base") and float(ose_tpx["base"]) > 0 and ose_tpx.get("cur"):
+                cur_val = base_val * (float(ose_tpx["cur"]) / float(ose_tpx["base"]))
+            else:
+                cur_val = base_val * (1.0 + ose_tpx["rawChange"])
             as_of_iso = ose_tpx["asOf"]
             futures_info = {
                 "symbol": ose_tpx["symbol"],
                 "base": ose_tpx["base"],
                 "cur": ose_tpx["cur"],
                 "change": ose_tpx["change"],
+                "baseSource": ose_tpx.get("baseSource", "15:30"),
             }
+            if "anchorSource" in ose_tpx:
+                futures_info["anchorSource"] = ose_tpx["anchorSource"]
         else:
-            ose_nk = get_ose_session_futures_change(ose_futures, "nikkei225", "日経225先物(大証)", d0_str, d1_str)
+            ose_nk = get_ose_session_futures_change(
+                ose_futures, anchor_cache, "nikkei225", "日経225先物(大証)", d0_str, d1_str
+            )
             nk_fut = ose_nk or get_cme_niy_futures_change(market_cache, d0_str, now_jst)
             if nk_fut:
                 r_approx = topix_beta * nk_fut["rawChange"]
@@ -1455,7 +1641,10 @@ def get_topix_index_change(
                     "base": nk_fut["base"],
                     "cur": nk_fut["cur"],
                     "change": round(r_approx * 100.0, 2),
+                    "baseSource": nk_fut.get("baseSource", "15:30"),
                 }
+                if "anchorSource" in nk_fut:
+                    futures_info["anchorSource"] = nk_fut["anchorSource"]
 
     r_idx = (cur_val - base_val) / base_val if base_val else 0.0
     res: Dict[str, Any] = {
@@ -1523,7 +1712,7 @@ def update_forecast_log_and_accuracy(
     now_jst: datetime.datetime,
     window_days: int = 20,
 ) -> Dict[str, Any]:
-    """朝 8:30 JST 時点の予想値を docs/history/forecast_log.json に記録し、公表基準価額との誤差を集計する。"""
+    """海外ファンドは朝 8:30 JST、国内株は 14:50 JST 時点の予想値を forecast_log.json に記録し、公表基準価額との誤差を集計する。"""
     FORECAST_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     log_data: Dict[str, Any] = {"version": 1, "entries": {}}
     if FORECAST_LOG_PATH.exists():
@@ -1537,13 +1726,12 @@ def update_forecast_log_and_accuracy(
     entries: Dict[str, Dict[str, Any]] = log_data["entries"]
     changed = False
     today_str = now_jst.strftime("%Y-%m-%d")
-    in_morning_snapshot_window = (
-        (now_jst.hour > 8 or (now_jst.hour == 8 and now_jst.minute >= 30))
-        and now_jst.hour < 18
-    )
+    now_hm = now_jst.hour * 60 + now_jst.minute
+    in_overseas_snapshot_window = (8 * 60 + 30) <= now_hm < (18 * 60)
+    in_domestic_snapshot_window = (14 * 60 + 50) <= now_hm < (18 * 60)
 
-    # 1. 予想対象日当日の朝 8:30 JST 以降（18:00 未満）に 1 日 1 回記録
-    if in_morning_snapshot_window:
+    # 1. 予想対象日当日の記録（海外ファンド: 8:30以降、国内株: 14:50以降、18:00未満に1日1回）
+    if in_overseas_snapshot_window or in_domestic_snapshot_window:
         for g in out_groups:
             for f in g.get("funds", []):
                 if f.get("stale") or "forecast" not in f or "targetDate" not in f:
@@ -1551,10 +1739,21 @@ def update_forecast_log_and_accuracy(
                 t_date = f["targetDate"]
                 if t_date != today_str:
                     continue
+                is_dom = is_domestic_snapshot_fund(f)
+                if is_dom and not in_domestic_snapshot_window:
+                    continue
+                if (not is_dom) and not in_overseas_snapshot_window:
+                    continue
+
                 fid = f["id"]
                 day_bucket = entries.setdefault(t_date, {})
                 existing = day_bucket.get(fid)
-                if existing is None or existing.get("source") == "backtest":
+                should_record = (
+                    existing is None
+                    or existing.get("source") in ("backtest", "backtest-proxy")
+                    or (is_dom and not is_recorded_at_1450_or_later(existing.get("recordedAt")))
+                )
+                if should_record:
                     day_bucket[fid] = {
                         "baseDate": f["navDate"],
                         "baseNav": int(f["nav"]),
@@ -1617,14 +1816,24 @@ def update_forecast_log_and_accuracy(
         g_abs_errors: List[float] = []
         g_signed_errors: List[float] = []
         g_fund_with_data = 0
+        g_rec_times: List[str] = []
 
         for f in g.get("funds", []):
             fid = f["id"]
+            is_dom = is_domestic_snapshot_fund(f)
+            f_rec_time = "14:50" if is_dom else "8:30"
+            if f_rec_time not in g_rec_times:
+                g_rec_times.append(f_rec_time)
+
             matched_recs: List[Tuple[str, Dict[str, Any]]] = []
             for d_str in sorted_dates:
                 rec = entries.get(d_str, {}).get(fid)
-                if isinstance(rec, dict) and rec.get("errorPt") is not None:
-                    matched_recs.append((d_str, rec))
+                if not isinstance(rec, dict) or rec.get("errorPt") is None:
+                    continue
+                # 国内株で万一 14:50 未満の旧 8:30 記録が残っていた場合は除外
+                if is_dom and not is_recorded_at_1450_or_later(rec.get("recordedAt")):
+                    continue
+                matched_recs.append((d_str, rec))
 
             recent = matched_recs[-window_days:]
             if recent:
@@ -1637,6 +1846,7 @@ def update_forecast_log_and_accuracy(
                     "days": len(recent),
                     "maePt": round(mae_pt, 2),
                     "biasPt": round(bias_pt, 2),
+                    "recordTime": f_rec_time,
                     "latest": {
                         "date": last_date,
                         "forecast": int(last_rec["forecastNav"]),
@@ -1650,9 +1860,11 @@ def update_forecast_log_and_accuracy(
                 all_abs_errors.extend(abs_errs)
                 g_fund_with_data += 1
 
+        group_rec_label = " / ".join(g_rec_times) if g_rec_times else "8:30"
         group_summaries.append({
             "id": g["id"],
             "label": g["label"],
+            "recordTime": group_rec_label,
             "fundCount": len(g.get("funds", [])),
             "evaluatedFundCount": g_fund_with_data,
             "sampleCount": len(g_abs_errors),
@@ -1687,6 +1899,8 @@ def run_build(
     force_nav: bool = False,
     nav_ttl_hours: float = 6.0,
     next_update_in_sec: Optional[int] = None,
+    base_interval_sec: int = 300,
+    offhours_interval_sec: int = 1800,
     output_path: pathlib.Path = DATA_JSON_PATH,
 ) -> Dict[str, Any]:
     """市場データ・基準価額データを取得して予想基準価額を計算し、data.json に書き出す。"""
@@ -1696,6 +1910,19 @@ def run_build(
 
     funds_cfg = json.loads(FUNDS_JSON_PATH.read_text(encoding="utf-8"))
     anchor_cache = load_anchor_cache()
+
+    # 4-1: 営業日の 15:44:30〜16:15:59 は Yahoo 等を取得する前に最優先で大証先物 API を叩き 15:30 値を捕捉する
+    early_ose_futures: Optional[Dict[str, Dict[str, Any]]] = None
+    if is_jp_business_day(now_jst.date()):
+        hm_sec = now_jst.hour * 3600 + now_jst.minute * 60 + now_jst.second
+        if (15 * 3600 + 44 * 60 + 30) <= hm_sec < (15 * 3600 + 45 * 60 + 2):
+            wait_s = (15 * 3600 + 45 * 60 + 2) - hm_sec
+            time.sleep(wait_s)
+            now_jst = datetime.datetime.now(JST)
+            hm_sec = now_jst.hour * 3600 + now_jst.minute * 60 + now_jst.second
+        if (15 * 3600 + 45 * 60) <= hm_sec <= (16 * 3600 + 15 * 60 + 59):
+            early_ose_futures = fetch_ose_futures(anchor_cache, now_jst)
+            save_anchor_cache(anchor_cache)
 
     nav_cache: Dict[str, Any] = {}
     if NAV_CACHE_PATH.exists():
@@ -1796,7 +2023,7 @@ def run_build(
     ttm_map = update_murc_ttm_cache(anchor_cache, distinct_d0_dates, now_jst, rep_d1_str)
     jpx_topix_live = fetch_jpx_topix_live(anchor_cache, now_jst)
     topix_daily = ensure_topix_history_for_beta(anchor_cache, rep_d0_str)
-    ose_futures = fetch_ose_futures(anchor_cache, now_jst)
+    ose_futures = early_ose_futures if early_ose_futures is not None else fetch_ose_futures(anchor_cache, datetime.datetime.now(JST))
     msci_maps = update_msci_cache(anchor_cache, now_jst, rep_d1_str)
     solactive_maps = update_solactive_cache(anchor_cache, solactive_isins, now_jst, rep_d1_str)
     save_anchor_cache(anchor_cache)
@@ -1816,9 +2043,9 @@ def run_build(
     nqf_m = get_us_futures_change(
         market_cache, "NQ=F", rep_d0_str, rep_d1_str, now_jst, settle_hour_et=16, settle_min_et=0
     )
-    n225_m = get_nikkei_index_change(market_cache, ose_futures, rep_d0_str, rep_d1_str, now_jst)
+    n225_m = get_nikkei_index_change(market_cache, ose_futures, anchor_cache, rep_d0_str, rep_d1_str, now_jst)
     topix_m = get_topix_index_change(
-        market_cache, jpx_topix_live, topix_daily, ose_futures, topix_beta, rep_d0_str, rep_d1_str, now_jst
+        market_cache, jpx_topix_live, topix_daily, ose_futures, anchor_cache, topix_beta, rep_d0_str, rep_d1_str, now_jst
     )
     sox_m = get_overseas_index_change(market_cache, "^SOX", rep_d0_str, d1_str=rep_d1_str)
     fang_m = get_overseas_index_change(market_cache, "^NYFANG", rep_d0_str, d1_str=rep_d1_str)
@@ -1957,10 +2184,10 @@ def run_build(
                     is_topix = (gid == "topix" or sym in ("1306.T", "TOPIX", "^TOPX"))
                     if is_topix:
                         idx_info = get_topix_index_change(
-                            market_cache, jpx_topix_live, topix_daily, ose_futures, topix_beta, d0_str, d1_str, now_jst
+                            market_cache, jpx_topix_live, topix_daily, ose_futures, anchor_cache, topix_beta, d0_str, d1_str, now_jst
                         )
                     else:
-                        idx_info = get_nikkei_index_change(market_cache, ose_futures, d0_str, d1_str, now_jst)
+                        idx_info = get_nikkei_index_change(market_cache, ose_futures, anchor_cache, d0_str, d1_str, now_jst)
                     r_idx = idx_info["rawChange"]
                     r_total = r_idx
                     breakdown = {
@@ -2045,7 +2272,7 @@ def run_build(
 
                 elif model == "topix_gold_plus":
                     idx_info = get_topix_index_change(
-                        market_cache, jpx_topix_live, topix_daily, ose_futures, topix_beta, d0_str, d1_str, now_jst
+                        market_cache, jpx_topix_live, topix_daily, ose_futures, anchor_cache, topix_beta, d0_str, d1_str, now_jst
                     )
                     ref_us_base = get_overseas_index_change(market_cache, "^GSPC", d0_str, d1_str=d1_str)["baseDate"]
                     gold_info = get_us_futures_change(
@@ -2138,10 +2365,19 @@ def run_build(
             "funds": out_funds,
         })
 
-    accuracy_summary = update_forecast_log_and_accuracy(out_groups, nav_cache, now_jst, window_days=20)
+    finish_jst = datetime.datetime.now(JST)
+    accuracy_summary = update_forecast_log_and_accuracy(out_groups, nav_cache, finish_jst, window_days=20)
+
+    if next_update_in_sec is not None and next_update_in_sec > 0:
+        planned_interval = int(next_update_in_sec)
+        next_dt = finish_jst + datetime.timedelta(seconds=planned_interval)
+    else:
+        planned_interval, next_dt = compute_next_update_plan(
+            finish_jst, base_interval=base_interval_sec, offhours_interval=offhours_interval_sec
+        )
 
     output_data: Dict[str, Any] = {
-        "updatedAt": now_jst.isoformat(timespec="seconds"),
+        "updatedAt": finish_jst.isoformat(timespec="seconds"),
         "baseDate": rep_d0_str,
         "targetDate": rep_d1_str,
         "topixBeta": topix_beta,
@@ -2157,18 +2393,16 @@ def run_build(
         },
         "accuracySummary": accuracy_summary,
         "groups": out_groups,
+        "updateIntervalSec": planned_interval,
+        "nextUpdateAt": next_dt.isoformat(timespec="seconds"),
     }
-    if next_update_in_sec is not None and next_update_in_sec > 0:
-        next_dt = now_jst + datetime.timedelta(seconds=int(next_update_in_sec))
-        output_data["updateIntervalSec"] = int(next_update_in_sec)
-        output_data["nextUpdateAt"] = next_dt.isoformat(timespec="seconds")
 
     output_path.write_text(
         json.dumps(output_data, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
         newline="\n",
     )
-    print(f"[OK] Wrote {output_path} (targetDate={rep_d1_str}, topixBeta={topix_beta})")
+    print(f"[OK] Wrote {output_path} (targetDate={rep_d1_str}, topixBeta={topix_beta}, nextUpdateAt={output_data['nextUpdateAt']})")
     return output_data
 
 
@@ -2176,7 +2410,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Build docs/data.json for fund-forecast")
     parser.add_argument("--force-nav", action="store_true", help="時間帯に関わらず基準価額CSVを再取得する")
     parser.add_argument("--nav-ttl-hours", type=float, default=6.0, help="基準価額キャッシュの再利用有効時間（時間）")
-    parser.add_argument("--next-update-sec", type=int, default=300, help="次回更新予定までの秒数")
+    parser.add_argument("--next-update-sec", type=int, default=None, help="次回更新予定までの秒数（省略時は休場判定・15:40〜16:20例外から自動算出）")
     parser.add_argument("--output", type=str, default=str(DATA_JSON_PATH), help="出力先 data.json パス")
     args = parser.parse_args()
 

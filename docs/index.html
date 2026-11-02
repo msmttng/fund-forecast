@@ -787,7 +787,7 @@
           <li><strong>標準（為替ヘッジなし）</strong>：海外指数または投資先ETFの未反映変化率（D0より前の最終終値→最新値）と、ドル円変化率（D0の三菱UFJ公示仲値 TTM → D1公示仲値または現在値、仲値未取得日のみ10:00足で代替）を掛け合わせて <code>(1 + 指数変化率) × (1 + 為替変化率) − 1</code> で算出します。オルカン・先進国株式（コクサイ）は公表済みMSCI公式指数（グロス配当込み・USD）を使用し、未公表分のみ対応ETF（ACWI・TOK）で補完します。</li>
           <li><strong>レバレッジ（為替ヘッジあり）</strong>：先物（CME清算値基準）または指数の未反映変化率 × 倍率（2倍）で算出します。</li>
           <li><strong>加算型（auAMレバレッジ2倍・トリプル3倍 為替ヘッジ無し）</strong>：NASDAQ100先物（NQ=F、D0前夜のCME清算値基準）の未反映変化率 × 倍率（2倍または3倍）＋ ドル円変化率 で算出します。</li>
-          <li><strong>国内株式（日経平均・TOPIX・4.3倍ブル）</strong>：東証取引時間中（平日9:00〜15:30）は指数現在値、夜間・時間外は大阪取引所の日経225先物・TOPIX先物（15:30比、取得不可時は直近60営業日の回帰係数 β × 日経先物変化率）で試算します。日本株4.3倍ブルは大証日経225先物のD0清算値からの変化率 × 4.3 で算出します。</li>
+          <li><strong>国内株式（日経平均・TOPIX・4.3倍ブル）</strong>：東証取引時間中（平日9:00〜15:30）は指数現在値、夜間・時間外（15:30以降）は大阪取引所の日経225先物・TOPIX先物の15:30時点の先物値を起点として <code>現物終値 ×（先物の現在値 ÷ 15:30の先物値）</code> で試算します（15:30値未取得日は清算値基準にフォールバック、TOPIX先物取得不可時は直近60営業日の回帰係数 β × 日経先物変化率で代替）。日本株4.3倍ブルは大証日経225先物のD0清算値からの変化率 × 4.3 で算出します。</li>
           <li><strong>ゴールド・ゴールドプラス</strong>：三菱UFJ純金ファンドは国内ETF（1540.T）の当日終値ベース、金ETF連動ファンドは投資先金ETFベース、Tracersゴールドプラス各ファンドは「株式指数変化率（＋為替変化率）＋ COMEX金先物（株式と同夜の清算値基準）変化率」で試算します。</li>
         </ul>
       </div>
@@ -972,14 +972,10 @@
           if (!isNaN(nextDate.getTime())) {
             var remainSec = (nextDate.getTime() - now.getTime()) / 1000;
             nextEl.style.display = "inline";
-            if (remainSec >= -45) {
+            if (remainSec > 0) {
               nextEl.textContent = "次の更新予定 " + formatOnlyHHMM(nextDate);
-            } else if (diffMin <= 35.0) {
-              var steps = Math.max(1, Math.ceil((now.getTime() - updatedDate.getTime()) / intervalMs));
-              var estNext = new Date(updatedDate.getTime() + steps * intervalMs);
-              nextEl.textContent = "次の更新予定 " + formatOnlyHHMM(estNext);
             } else {
-              nextEl.textContent = "次の更新予定 順次更新";
+              nextEl.textContent = "まもなく更新";
             }
           }
         }
@@ -1184,7 +1180,10 @@
         var parts = [];
 
         if (idx) {
-          var symText = idx.symbol + " " + formatPrice(idx.base) + " → " + formatPrice(idx.cur) + "（" + formatSignedPct(idx.change) + "）";
+          var idxOrigin = (!fut && idx.baseSource)
+            ? (idx.baseSource === "settlement" ? "（起点:清算値）" : (idx.baseSource === "15:30" ? "（起点:15:30）" : ""))
+            : "";
+          var symText = idx.symbol + idxOrigin + " " + formatPrice(idx.base) + " → " + formatPrice(idx.cur) + "（" + formatSignedPct(idx.change) + "）";
           if (idx.dividendAdjusted) {
             symText += "［分配落ち+" + idx.dividendAdjusted + "調整済］";
           }
@@ -1198,7 +1197,8 @@
         }
 
         if (fut) {
-          parts.push("先物 " + fut.symbol + " " + formatPrice(fut.base) + " → " + formatPrice(fut.cur) + "（" + formatSignedPct(fut.change) + "）");
+          var futOrigin = fut.baseSource === "settlement" ? "清算値" : "15:30";
+          parts.push("先物 " + fut.symbol + "（起点:" + futOrigin + "） " + formatPrice(fut.base) + " → " + formatPrice(fut.cur) + "（" + formatSignedPct(fut.change) + "）");
         }
 
         if (gold) {
@@ -1349,7 +1349,8 @@
           var accDiv = document.createElement("div");
           accDiv.className = "detail-accuracy num";
           var accMain = document.createElement("span");
-          accMain.textContent = "直近 " + f.accuracy.days + " 営業日の平均誤差 ±" + Number(f.accuracy.maePt).toFixed(2) + "pt";
+          var recTimeBadge = f.accuracy.recordTime ? ("（" + f.accuracy.recordTime + "記録）") : "";
+          accMain.textContent = "直近 " + f.accuracy.days + " 営業日の平均誤差" + recTimeBadge + " ±" + Number(f.accuracy.maePt).toFixed(2) + "pt";
           accDiv.appendChild(accMain);
           if (f.accuracy.latest && f.accuracy.latest.actual) {
             var lat = f.accuracy.latest;
@@ -1522,7 +1523,7 @@
         if (!summary || !Array.isArray(summary.groups) || !summary.totalSamples) {
           var p = document.createElement("p");
           p.className = "accuracy-note";
-          p.textContent = "毎営業日 8:30（日本時間）時点の予想値と公表基準価額の答え合わせデータを蓄積中です。";
+          p.textContent = "毎営業日（海外 8:30／国内 14:50、日本時間）時点の予想値と公表基準価額の答え合わせデータを蓄積中です。";
           wrap.appendChild(p);
           return;
         }
@@ -1535,6 +1536,7 @@
         var cols = [
           { text: "グループ", cls: "" },
           { text: "対象", cls: "num-col" },
+          { text: "記録時刻", cls: "num-col" },
           { text: "平均誤差", cls: "num-col" },
           { text: "平均乖離", cls: "num-col" }
         ];
@@ -1559,6 +1561,18 @@
           tdCnt.className = "num-col num";
           tdCnt.textContent = (g.evaluatedFundCount || g.fundCount || 0) + "本";
           tr.appendChild(tdCnt);
+
+          var tdRecTime = document.createElement("td");
+          tdRecTime.className = "num-col num";
+          var rt = g.recordTime || "8:30";
+          if (rt === "8:30") {
+            tdRecTime.textContent = "海外 8:30";
+          } else if (rt === "14:50") {
+            tdRecTime.textContent = "国内 14:50";
+          } else {
+            tdRecTime.textContent = "海外 8:30／国内 14:50";
+          }
+          tr.appendChild(tdRecTime);
 
           var tdMae = document.createElement("td");
           tdMae.className = "num-col num";
@@ -1585,7 +1599,7 @@
         var overallTxt = (summary.overallMaePt !== null && summary.overallMaePt !== undefined)
           ? ("全体平均 ±" + Number(summary.overallMaePt).toFixed(2) + "pt / ")
           : "";
-        note.textContent = overallTxt + "直近" + (summary.windowDays || 20) + "営業日の朝 8:30（日本時間）時点の予想騰落率と公表基準価額騰落率の差（ポイント）を集計。";
+        note.textContent = overallTxt + "直近" + (summary.windowDays || 20) + "営業日の予想騰落率（海外 8:30／国内 14:50 時点）と公表基準価額騰落率の差（ポイント）を集計。";
         wrap.appendChild(note);
       }
 
