@@ -24,34 +24,15 @@ def determine_interval_sec(
     now_jst: datetime.datetime,
     base_interval: int,
     offhours_interval: int,
-    elapsed_minutes: float,
-    event_name: str,
+    elapsed_minutes: float = 0.0,
+    event_name: str = "",
 ) -> int:
-    """現在時刻（JST）に応じて更新間隔（通常5分、土日・日米休場時間帯は30分）を返す。"""
-    # 手動実行 (workflow_dispatch) の開始直後35分間は即時確認のため通常間隔で動作させる
-    if event_name == "workflow_dispatch" and elapsed_minutes < 35.0:
-        return base_interval
-
-    wd = now_jst.weekday()  # 0=月 ... 5=土, 6=日
-    hm = now_jst.hour * 60 + now_jst.minute
-
-    # 日曜終日
-    if wd == 6:
-        return offhours_interval
-    # 土曜 07:15 以降（米国金曜市場・大証夜間終了後）
-    if wd == 5 and hm >= 7 * 60 + 15:
-        return offhours_interval
-    # 月曜 06:45 未満（週明け市場開始前）
-    if wd == 0 and hm < 6 * 60 + 45:
-        return offhours_interval
-    # 日本の祝日・年末年始（平日）で米国市場も開いていない日中〜夜（07:15〜21:30 JST）
-    if not build_data.is_jp_business_day(now_jst.date()) and (7 * 60 + 15 <= hm < 21 * 60 + 30):
-        return offhours_interval
-    # 平日の日米市場幕間（06:15〜07:45 JST：米国・大証夜間終了後〜東京開場前）
-    if 6 * 60 + 15 <= hm < 7 * 60 + 45:
-        return offhours_interval
-
-    return base_interval
+    """現在時刻（JST）に応じて更新間隔（通常5分、平日15:40〜16:20は5分強制、土日・日米休場時間帯は30分）を返す。"""
+    return build_data.determine_update_interval_sec(
+        now_jst=now_jst,
+        base_interval=base_interval,
+        offhours_interval=offhours_interval,
+    )
 
 
 def run_git(args: List[str], input_bytes: Optional[bytes] = None, check: bool = True) -> subprocess.CompletedProcess:
@@ -122,9 +103,19 @@ def restore_state_from_data_branch(remote: str, branch: str) -> None:
         )
         print(f"[INFO] Restored nav_cache.json ({len(merged_nav)} funds) from {remote}/{branch}.")
 
-    # 2. forecast_log.json の引き継ぎ（毎朝 8:30 JST の live 記録を永続保持）
+    # 2. forecast_log.json の引き継ぎ（海外 8:30 / 国内 14:50 JST の記録を永続保持）
     remote_log = read_blob_from_fetch_head("forecast_log.json")
     if remote_log and isinstance(remote_log.get("entries"), dict):
+        domestic_fids: set = set()
+        try:
+            funds_cfg = json.loads(build_data.FUNDS_JSON_PATH.read_text(encoding="utf-8"))
+            for grp in funds_cfg.get("groups", []):
+                for f_cfg in grp.get("funds", []):
+                    if build_data.is_domestic_snapshot_fund(f_cfg):
+                        domestic_fids.add(f_cfg["id"])
+        except Exception:
+            pass
+
         local_log: Dict[str, Any] = {"version": 1, "entries": {}}
         if build_data.FORECAST_LOG_PATH.exists():
             try:
@@ -140,9 +131,19 @@ def restore_state_from_data_branch(remote: str, branch: str) -> None:
                 if not isinstance(r_rec, dict):
                     continue
                 l_rec = bucket.get(fid)
+                if fid in domestic_fids:
+                    r_time = str(r_rec.get("recordedAt") or "")
+                    l_time = str((l_rec or {}).get("recordedAt") or "")
+                    r_is_1450 = len(r_time) >= 16 and r_time[11:16] >= "14:50"
+                    l_is_1450 = len(l_time) >= 16 and l_time[11:16] >= "14:50"
+                    # 国内株でリモートが旧 08:30 記録かつローカルが 14:50 記録済みの場合はローカルを優先
+                    if l_rec is not None and l_is_1450 and not r_is_1450:
+                        continue
                 if l_rec is None:
                     bucket[fid] = r_rec
                 elif r_rec.get("source") == "live" and l_rec.get("source") != "live":
+                    bucket[fid] = r_rec
+                elif r_rec.get("source") == "backtest-proxy" and l_rec.get("source") == "backtest":
                     bucket[fid] = r_rec
                 elif r_rec.get("actualNav") is not None and l_rec.get("actualNav") is None:
                     bucket[fid] = r_rec
@@ -155,10 +156,20 @@ def restore_state_from_data_branch(remote: str, branch: str) -> None:
         )
         print(f"[INFO] Restored forecast_log.json ({len(local_log['entries'])} days) from {remote}/{branch}.")
 
-    # 3. market_anchor_cache.json の引き継ぎ（仲値・TOPIX過去日足・清算値キャッシュ）
+    # 3. market_anchor_cache.json の引き継ぎ（仲値・TOPIX過去日足・清算値・15:30先物値キャッシュ）
     remote_anchor = read_blob_from_fetch_head("market_anchor_cache.json")
     if remote_anchor:
-        build_data.save_anchor_cache(remote_anchor)
+        local_anchor = build_data.load_anchor_cache()
+        for sub_key in ("murc_ttm", "topix_daily", "ose_settlements", "ose_1530", "msci_grtr", "solactive", "triple_advisor_series"):
+            r_sub = remote_anchor.get(sub_key)
+            if isinstance(r_sub, dict):
+                l_sub = local_anchor.setdefault(sub_key, {})
+                for k, v in r_sub.items():
+                    if isinstance(v, dict) and isinstance(l_sub.get(k), dict):
+                        l_sub[k].update(v)
+                    else:
+                        l_sub[k] = v
+        build_data.save_anchor_cache(local_anchor)
         print(f"[INFO] Restored market_anchor_cache.json from {remote}/{branch}.")
 
     # 4. triple_notify_state.json の引き継ぎ（Discord通知の重複送信防止ステート）
@@ -254,27 +265,34 @@ def main() -> None:
         elapsed_min = (iter_start_mono - start_mono) / 60.0
         now_jst = datetime.datetime.now(JST)
 
-        current_interval = determine_interval_sec(
+        current_interval, planned_next_dt = build_data.compute_next_update_plan(
             now_jst=now_jst,
             base_interval=args.interval,
             offhours_interval=args.offhours_interval,
-            elapsed_minutes=elapsed_min,
-            event_name=event_name,
         )
 
         print(
             f"\n[LOOP #{iteration}] {now_jst.isoformat(timespec='seconds')} "
-            f"(elapsed={elapsed_min:.1f}m / {args.max_minutes:.1f}m, next_interval={current_interval}s)",
+            f"(elapsed={elapsed_min:.1f}m / {args.max_minutes:.1f}m, "
+            f"next_interval={current_interval}s, next_at={planned_next_dt.isoformat(timespec='seconds')})",
             flush=True,
         )
 
+        next_update_dt: Optional[datetime.datetime] = None
         try:
             app_data = build_data.run_build(
                 force_nav=False,
                 nav_ttl_hours=args.nav_ttl_hours,
-                next_update_in_sec=current_interval,
+                next_update_in_sec=None,
+                base_interval_sec=args.interval,
+                offhours_interval_sec=args.offhours_interval,
                 output_path=build_data.DATA_JSON_PATH,
             )
+            try:
+                next_update_dt = datetime.datetime.fromisoformat(str(app_data.get("nextUpdateAt", "")))
+            except Exception:
+                next_update_dt = None
+
             advisor_dt = datetime.datetime.now(JST)
             t_data = triple_advisor.build_triple_advisor_data(
                 app_data=app_data,
@@ -310,8 +328,13 @@ def main() -> None:
             print("[DONE] Reached max-minutes deadline. Exiting cleanly.", flush=True)
             break
 
-        iter_duration = now_mono - iter_start_mono
-        sleep_sec = max(5.0, float(current_interval) - iter_duration)
+        if next_update_dt is not None:
+            remain_to_next = (next_update_dt - datetime.datetime.now(JST)).total_seconds()
+            sleep_sec = max(5.0, remain_to_next)
+        else:
+            iter_duration = now_mono - iter_start_mono
+            sleep_sec = max(5.0, float(current_interval) - iter_duration)
+
         if now_mono + sleep_sec >= deadline_mono:
             print(
                 f"[DONE] Next cycle ({sleep_sec:.0f}s) would exceed max-minutes ({args.max_minutes}m). Exiting cleanly.",

@@ -80,37 +80,64 @@ def parse_jp_date(date_str: str) -> Optional[str]:
     return None
 
 
+NAV_CACHE_PATH = DOCS_DIR / "nav_cache.json"
+ANCHOR_CACHE_PATH = ROOT_DIR / ".market_anchor_cache.json"
+
+
+def is_domestic_snapshot_fund(fund: Dict[str, Any]) -> bool:
+    """答え合わせ（forecast_log.json）の記録時刻を 14:50 JST とする国内株・国内ETF連動ファンドか判定する。"""
+    return str(fund.get("model") or "") in (
+        "domestic",
+        "domestic_leveraged",
+        "domestic_close",
+        "topix_gold_plus",
+    )
+
+
 def load_or_fetch_nav_history(fund: Dict[str, Any]) -> Dict[str, int]:
-    """投信総合検索ライブラリーから全期間の基準価額履歴を取得（キャッシュ利用）する。"""
+    """投信総合検索ライブラリーから全期間の基準価額履歴を取得（キャッシュ利用＋nav_cache補完）する。"""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     fid = fund["id"]
     cpath = CACHE_DIR / f"nav_{fid}.json"
-    if cpath.exists():
-        return json.loads(cpath.read_text(encoding="utf-8"))
-
-    url = (
-        "https://toushin-lib.fwg.ne.jp/FdsWeb/FDST030000/csv-file-download"
-        f"?isinCd={fund['isinCd']}&associFundCd={fund['associFundCd']}"
-    )
-    resp = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=25)
-    resp.raise_for_status()
-    text = resp.content.decode("cp932", errors="replace")
-    reader = csv.reader(io.StringIO(text))
     hist: Dict[str, int] = {}
-    for row in reader:
-        if len(row) < 2:
-            continue
-        d_str = parse_jp_date(row[0])
-        if not d_str:
-            continue
-        try:
-            nav_val = int(float(row[1].replace(",", "").strip()))
-        except ValueError:
-            continue
-        hist[d_str] = nav_val
+    if cpath.exists():
+        hist = json.loads(cpath.read_text(encoding="utf-8"))
+    else:
+        url = (
+            "https://toushin-lib.fwg.ne.jp/FdsWeb/FDST030000/csv-file-download"
+            f"?isinCd={fund['isinCd']}&associFundCd={fund['associFundCd']}"
+        )
+        resp = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=25)
+        resp.raise_for_status()
+        text = resp.content.decode("cp932", errors="replace")
+        reader = csv.reader(io.StringIO(text))
+        for row in reader:
+            if len(row) < 2:
+                continue
+            d_str = parse_jp_date(row[0])
+            if not d_str:
+                continue
+            try:
+                nav_val = int(float(row[1].replace(",", "").strip()))
+            except ValueError:
+                continue
+            hist[d_str] = nav_val
 
-    cpath.write_text(json.dumps(hist, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
-    time.sleep(1.1)
+        cpath.write_text(json.dumps(hist, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+        time.sleep(1.1)
+
+    if NAV_CACHE_PATH.exists():
+        try:
+            nav_cache = json.loads(NAV_CACHE_PATH.read_text(encoding="utf-8"))
+            entry = nav_cache.get(fid)
+            if isinstance(entry, dict):
+                for h_row in entry.get("history", []):
+                    if isinstance(h_row, list) and len(h_row) >= 2:
+                        hist[str(h_row[0])] = int(h_row[1])
+                if entry.get("navDate") and entry.get("nav") is not None:
+                    hist[str(entry["navDate"])] = int(entry["nav"])
+        except Exception:
+            pass
     return hist
 
 
@@ -141,6 +168,13 @@ def load_or_fetch_murc_ttm(dates: List[str]) -> Dict[str, float]:
     ttm_map: Dict[str, float] = {}
     if cpath.exists():
         ttm_map = json.loads(cpath.read_text(encoding="utf-8"))
+    if ANCHOR_CACHE_PATH.exists():
+        try:
+            anc = json.loads(ANCHOR_CACHE_PATH.read_text(encoding="utf-8"))
+            for k, v in (anc.get("murc_ttm") or {}).items():
+                ttm_map[str(k)] = float(v)
+        except Exception:
+            pass
 
     missing = [d for d in sorted(set(dates)) if d not in ttm_map]
     updated = False
@@ -170,10 +204,19 @@ def load_or_fetch_topix_daily() -> Dict[str, float]:
     """株探の TOPIX 時系列ページ（JPX 公式終値と一致）から直近約120営業日分の終値を取得する。"""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     cpath = CACHE_DIR / "topix_daily.json"
-    if cpath.exists():
-        return json.loads(cpath.read_text(encoding="utf-8"))
-
     topix_map: Dict[str, float] = {}
+    if cpath.exists():
+        topix_map = json.loads(cpath.read_text(encoding="utf-8"))
+    if ANCHOR_CACHE_PATH.exists():
+        try:
+            anc = json.loads(ANCHOR_CACHE_PATH.read_text(encoding="utf-8"))
+            for k, v in (anc.get("topix_daily") or {}).items():
+                topix_map[str(k)] = float(v)
+        except Exception:
+            pass
+    if topix_map:
+        return topix_map
+
     for page in range(1, 6):
         url = f"https://kabutan.jp/stock/kabuka?code=0010&ashi=day&page={page}"
         resp = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=15)
@@ -343,6 +386,25 @@ def find_hourly_price_at(h_bars: List[Tuple[int, float, float]], target_dt_jst: 
     return best[2]
 
 
+def find_intraday_price_at_1450(
+    m15_bars: List[Tuple[int, float, float]],
+    h_bars: List[Tuple[int, float, float]],
+    d1_str: str,
+) -> Optional[float]:
+    """指定営業日 d1_str の 14:50 JST 時点の価格を Yahoo 15分足（14:45足 close、60日超の過去日は1時間足14:00足 close）から返す。"""
+    d1_start_ts = int(datetime.datetime.strptime(d1_str, "%Y-%m-%d").replace(hour=9, minute=0, tzinfo=JST).timestamp())
+    d1_1450_ts = int(datetime.datetime.strptime(d1_str, "%Y-%m-%d").replace(hour=14, minute=50, tzinfo=JST).timestamp())
+    if m15_bars:
+        cands = [b for b in m15_bars if d1_start_ts <= b[0] <= d1_1450_ts]
+        if cands:
+            return cands[-1][2]
+    if h_bars:
+        cands_h = [b for b in h_bars if d1_start_ts <= b[0] <= d1_1450_ts]
+        if cands_h:
+            return cands_h[-1][2]
+    return None
+
+
 def calc_rolling_beta(topix_map: Dict[str, float], n225_map: Dict[str, float], up_to_d0: str, lookback: int = 60) -> float:
     """up_to_d0 までの直近 lookback 営業日の TOPIX と日経平均の日次変化率から単回帰係数 β を計算する。"""
     common_dates = sorted(d for d in topix_map.keys() if d in n225_map and d <= up_to_d0)
@@ -409,13 +471,21 @@ def simulate_fund_day(
     msci_acwi_map: Dict[str, float],
     msci_kokusai_map: Dict[str, float],
     solactive_maps: Optional[Dict[str, Dict[str, float]]] = None,
+    m15_series: Optional[Dict[str, List[Tuple[int, float, float]]]] = None,
     auam_formula: str = "additive",
     gold_plus_formula: str = "additive",
+    domestic_record_time: str = "auto",
 ) -> Optional[int]:
-    """指定日の朝 8:30 JST 時点で得られたデータから予想基準価額を計算する。"""
+    """指定日の記録時刻（海外 8:30 JST / 国内 14:50 JST）時点で得られたデータから予想基準価額を計算する。"""
     d0_9am = datetime.datetime.strptime(d0_str, "%Y-%m-%d").replace(hour=9, minute=0, tzinfo=JST)
     d0_15pm = datetime.datetime.strptime(d0_str, "%Y-%m-%d").replace(hour=15, minute=0, tzinfo=JST)
     d1_8am = datetime.datetime.strptime(d1_str, "%Y-%m-%d").replace(hour=8, minute=0, tzinfo=JST)
+    m15_map = m15_series or {}
+
+    use_1450_domestic = (
+        domestic_record_time == "14:50"
+        or (domestic_record_time == "auto" and mode == "after")
+    )
 
     # 1. 為替変化率 r_fx（D1 朝 8:30 JST 時点の現在値は 08:00 足 open）
     jpy_h = hourly_series.get("JPY=X", [])
@@ -509,23 +579,61 @@ def simulate_fund_day(
             r_total = (1.0 + lev * r_idx) * (1.0 + r_fx) - 1.0
 
     elif model in ("domestic", "domestic_leveraged"):
-        # 朝 8:30 JST 時点では東証開場前のため、夜間先物変化率を使用
-        niy_h = hourly_series.get("NIY=F", [])
-        f_base = find_hourly_price_at(niy_h, d0_15pm, use_open=False)
-        f_cur = find_hourly_price_at(niy_h, d1_8am, use_open=True)
-        r_fut = (f_cur - f_base) / f_base if (f_base and f_cur and f_base > 0) else 0.0
-
         is_topix = (group_id == "topix" or sym in ("1306.T", "^TOPX", "TOPIX"))
-        if mode == "after" and is_topix:
-            beta = calc_rolling_beta(topix_map, n225_map, d0_str, lookback=60)
-            r_idx = beta * r_fut
+        if use_1450_domestic:
+            # 14:50 JST 記録：Yahoo 15分足（^N225 / 1306.T の変化率で TOPIX を推定）
+            if is_topix:
+                etf_bars, etf_divs = daily_series["1306.T"]
+                etf_d0_map = dict(etf_bars)
+                b_1306 = etf_d0_map.get(d0_str)
+                if b_1306 is None:
+                    prev_1306 = [c for d, c in etf_bars if d <= d0_str]
+                    b_1306 = prev_1306[-1] if prev_1306 else 0.0
+                c_1306 = find_intraday_price_at_1450(m15_map.get("1306.T", []), hourly_series.get("1306.T", []), d1_str)
+                if c_1306 is None:
+                    c_1306 = etf_d0_map.get(d1_str, b_1306)
+                div_1306 = float(etf_divs.get(d1_str, 0.0))
+                r_idx = ((c_1306 + div_1306) - b_1306) / b_1306 if (b_1306 and b_1306 > 0) else 0.0
+            else:
+                b_n225 = n225_map.get(d0_str)
+                if b_n225 is None:
+                    n_bars, _ = daily_series["^N225"]
+                    prev_n = [c for d, c in n_bars if d <= d0_str]
+                    b_n225 = prev_n[-1] if prev_n else 0.0
+                c_n225 = find_intraday_price_at_1450(m15_map.get("^N225", []), hourly_series.get("^N225", []), d1_str)
+                if c_n225 is None:
+                    c_n225 = n225_map.get(d1_str, b_n225)
+                r_idx = (c_n225 - b_n225) / b_n225 if (b_n225 and b_n225 > 0) else 0.0
         else:
-            r_idx = r_fut
+            # 朝 8:30 JST 時点では東証開場前のため、夜間先物変化率を使用
+            niy_h = hourly_series.get("NIY=F", [])
+            f_base = find_hourly_price_at(niy_h, d0_15pm, use_open=False)
+            f_cur = find_hourly_price_at(niy_h, d1_8am, use_open=True)
+            r_fut = (f_cur - f_base) / f_base if (f_base and f_cur and f_base > 0) else 0.0
+            if mode == "after" and is_topix:
+                beta = calc_rolling_beta(topix_map, n225_map, d0_str, lookback=60)
+                r_idx = beta * r_fut
+            else:
+                r_idx = r_fut
         r_total = lev * r_idx if model == "domestic_leveraged" else r_idx
 
     elif model == "domestic_close":
-        # 朝 8:30 JST 時点では東証開場前のため変化率 0
-        r_total = 0.0
+        if use_1450_domestic:
+            # 14:50 JST 記録：1540.T 15分足の D0 終値比
+            dc_bars, dc_divs = daily_series[sym]
+            dc_map = dict(dc_bars)
+            b_dc = dc_map.get(d0_str)
+            if b_dc is None:
+                prev_dc = [c for d, c in dc_bars if d <= d0_str]
+                b_dc = prev_dc[-1] if prev_dc else 0.0
+            c_dc = find_intraday_price_at_1450(m15_map.get(sym, []), hourly_series.get(sym, []), d1_str)
+            if c_dc is None:
+                c_dc = dc_map.get(d1_str, b_dc)
+            div_dc = float(dc_divs.get(d1_str, 0.0))
+            r_total = ((c_dc + div_dc) - b_dc) / b_dc if (b_dc and b_dc > 0) else 0.0
+        else:
+            # 朝 8:30 JST 時点では東証開場前のため変化率 0
+            r_total = 0.0
 
     elif model in ("gold_plus", "topix_gold_plus"):
         gold_sym = fund.get("goldSymbol", "GC=F")
@@ -539,24 +647,50 @@ def simulate_fund_day(
                 r_gold = (gc_830 - gb_val) / gb_val
 
         if model == "topix_gold_plus" or sym in ("TOPIX", "^TOPX"):
-            niy_h = hourly_series.get("NIY=F", [])
-            f_base = find_hourly_price_at(niy_h, d0_15pm, use_open=False)
-            f_cur = find_hourly_price_at(niy_h, d1_8am, use_open=True)
-            r_fut = (f_cur - f_base) / f_base if (f_base and f_cur and f_base > 0) else 0.0
-            if mode == "after":
-                beta = calc_rolling_beta(topix_map, n225_map, d0_str, lookback=60)
-                r_stock_jpy = beta * r_fut
+            if use_1450_domestic:
+                # 14:50 JST 記録：TOPIX 部分は 1306.T 15分足変化率、為替は D1 仲値確定済み
+                etf_bars, etf_divs = daily_series["1306.T"]
+                etf_d0_map = dict(etf_bars)
+                b_1306 = etf_d0_map.get(d0_str)
+                if b_1306 is None:
+                    prev_1306 = [c for d, c in etf_bars if d <= d0_str]
+                    b_1306 = prev_1306[-1] if prev_1306 else 0.0
+                c_1306 = find_intraday_price_at_1450(m15_map.get("1306.T", []), hourly_series.get("1306.T", []), d1_str)
+                if c_1306 is None:
+                    c_1306 = etf_d0_map.get(d1_str, b_1306)
+                div_1306 = float(etf_divs.get(d1_str, 0.0))
+                r_stock_jpy = ((c_1306 + div_1306) - b_1306) / b_1306 if (b_1306 and b_1306 > 0) else 0.0
+
+                fx_1450_cur = ttm_map.get(d1_str, fx_cur)
+                r_fx_1450 = (fx_1450_cur - fx_base) / fx_base if fx_base else r_fx
                 gold_etf_sym = fund.get("goldEtfSymbol")
                 if gold_etf_sym and gold_etf_sym in daily_series:
                     w_etf = float(fund.get("goldEtfWeight", 0.55))
                     ge_bars, ge_divs = daily_series[gold_etf_sym]
                     r_ge, _, _, _, _ = get_series_change_between(ge_bars, ge_divs, d0_str, d1_str, adjust_div=False)
-                    r_gold_leg = w_etf * ((1.0 + r_ge) * (1.0 + r_fx) - 1.0) + (1.0 - w_etf) * r_gold
+                    r_gold_leg = w_etf * ((1.0 + r_ge) * (1.0 + r_fx_1450) - 1.0) + (1.0 - w_etf) * r_gold
                 else:
                     r_gold_leg = r_gold
                 r_total = r_stock_jpy + r_gold_leg
             else:
-                r_total = r_fut + r_gold
+                niy_h = hourly_series.get("NIY=F", [])
+                f_base = find_hourly_price_at(niy_h, d0_15pm, use_open=False)
+                f_cur = find_hourly_price_at(niy_h, d1_8am, use_open=True)
+                r_fut = (f_cur - f_base) / f_base if (f_base and f_cur and f_base > 0) else 0.0
+                if mode == "after":
+                    beta = calc_rolling_beta(topix_map, n225_map, d0_str, lookback=60)
+                    r_stock_jpy = beta * r_fut
+                    gold_etf_sym = fund.get("goldEtfSymbol")
+                    if gold_etf_sym and gold_etf_sym in daily_series:
+                        w_etf = float(fund.get("goldEtfWeight", 0.55))
+                        ge_bars, ge_divs = daily_series[gold_etf_sym]
+                        r_ge, _, _, _, _ = get_series_change_between(ge_bars, ge_divs, d0_str, d1_str, adjust_div=False)
+                        r_gold_leg = w_etf * ((1.0 + r_ge) * (1.0 + r_fx) - 1.0) + (1.0 - w_etf) * r_gold
+                    else:
+                        r_gold_leg = r_gold
+                    r_total = r_stock_jpy + r_gold_leg
+                else:
+                    r_total = r_fut + r_gold
         else:
             if mode == "after" and sym == "ACWI":
                 msci_bars = sorted(msci_acwi_map.items())
@@ -603,7 +737,13 @@ def main() -> None:
         (target_window[i], target_window[i + 1]) for i in range(len(target_window) - 1)
     ]
 
-    all_d0_dates = [d0 for d0, _ in day_pairs]
+    # forecast_log.json に既存の過去日（例: 61営業日前の 2026-08-03）がある場合はシード対象ペアに含める
+    seed_window = ref_dates[-(args.days + 2):] if len(ref_dates) >= args.days + 2 else target_window
+    seed_day_pairs: List[Tuple[str, str]] = [
+        (seed_window[i], seed_window[i + 1]) for i in range(len(seed_window) - 1)
+    ]
+
+    all_d0_dates = sorted({d0 for d0, _ in seed_day_pairs} | {d1 for _, d1 in seed_day_pairs})
 
     # 2. 市場データの取得
     yahoo_symbols = {"JPY=X", "NIY=F", "^N225", "1306.T", "1540.T", "^GSPC", "^NDX", "NQ=F", "ACWI", "TOK", "SCHD", "VTI", "IGLN.L", "GC=F"}
@@ -626,9 +766,14 @@ def main() -> None:
         daily_series[sym] = parse_daily_series(ch)
 
     hourly_series: Dict[str, List[Tuple[int, float, float]]] = {}
-    for sym in ["JPY=X", "NIY=F", "NQ=F", "GC=F"]:
+    for sym in ["JPY=X", "NIY=F", "NQ=F", "GC=F", "^N225", "1306.T", "1540.T"]:
         ch_h = load_or_fetch_yahoo(sym, range_str="6mo", interval="1h", events=False)
         hourly_series[sym] = parse_hourly_bars(ch_h)
+
+    m15_series: Dict[str, List[Tuple[int, float, float]]] = {}
+    for sym in ["^N225", "1306.T", "1540.T"]:
+        ch_15 = load_or_fetch_yahoo(sym, range_str="60d", interval="15m", events=False)
+        m15_series[sym] = parse_hourly_bars(ch_15)
 
     ttm_map = load_or_fetch_murc_ttm(all_d0_dates)
     topix_map = load_or_fetch_topix_daily()
@@ -637,54 +782,117 @@ def main() -> None:
     msci_kokusai_map = load_or_fetch_msci("991200")
     solactive_maps = {isin: load_or_fetch_solactive(isin) for isin in sorted(solactive_isins)}
 
-    # 3. auAM 2倍・3倍の加算型 vs 掛け算型 比較（改善後データ条件で比較）
     print(f"=== バックテスト期間: {day_pairs[0][1]} 〜 {day_pairs[-1][1]} ({len(day_pairs)} 営業日) ===\n")
-    print("=== auAM レバレッジ（為替ヘッジ無し）加算型 vs 掛け算型 比較 ===")
-    print("| ファンド | 加算型 `L*r + r_fx` 平均絶対誤差 | 掛け算型 `(1+L*r)(1+r_fx)-1` 平均絶対誤差 | 判定 |")
-    print("|---|---:|---:|---|")
-    auam_best_counts = {"additive": 0, "multiplicative": 0}
-    for _, _, f in all_funds:
-        if f["id"] in ("auam-triple-ndx", "auam-lev-ndx"):
-            errs_add: List[float] = []
-            errs_mul: List[float] = []
-            h = nav_histories[f["id"]]
+
+    # 3. 国内株グループ・ファンド別 平均誤差（朝 8:30 記録 vs 14:50 記録）
+    print("=== 国内株グループ別 平均絶対誤差（MAE, 単位: pt）朝 8:30 記録 vs 14:50 記録 ===")
+    print("| グループ | 対象本数 | サンプル数 | 8:30記録 MAE | 14:50記録 MAE | 改善幅 (14:50-8:30) | 8:30 Bias | 14:50 Bias |")
+    print("|---|---:|---:|---:|---:|---:|---:|---:|")
+
+    dom_total_830_abs: List[float] = []
+    dom_total_1450_abs: List[float] = []
+    dom_total_830_sgn: List[float] = []
+    dom_total_1450_sgn: List[float] = []
+    dom_fund_rows: List[str] = []
+
+    for g in funds_cfg["groups"]:
+        gid = g["id"]
+        dom_funds = [f for f in g["funds"] if is_domestic_snapshot_fund(f)]
+        if not dom_funds:
+            continue
+        g_830_abs: List[float] = []
+        g_1450_abs: List[float] = []
+        g_830_sgn: List[float] = []
+        g_1450_sgn: List[float] = []
+
+        for f in dom_funds:
+            fid = f["id"]
+            h = nav_histories[fid]
+            f_830_abs: List[float] = []
+            f_1450_abs: List[float] = []
+            f_830_sgn: List[float] = []
+            f_1450_sgn: List[float] = []
             for d0, d1 in day_pairs:
                 if d0 not in h or d1 not in h:
                     continue
                 nav0, act = h[d0], h[d1]
-                fc_add = simulate_fund_day(
-                    f, "nasdaq100", d0, d1, nav0, "after",
+                fc_830 = simulate_fund_day(
+                    f, gid, d0, d1, nav0, "after",
                     daily_series, hourly_series, ttm_map, topix_map, n225_map, msci_acwi_map, msci_kokusai_map,
-                    auam_formula="additive",
+                    solactive_maps=solactive_maps, m15_series=m15_series,
+                    auam_formula=args.auam_formula, domestic_record_time="08:30",
                 )
-                fc_mul = simulate_fund_day(
-                    f, "nasdaq100", d0, d1, nav0, "after",
+                fc_1450 = simulate_fund_day(
+                    f, gid, d0, d1, nav0, "after",
                     daily_series, hourly_series, ttm_map, topix_map, n225_map, msci_acwi_map, msci_kokusai_map,
-                    auam_formula="multiplicative",
+                    solactive_maps=solactive_maps, m15_series=m15_series,
+                    auam_formula=args.auam_formula, domestic_record_time="14:50",
                 )
-                if fc_add is not None and fc_mul is not None:
-                    errs_add.append(abs((fc_add - act) / nav0 * 100.0))
-                    errs_mul.append(abs((fc_mul - act) / nav0 * 100.0))
-            mae_add = sum(errs_add) / len(errs_add) if errs_add else 0.0
-            mae_mul = sum(errs_mul) / len(errs_mul) if errs_mul else 0.0
-            better = "掛け算型" if mae_mul < mae_add else "加算型"
-            if mae_mul < mae_add:
-                auam_best_counts["multiplicative"] += 1
-            else:
-                auam_best_counts["additive"] += 1
-            print(f"| {f['name']} ({len(errs_add)}日) | {mae_add:.4f}pt | {mae_mul:.4f}pt | {better} |")
+                if fc_830 is None or fc_1450 is None:
+                    continue
+                e830 = (fc_830 - act) / nav0 * 100.0
+                e1450 = (fc_1450 - act) / nav0 * 100.0
+                f_830_abs.append(abs(e830))
+                f_1450_abs.append(abs(e1450))
+                f_830_sgn.append(e830)
+                f_1450_sgn.append(e1450)
+                g_830_abs.append(abs(e830))
+                g_1450_abs.append(abs(e1450))
+                g_830_sgn.append(e830)
+                g_1450_sgn.append(e1450)
+                dom_total_830_abs.append(abs(e830))
+                dom_total_1450_abs.append(abs(e1450))
+                dom_total_830_sgn.append(e830)
+                dom_total_1450_sgn.append(e1450)
+
+            if f_830_abs:
+                fm_830 = sum(f_830_abs) / len(f_830_abs)
+                fm_1450 = sum(f_1450_abs) / len(f_1450_abs)
+                fb_830 = sum(f_830_sgn) / len(f_830_sgn)
+                fb_1450 = sum(f_1450_sgn) / len(f_1450_sgn)
+                dom_fund_rows.append(
+                    f"| {g['label']} | {f['name']} | {len(f_830_abs)} | "
+                    f"{fm_830:.4f}pt | {fm_1450:.4f}pt | {fm_1450 - fm_830:+.4f}pt | {fb_830:+.4f}pt | {fb_1450:+.4f}pt |"
+                )
+
+        if g_830_abs:
+            gm_830 = sum(g_830_abs) / len(g_830_abs)
+            gm_1450 = sum(g_1450_abs) / len(g_1450_abs)
+            gb_830 = sum(g_830_sgn) / len(g_830_sgn)
+            gb_1450 = sum(g_1450_sgn) / len(g_1450_sgn)
+            g_title = g["label"] if len(dom_funds) == len(g["funds"]) else f"{g['label']}（国内対象{len(dom_funds)}本）"
+            print(
+                f"| {g_title} | {len(dom_funds)} | {len(g_830_abs)} | "
+                f"{gm_830:.4f}pt | {gm_1450:.4f}pt | {gm_1450 - gm_830:+.4f}pt | {gb_830:+.4f}pt | {gb_1450:+.4f}pt |"
+            )
+
+    if dom_total_830_abs:
+        dm_830 = sum(dom_total_830_abs) / len(dom_total_830_abs)
+        dm_1450 = sum(dom_total_1450_abs) / len(dom_total_1450_abs)
+        db_830 = sum(dom_total_830_sgn) / len(dom_total_830_sgn)
+        db_1450 = sum(dom_total_1450_sgn) / len(dom_total_1450_sgn)
+        print(
+            f"| **国内株対象 合計** | **14** | **{len(dom_total_830_abs)}** | "
+            f"**{dm_830:.4f}pt** | **{dm_1450:.4f}pt** | **{dm_1450 - dm_830:+.4f}pt** | "
+            f"**{db_830:+.4f}pt** | **{db_1450:+.4f}pt** |"
+        )
+
+    print("\n=== 国内株ファンド個別 平均絶対誤差（MAE, 単位: pt）朝 8:30 記録 vs 14:50 記録 ===")
+    print("| グループ | ファンド | サンプル数 | 8:30記録 MAE | 14:50記録 MAE | 改善幅 (14:50-8:30) | 8:30 Bias | 14:50 Bias |")
+    print("|---|---|---:|---:|---:|---:|---:|---:|")
+    for r_line in dom_fund_rows:
+        print(r_line)
+    print()
 
     chosen_auam = args.auam_formula
-    print(f"\n採用式（指定値）: {chosen_auam}\n")
 
     # 4. グループ別 改善前 vs 改善後 の平均絶対誤差（MAE）比較
-    print("=== グループ別 平均絶対誤差（MAE, 単位: pt）改善前 vs 改善後 ===")
-    print("| グループ | 本数 | サンプル数 | 改善前 MAE | 改善後 MAE | 改善幅 (後-前) | 改善前 Bias | 改善後 Bias |")
-    print("|---|---:|---:|---:|---:|---:|---:|---:|")
+    print("=== 全グループ別 平均絶対誤差（MAE, 単位: pt）改善前 vs 改善後（海外8:30 / 国内14:50） ===")
+    print("| グループ | 本数 | 記録時刻 | サンプル数 | 改善前 MAE | 改善後 MAE | 改善幅 (後-前) | 改善前 Bias | 改善後 Bias |")
+    print("|---|---:|:---:|---:|---:|---:|---:|---:|---:|")
 
     all_before_abs: List[float] = []
     all_after_abs: List[float] = []
-    seed_records: Dict[str, Dict[str, Dict[str, Any]]] = {}
 
     for g in funds_cfg["groups"]:
         gid = g["id"]
@@ -693,6 +901,9 @@ def main() -> None:
         g_after_abs: List[float] = []
         g_before_sgn: List[float] = []
         g_after_sgn: List[float] = []
+        has_dom = any(is_domestic_snapshot_fund(f) for f in g["funds"])
+        has_ovr = any(not is_domestic_snapshot_fund(f) for f in g["funds"])
+        rec_time_lbl = "8:30 / 14:50" if (has_dom and has_ovr) else ("14:50" if has_dom else "8:30")
 
         for f in g["funds"]:
             fid = f["id"]
@@ -704,13 +915,13 @@ def main() -> None:
                 fc_bef = simulate_fund_day(
                     f, gid, d0, d1, nav0, "before",
                     daily_series, hourly_series, ttm_map, topix_map, n225_map, msci_acwi_map, msci_kokusai_map,
-                    solactive_maps=solactive_maps,
+                    solactive_maps=solactive_maps, m15_series=m15_series,
                     auam_formula="additive",
                 )
                 fc_aft = simulate_fund_day(
                     f, gid, d0, d1, nav0, "after",
                     daily_series, hourly_series, ttm_map, topix_map, n225_map, msci_acwi_map, msci_kokusai_map,
-                    solactive_maps=solactive_maps,
+                    solactive_maps=solactive_maps, m15_series=m15_series,
                     auam_formula=chosen_auam,
                 )
                 if fc_bef is None or fc_aft is None:
@@ -725,9 +936,52 @@ def main() -> None:
                 all_before_abs.append(abs(err_bef))
                 all_after_abs.append(abs(err_aft))
 
-                if args.seed_log in ("before", "after"):
-                    fc_use = fc_bef if args.seed_log == "before" else fc_aft
-                    err_use = err_bef if args.seed_log == "before" else err_aft
+        if g_before_abs:
+            m_bef = sum(g_before_abs) / len(g_before_abs)
+            m_aft = sum(g_after_abs) / len(g_after_abs)
+            b_bef = sum(g_before_sgn) / len(g_before_sgn)
+            b_aft = sum(g_after_sgn) / len(g_after_sgn)
+            diff = m_aft - m_bef
+            print(
+                f"| {glabel} | {len(g['funds'])} | {rec_time_lbl} | {len(g_before_abs)} | "
+                f"{m_bef:.4f}pt | {m_aft:.4f}pt | {diff:+.4f}pt | {b_bef:+.4f}pt | {b_aft:+.4f}pt |"
+            )
+
+    if all_before_abs:
+        tot_bef = sum(all_before_abs) / len(all_before_abs)
+        tot_aft = sum(all_after_abs) / len(all_after_abs)
+        print(
+            f"| **全体** | **{len(all_funds)}** | **8:30 / 14:50** | **{len(all_before_abs)}** | "
+            f"**{tot_bef:.4f}pt** | **{tot_aft:.4f}pt** | **{tot_aft - tot_bef:+.4f}pt** | ― | ― |"
+        )
+
+    # β の最新値も参考出力
+    latest_d0 = day_pairs[-1][0]
+    latest_beta = calc_rolling_beta(topix_map, n225_map, latest_d0, lookback=60)
+    print(f"\n直近 60 営業日の TOPIX 対 日経平均 回帰係数 β ({latest_d0} 時点): {latest_beta:.4f}")
+
+    if args.seed_log != "none":
+        seed_records: Dict[str, Dict[str, Dict[str, Any]]] = {}
+        domestic_fids = {f["id"] for _, _, f in all_funds if is_domestic_snapshot_fund(f)}
+        for g in funds_cfg["groups"]:
+            gid = g["id"]
+            for f in g["funds"]:
+                fid = f["id"]
+                is_dom = fid in domestic_fids
+                h = nav_histories[fid]
+                for d0, d1 in seed_day_pairs:
+                    if d0 not in h or d1 not in h:
+                        continue
+                    nav0, act = h[d0], h[d1]
+                    fc_use = simulate_fund_day(
+                        f, gid, d0, d1, nav0, args.seed_log,
+                        daily_series, hourly_series, ttm_map, topix_map, n225_map, msci_acwi_map, msci_kokusai_map,
+                        solactive_maps=solactive_maps, m15_series=m15_series,
+                        auam_formula=chosen_auam if args.seed_log == "after" else "additive",
+                    )
+                    if fc_use is None:
+                        continue
+                    err_use = (fc_use - act) / nav0 * 100.0
                     fc_chg = (fc_use - nav0) / nav0 * 100.0
                     act_chg = (act - nav0) / nav0 * 100.0
                     seed_records.setdefault(d1, {})[fid] = {
@@ -739,35 +993,10 @@ def main() -> None:
                         "actualChange": round(act_chg, 2),
                         "errorYen": int(fc_use - act),
                         "errorPt": round(err_use, 4),
-                        "recordedAt": f"{d1}T08:30:00+09:00",
-                        "source": "backtest",
+                        "recordedAt": f"{d1}T14:50:00+09:00" if (is_dom and args.seed_log == "after") else f"{d1}T08:30:00+09:00",
+                        "source": "backtest-proxy" if (is_dom and args.seed_log == "after") else "backtest",
                     }
 
-        if g_before_abs:
-            m_bef = sum(g_before_abs) / len(g_before_abs)
-            m_aft = sum(g_after_abs) / len(g_after_abs)
-            b_bef = sum(g_before_sgn) / len(g_before_sgn)
-            b_aft = sum(g_after_sgn) / len(g_after_sgn)
-            diff = m_aft - m_bef
-            print(
-                f"| {glabel} | {len(g['funds'])} | {len(g_before_abs)} | "
-                f"{m_bef:.4f}pt | {m_aft:.4f}pt | {diff:+.4f}pt | {b_bef:+.4f}pt | {b_aft:+.4f}pt |"
-            )
-
-    if all_before_abs:
-        tot_bef = sum(all_before_abs) / len(all_before_abs)
-        tot_aft = sum(all_after_abs) / len(all_after_abs)
-        print(
-            f"| **全体** | **{len(all_funds)}** | **{len(all_before_abs)}** | "
-            f"**{tot_bef:.4f}pt** | **{tot_aft:.4f}pt** | **{tot_aft - tot_bef:+.4f}pt** | ― | ― |"
-        )
-
-    # β の最新値も参考出力
-    latest_d0 = day_pairs[-1][0]
-    latest_beta = calc_rolling_beta(topix_map, n225_map, latest_d0, lookback=60)
-    print(f"\n直近 60 営業日の TOPIX 対 日経平均 回帰係数 β ({latest_d0} 時点): {latest_beta:.4f}")
-
-    if args.seed_log != "none":
         FORECAST_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
         existing_log: Dict[str, Any] = {"version": 1, "entries": {}}
         if FORECAST_LOG_PATH.exists():
@@ -779,10 +1008,18 @@ def main() -> None:
         for d1_str, day_map in seed_records.items():
             bucket = entries.setdefault(d1_str, {})
             for fid, rec in day_map.items():
-                # 既に live で記録されたものがあれば上書きしない
-                if bucket.get(fid, {}).get("source") == "live":
-                    continue
-                bucket[fid] = rec
+                cur_rec = bucket.get(fid, {})
+                if fid in domestic_fids and args.seed_log == "after":
+                    # 国内株は過去の 8:30 記録（live 含む）をすべて 14:50 相当（backtest-proxy）で作り直す
+                    cur_time = str(cur_rec.get("recordedAt") or "")
+                    if cur_rec.get("source") == "live" and len(cur_time) >= 16 and cur_time[11:16] >= "14:50":
+                        continue
+                    bucket[fid] = rec
+                else:
+                    # 海外ファンドは既に live で記録されたものがあれば上書きしない
+                    if cur_rec.get("source") == "live":
+                        continue
+                    bucket[fid] = rec
         existing_log["entries"] = {k: entries[k] for k in sorted(entries.keys())}
         existing_log["updatedAt"] = datetime.datetime.now(JST).isoformat(timespec="seconds")
         FORECAST_LOG_PATH.write_text(

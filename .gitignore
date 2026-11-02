@@ -1,10 +1,12 @@
 .venv/
 __pycache__/
 .backtest_cache/
+_backups/
 .market_anchor_cache.json
 docs/triple_notify_state.json
 *.bak
 *.pyc
-fund-forecast_新規構築_改修指示書_*.md
+fund-forecast_*_改修指示書_*.md
+調査結果_*.md
 報告書_*.md
 *.png
