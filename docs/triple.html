@@ -552,11 +552,164 @@
       color: var(--text-muted);
     }
 
+    .orders-sync-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 9px 11px;
+      background-color: var(--surface-subtle);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .orders-sync-left {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 210px;
+    }
+
+    .orders-key-input {
+      padding: 6px 9px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      background-color: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      width: 190px;
+      max-width: 100%;
+    }
+
+    .orders-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px 11px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .orders-banner.error {
+      display: flex;
+      background-color: var(--judge-ng-bg);
+      border: 1px solid var(--judge-ng-border);
+      color: var(--judge-ng);
+    }
+    .orders-banner.warn {
+      display: flex;
+      background-color: var(--judge-mild-bg);
+      border: 1px solid var(--judge-mild-border);
+      color: var(--judge-mild);
+    }
+
+    .stale-data {
+      opacity: 0.62;
+      transition: opacity 0.2s ease;
+    }
+
+    .record-bal-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .record-bal-card {
+      background-color: var(--surface-subtle);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 11px;
+    }
+
+    .record-bal-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .record-bal-val {
+      font-size: 16.5px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .record-bal-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+
+    .record-order-btn {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      width: 100%;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 5px;
+      border: 1px solid var(--accent);
+      background-color: var(--accent);
+      color: #ffffff;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .record-order-btn:hover {
+      opacity: 0.92;
+    }
+    @media (prefers-color-scheme: dark) {
+      .record-order-btn {
+        color: #0b121c;
+      }
+    }
+
+    .sim-details {
+      margin-bottom: 12px;
+      border: 1px dashed var(--line);
+      border-radius: 6px;
+      padding: 8px 11px;
+      background-color: var(--surface-subtle);
+    }
+
+    .sim-details summary {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .sim-badge {
+      display: inline-block;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background-color: var(--judge-mild-bg);
+      color: var(--judge-mild);
+      border: 1px solid var(--judge-mild-border);
+      margin-left: 6px;
+    }
+
     .calc-controls {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
-      margin-bottom: 10px;
+      margin-top: 10px;
     }
 
     .field-group {
@@ -917,6 +1070,7 @@
       }
       .schedule-strip,
       .price-flow-grid,
+      .record-bal-grid,
       .calc-controls,
       .calc-result-grid {
         grid-template-columns: 1fr;
@@ -941,7 +1095,10 @@
           <span class="brand-badge num">3x NASDAQ</span>
           <span class="site-title">トリプルNASDAQ リバランス＆購入ジャッジ</span>
         </div>
-        <a href="./index.html" class="back-link">全ファンド予報へ →</a>
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <a href="./triple_orders.html" class="back-link" style="background-color: var(--accent-soft); border-color: var(--accent);">📝 注文記録</a>
+          <a href="./index.html" class="back-link">全ファンド予報へ →</a>
+        </div>
       </div>
       <div class="header-sub">
         <h1 class="fund-title-main" id="fundTitle">auAMトリプル・NASDAQ100 為替ヘッジ無し</h1>
@@ -994,7 +1151,7 @@
         <div class="sched-item">
           <div class="sched-lbl">今回のリバランス指示</div>
           <div class="sched-val num" id="schedAllocVal">計算中...</div>
-          <div class="sched-sub" id="schedAllocSub">投信7万円 : 現金7万円 バランス運用</div>
+          <div class="sched-sub" id="schedAllocSub">動的ターゲット比率リバランス運用</div>
         </div>
       </div>
     </section>
@@ -1029,17 +1186,52 @@
       </div>
     </section>
 
-    <!-- 3. Portfolio & Rebalance Simulator (Default: 70,000 Fund + 70,000 Cash) -->
-    <section class="card" aria-label="ポートフォリオ＆リバランス運用パネル">
+    <!-- 3. Portfolio & Rebalance Panel (Calculated from Order Records) -->
+    <section class="card" id="rebalanceSection" aria-label="ポートフォリオ＆リバランス運用パネル">
       <div class="card-title">
-        <span>ポートフォリオ ＆ リバランス運用ジャッジ（投信・現金バランス）</span>
-        <span class="card-subtitle">初期値: 投信7万円＋現金7万円（ブラウザ保存・外部送信なし）</span>
+        <span>ポートフォリオ ＆ リバランス運用ジャッジ（注文記録連動）</span>
+        <span class="card-subtitle" id="ordersSyncStatusText">注文記録（Googleスプレッドシート）から自動計算</span>
+      </div>
+
+      <!-- Passphrase & Order Record Sync Bar -->
+      <div class="orders-sync-bar">
+        <div class="orders-sync-left">
+          <label for="ordersKeyInput" class="field-label" style="margin-bottom: 0; white-space: nowrap;">合言葉:</label>
+          <input type="password" id="ordersKeyInput" class="orders-key-input num" placeholder="合言葉を入力（初回のみ）" autocomplete="off">
+          <button type="button" class="preset-btn accent-btn" id="btnSaveOrdersKey">保存して読込</button>
+          <button type="button" class="preset-btn" id="btnReloadOrders">再読み込み</button>
+        </div>
+        <a href="./triple_orders.html" class="back-link">📝 注文記録ページを開く →</a>
+      </div>
+
+      <div class="orders-banner" id="ordersStatusBanner">
+        <span id="ordersStatusBannerText">合言葉が違います</span>
+        <button type="button" class="preset-btn" id="btnRetryOrdersFetch">再読み込み</button>
+      </div>
+
+      <!-- Calculated Balance Display from Order Records -->
+      <div class="record-bal-grid" id="recordBalanceGrid">
+        <div class="record-bal-card">
+          <div class="record-bal-lbl">保有口数（記録から自動計算）</div>
+          <div class="record-bal-val num" id="recHoldingUnits">--- 口</div>
+          <div class="record-bal-sub num" id="recPendingUnitsNote">合言葉を入力すると注文記録から計算します</div>
+        </div>
+        <div class="record-bal-card">
+          <div class="record-bal-lbl">平均取得単価 ／ 含み損益（予想価額ベース）</div>
+          <div class="record-bal-val num" id="recAvgCost">取得単価: --- 円</div>
+          <div class="record-bal-sub num" id="recUnrealizedPnl">含み損益: --- 円 (--%)</div>
+        </div>
+        <div class="record-bal-card">
+          <div class="record-bal-lbl">待機キャッシュ（約定待ち買付控除後）</div>
+          <div class="record-bal-val num" id="recCashYen">--- 円</div>
+          <div class="record-bal-sub num" id="recCashSub">約定待ち注文も反映して提案を計算</div>
+        </div>
       </div>
 
       <!-- Visual Current vs Target Allocation Meter -->
-      <div class="alloc-meter-box">
+      <div class="alloc-meter-box" id="allocMeterBox">
         <div class="alloc-summary-top">
-          <span class="alloc-total-lbl num" id="allocSummaryTotal">現在実質資産: 計算中...</span>
+          <span class="alloc-total-lbl num" id="allocSummaryTotal">現在実質資産: 注文記録読込待ち</span>
           <span class="alloc-d0-ref num" id="allocD0Ref">前回確定時: ---</span>
         </div>
         <div class="alloc-bar-wrap">
@@ -1053,16 +1245,17 @@
         </div>
         <div class="alloc-legend-row">
           <span class="alloc-leg-fund num" id="allocLegFund">■ 投信時価: ---円 (--%)</span>
-          <span class="alloc-leg-cash num" id="allocLegCash">□ 待機現金: ---円 (--%)</span>
+          <span class="alloc-leg-cash num" id="allocLegCash">□ 待機キャッシュ: ---円 (--%)</span>
         </div>
       </div>
 
       <!-- 3-Box Rebalance Verdict -->
-      <div class="calc-result-grid">
+      <div class="calc-result-grid" id="calcResultGrid">
         <div class="calc-box primary" id="rebActionBox">
           <div class="calc-box-lbl" id="rebActionLbl">今回の推奨リバランス注文</div>
           <div class="calc-box-val num" id="calcOrderYen">---</div>
           <div class="calc-box-sub num" id="calcOrderSub">判定中...</div>
+          <button type="button" class="record-order-btn" id="btnRecordRecommendedOrder">📝 この内容で注文を記録</button>
         </div>
         <div class="calc-box">
           <div class="calc-box-lbl">推奨売買後の想定バランス</div>
@@ -1072,38 +1265,11 @@
         <div class="calc-box">
           <div class="calc-box-lbl">次回の利確売り／買い増し目安</div>
           <div class="calc-box-val num" id="calcEstUnits">---</div>
-          <div class="calc-box-sub num" id="calcTriggersSub">反発時は「口数指定」で利確し現金補充</div>
+          <div class="calc-box-sub num" id="calcTriggersSub">反発時は「口数指定」で利確しキャッシュ補充</div>
         </div>
       </div>
 
-      <!-- Portfolio Inputs -->
-      <div class="calc-controls">
-        <div class="field-group">
-          <label class="field-label" for="setupFundYenInput" id="setupFundYenLabel">前回確定時の投信評価額（円）</label>
-          <div class="budget-input-row">
-            <input type="number" id="setupFundYenInput" class="budget-input num" min="0" step="1000" value="70000">
-          </div>
-          <div class="field-hint">金額を入れると保有口数を自動換算</div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="holdingUnitsInput">保有口数（口）※日々の時価連動基準</label>
-          <div class="budget-input-row">
-            <input type="number" id="holdingUnitsInput" class="budget-input num" min="0" step="100" value="74890">
-          </div>
-          <div class="field-hint">約定後は証券画面の保有口数入力でもOK</div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="cashYenInput">待機現金（キャッシュ）残高（円）</label>
-          <div class="budget-input-row">
-            <input type="number" id="cashYenInput" class="budget-input num" min="0" step="1000" value="70000">
-          </div>
-          <div class="field-hint">暴落時の買い増し弾＆利確の受け皿</div>
-        </div>
-      </div>
-
-      <!-- Strategy Mode, Base Ratio, Cutoff & Quick Actions -->
+      <!-- Strategy Mode, Base Ratio, Cutoff -->
       <div class="rebalance-toolbar">
         <div>
           <span class="field-label">リバランス方式（許容バンド ±4%）</span>
@@ -1116,11 +1282,11 @@
         <div>
           <label class="field-label" for="baseTargetSelect">平常時の基準比率</label>
           <select id="baseTargetSelect" class="budget-input num" style="padding: 6px 8px; font-size: 12.5px; width: auto;">
-            <option value="30">投信 30% : 現金 70%</option>
-            <option value="40">投信 40% : 現金 60%</option>
-            <option value="50" selected>投信 50% : 現金 50%（7万:7万）</option>
-            <option value="60">投信 60% : 現金 40%</option>
-            <option value="70">投信 70% : 現金 30%</option>
+            <option value="30">投信 30% : キャッシュ 70%</option>
+            <option value="40">投信 40% : キャッシュ 60%</option>
+            <option value="50" selected>投信 50% : キャッシュ 50%（標準バランス）</option>
+            <option value="60">投信 60% : キャッシュ 40%</option>
+            <option value="70">投信 70% : キャッシュ 30%</option>
           </select>
         </div>
 
@@ -1131,12 +1297,40 @@
             <button type="button" class="cutoff-btn num" id="btnCutoff1500" data-cutoff="15:00">15:00</button>
           </div>
         </div>
-
-        <div class="preset-btns">
-          <button type="button" class="preset-btn accent-btn" id="btnApplyAfterTrade">推奨売買後の残高を反映</button>
-          <button type="button" class="preset-btn" id="btnReset70k">初期値(7万:7万)に戻す</button>
-        </div>
       </div>
+
+      <!-- Optional Temporary Simulation Override (Not Saved to Order Records) -->
+      <details class="sim-details" id="simDetailsBox">
+        <summary>
+          一時シミュレーション（仮の口数・待機資金で試算する）
+          <span class="sim-badge">※記録には保存されません</span>
+        </summary>
+        <div class="calc-controls">
+          <div class="field-group">
+            <label class="field-label" for="simHoldingUnitsInput">仮の保有口数（口）</label>
+            <div class="budget-input-row">
+              <input type="number" id="simHoldingUnitsInput" class="budget-input num" min="0" step="100" placeholder="例: 50000">
+            </div>
+            <div class="field-hint">※記録には保存されません</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="simCashYenInput">仮の待機キャッシュ（円）</label>
+            <div class="budget-input-row">
+              <input type="number" id="simCashYenInput" class="budget-input num" min="0" step="1000" placeholder="例: 50000">
+            </div>
+            <div class="field-hint">※記録には保存されません</div>
+          </div>
+
+          <div class="field-group" style="display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;">
+            <div class="preset-btns">
+              <button type="button" class="preset-btn accent-btn" id="btnApplyAfterTrade">推奨売買後を一時試算</button>
+              <button type="button" class="preset-btn" id="btnResetToRecorded">記録の残高に戻す</button>
+            </div>
+            <div class="field-hint" id="simActiveNotice">現在：注文記録の残高を表示中</div>
+          </div>
+        </div>
+      </details>
 
       <div class="table-wrap">
         <table class="data-table">
@@ -1229,77 +1423,95 @@
     (function () {
       "use strict";
 
+      var DEFAULT_ORDERS_URL = "https://script.google.com/macros/s/AKfycbwaZu4G_PhrOQItGpvqBTwjVer2KeV-1884-c5YUGpaZJV5eOkcBcYL77g9VxoyY6u32g/exec";
       var DATA_BRANCH_URL = "https://raw.githubusercontent.com/msmttng/fund-forecast/data/triple_data.json";
       var DATA_LOCAL_URL = "./triple_data.json";
-      var STORAGE_PORTFOLIO_KEY = "triple_ndx_portfolio_v2";
-      var STORAGE_CUTOFF_KEY = "triple_ndx_cutoff_mode_v1";
-      var STORAGE_CACHE_KEY = "triple_ndx_data_cache_v1";
 
-      var DEFAULT_PORTFOLIO = {
-        holdingUnits: 74890,
-        cashYen: 70000,
-        baseTargetPct: 50,
-        mode: "dynamic",
-        customized: false
-      };
+      var LS_PASSPHRASE_ITEM = "triple_orders_passphrase_v1";
+      var LS_ORDERS_CACHE_ITEM = "triple_orders_cache_v1";
+      var LS_STRATEGY_ITEM = "triple_ndx_strategy_v3";
+      var LS_CUTOFF_ITEM = "triple_ndx_cutoff_mode_v1";
+      var LS_TRIPLE_CACHE_ITEM = "triple_ndx_data_cache_v1";
+      var TAX_RATE = 0.20315;
 
       var tripleData = null;
-      var portfolioState = loadPortfolioState();
+      var strategyState = loadStrategyState();
       var cutoffMode = loadCutoffMode();
       var lastComputedPlan = null;
 
-      function cloneDefaultPortfolio() {
-        return {
-          holdingUnits: DEFAULT_PORTFOLIO.holdingUnits,
-          cashYen: DEFAULT_PORTFOLIO.cashYen,
-          baseTargetPct: DEFAULT_PORTFOLIO.baseTargetPct,
-          mode: DEFAULT_PORTFOLIO.mode,
-          customized: false
-        };
+      // GAS注文記録の状態
+      var gasState = {
+        orders: [],
+        settings: {
+          budgetYen: 0,
+          baseTargetPct: 50,
+          mode: "dynamic",
+          rebalanceBandPt: 4.0,
+          minTradeYen: 3000
+        },
+        loaded: false,
+        stale: false
+      };
+
+      // 一時シミュレーション状態（※記録には保存しない）
+      var simOverride = {
+        active: false,
+        holdingUnits: 0,
+        cashYen: 0
+      };
+
+      function safeGetStorage(k) {
+        try {
+          return window.localStorage.getItem(k);
+        } catch (e) {
+          return null;
+        }
       }
 
-      function loadPortfolioState() {
+      function safeSetStorage(k, v) {
         try {
-          var raw = window.localStorage.getItem(STORAGE_PORTFOLIO_KEY);
-          if (!raw) return cloneDefaultPortfolio();
+          window.localStorage.setItem(k, v);
+        } catch (e) {}
+      }
+
+      function loadStrategyState() {
+        try {
+          var raw = safeGetStorage(LS_STRATEGY_ITEM);
+          if (!raw) return { baseTargetPct: 50, mode: "dynamic", customized: false };
           var obj = JSON.parse(raw);
-          if (!obj || typeof obj !== "object") return cloneDefaultPortfolio();
+          if (!obj || typeof obj !== "object") return { baseTargetPct: 50, mode: "dynamic", customized: false };
           return {
-            holdingUnits: (!isNaN(obj.holdingUnits) && obj.holdingUnits >= 0) ? Math.round(Number(obj.holdingUnits)) : DEFAULT_PORTFOLIO.holdingUnits,
-            cashYen: (!isNaN(obj.cashYen) && obj.cashYen >= 0) ? Math.round(Number(obj.cashYen)) : DEFAULT_PORTFOLIO.cashYen,
-            baseTargetPct: (!isNaN(obj.baseTargetPct) && obj.baseTargetPct >= 10 && obj.baseTargetPct <= 90) ? Number(obj.baseTargetPct) : DEFAULT_PORTFOLIO.baseTargetPct,
+            baseTargetPct: (!isNaN(obj.baseTargetPct) && obj.baseTargetPct >= 10 && obj.baseTargetPct <= 90) ? Number(obj.baseTargetPct) : 50,
             mode: obj.mode === "fixed" ? "fixed" : "dynamic",
             customized: Boolean(obj.customized)
           };
         } catch (e) {
-          return cloneDefaultPortfolio();
+          return { baseTargetPct: 50, mode: "dynamic", customized: false };
         }
       }
 
-      function savePortfolioState() {
-        try {
-          window.localStorage.setItem(STORAGE_PORTFOLIO_KEY, JSON.stringify(portfolioState));
-        } catch (e) {}
+      function saveStrategyState() {
+        safeSetStorage(LS_STRATEGY_ITEM, JSON.stringify(strategyState));
       }
 
       function loadCutoffMode() {
-        try {
-          var m = window.localStorage.getItem(STORAGE_CUTOFF_KEY);
-          return m === "15:00" ? "15:00" : "15:30";
-        } catch (e) {
-          return "15:30";
-        }
+        var m = safeGetStorage(LS_CUTOFF_ITEM);
+        return m === "15:00" ? "15:00" : "15:30";
       }
 
       function saveCutoffMode(m) {
-        try {
-          window.localStorage.setItem(STORAGE_CUTOFF_KEY, m);
-        } catch (e) {}
+        safeSetStorage(LS_CUTOFF_ITEM, m);
       }
 
       function formatInt(n) {
         if (n === null || n === undefined || isNaN(n)) return "---";
         return Math.round(Number(n)).toLocaleString("ja-JP");
+      }
+
+      function formatSignedInt(n) {
+        if (n === null || n === undefined || isNaN(n)) return "---";
+        var v = Math.round(Number(n));
+        return (v > 0 ? "+" : "") + v.toLocaleString("ja-JP");
       }
 
       function formatSignedPct(n, digits) {
@@ -1330,6 +1542,162 @@
       function activeSchedule() {
         if (!tripleData) return null;
         return (cutoffMode === "15:00" && tripleData.schedule1500) ? tripleData.schedule1500 : tripleData.schedule;
+      }
+
+      function getOrdersApiUrl() {
+        if (tripleData && tripleData.ordersApiUrl) return tripleData.ordersApiUrl;
+        return DEFAULT_ORDERS_URL;
+      }
+
+      function showOrdersBanner(kind, text) {
+        var el = document.getElementById("ordersStatusBanner");
+        var txt = document.getElementById("ordersStatusBannerText");
+        if (!kind) {
+          el.className = "orders-banner";
+          el.style.display = "none";
+          return;
+        }
+        el.className = "orders-banner " + kind;
+        el.style.display = "flex";
+        txt.textContent = text;
+      }
+
+      function setOrdersStaleVisual(isStale) {
+        gasState.stale = isStale;
+        document.getElementById("recordBalanceGrid").classList.toggle("stale-data", isStale);
+        document.getElementById("allocMeterBox").classList.toggle("stale-data", isStale);
+        document.getElementById("calcResultGrid").classList.toggle("stale-data", isStale);
+      }
+
+      // 4-2 & 4-3: 注文記録から保有口数・平均取得単価（移動平均法）・待機キャッシュ・約定待ちを計算
+      function computeBalanceFromOrders(orders, settings, provNav) {
+        var budgetYen = Number((settings && settings.budgetYen) || 0);
+        var sorted = (orders || []).slice().sort(function (a, b) {
+          var da = a.execDate || a.orderDate || "";
+          var db = b.execDate || b.orderDate || "";
+          if (da !== db) return da < db ? -1 : 1;
+          var oa = (a.orderDate || "") + " " + (a.orderTime || "");
+          var ob = (b.orderDate || "") + " " + (b.orderTime || "");
+          if (oa !== ob) return oa < ob ? -1 : 1;
+          var ca = a.createdAt || "";
+          var cb = b.createdAt || "";
+          if (ca !== cb) return ca < cb ? -1 : 1;
+          return String(a.id) < String(b.id) ? -1 : 1;
+        });
+
+        var settledUnits = 0;
+        var avgCostNav = 0;
+        var settledBuyYenTotal = 0;
+        var settledSellGrossYenTotal = 0;
+        var settledSellTaxYenTotal = 0;
+        var settledSellNetYenTotal = 0;
+
+        var pendingBuyYen = 0;
+        var pendingBuyEstUnits = 0;
+        var pendingSellUnits = 0;
+        var pendingSellEstYen = 0;
+        var pendingCount = 0;
+
+        for (var i = 0; i < sorted.length; i++) {
+          var o = sorted[i];
+          var st = String(o.status || "pending").toLowerCase();
+          if (st === "cancelled") continue;
+          var side = String(o.side || "BUY").toUpperCase();
+          var spec = String(o.spec || "YEN").toUpperCase();
+
+          if (st === "settled") {
+            var eNav = Number(o.execNav || 0);
+            var eUnits = Number(o.execUnits || 0);
+            var eYen = Number(o.execYen || 0);
+            if (side === "BUY") {
+              if (eUnits <= 0 && eNav > 0 && o.amountYen) {
+                eUnits = Math.floor((Number(o.amountYen) * 10000) / eNav);
+              }
+              if (eYen <= 0 && o.amountYen) {
+                eYen = Math.round(Number(o.amountYen));
+              }
+              if (eUnits > 0 && eYen > 0) {
+                var prevCost = (settledUnits * avgCostNav) / 10000;
+                var newCost = prevCost + eYen;
+                settledUnits += eUnits;
+                avgCostNav = settledUnits > 0 ? Math.round((newCost * 10000) / settledUnits) : 0;
+                settledBuyYenTotal += eYen;
+              }
+            } else if (side === "SELL") {
+              if (eUnits <= 0) {
+                if (spec === "UNITS" && o.units) eUnits = Math.round(Number(o.units));
+                else if (spec === "YEN" && o.amountYen && eNav > 0) eUnits = Math.ceil((Number(o.amountYen) * 10000) / eNav);
+              }
+              var sellU = Math.min(settledUnits, Math.max(0, eUnits));
+              if (eYen <= 0 && eNav > 0 && sellU > 0) {
+                eYen = Math.floor((sellU * eNav) / 10000);
+              }
+              if (sellU > 0) {
+                var costBasisYen = Math.round((avgCostNav * sellU) / 10000);
+                var gainYen = eYen - costBasisYen;
+                var estTaxYen = gainYen > 0 ? Math.floor(gainYen * TAX_RATE) : 0;
+                var netProceedsYen = eYen - estTaxYen;
+
+                settledUnits = Math.max(0, settledUnits - sellU);
+                if (settledUnits === 0) avgCostNav = 0;
+
+                settledSellGrossYenTotal += eYen;
+                settledSellTaxYenTotal += estTaxYen;
+                settledSellNetYenTotal += netProceedsYen;
+              }
+            }
+          } else if (st === "pending") {
+            pendingCount += 1;
+            if (side === "BUY") {
+              var amt = 0;
+              var estU = 0;
+              if (spec === "YEN" && o.amountYen) {
+                amt = Math.round(Number(o.amountYen));
+                estU = provNav > 0 ? Math.floor((amt * 10000) / provNav) : 0;
+              } else if (o.units) {
+                estU = Math.round(Number(o.units));
+                amt = provNav > 0 ? Math.floor((estU * provNav) / 10000) : 0;
+              }
+              pendingBuyYen += amt;
+              pendingBuyEstUnits += estU;
+            } else if (side === "SELL") {
+              var uSell = 0;
+              if (spec === "UNITS" && o.units) {
+                uSell = Math.round(Number(o.units));
+              } else if (spec === "YEN" && o.amountYen && provNav > 0) {
+                uSell = Math.ceil((Number(o.amountYen) * 10000) / provNav);
+              }
+              uSell = Math.min(Math.max(0, settledUnits - pendingSellUnits), Math.max(0, uSell));
+              var estSellY = provNav > 0 ? Math.floor((uSell * provNav) / 10000) : 0;
+              pendingSellUnits += uSell;
+              pendingSellEstYen += estSellY;
+            }
+          }
+        }
+
+        var settledCashYen = budgetYen - settledBuyYenTotal + settledSellNetYenTotal;
+        var cashYen = settledCashYen - pendingBuyYen;
+        var sellableUnits = Math.max(0, settledUnits - pendingSellUnits);
+        var effectiveHoldingUnits = sellableUnits + pendingBuyEstUnits;
+
+        return {
+          budgetYen: budgetYen,
+          holdingUnits: settledUnits,
+          sellableUnits: sellableUnits,
+          avgCostNav: avgCostNav,
+          settledCashYen: settledCashYen,
+          cashYen: cashYen,
+          effectiveHoldingUnits: effectiveHoldingUnits,
+          settledBuyYenTotal: settledBuyYenTotal,
+          settledSellGrossYenTotal: settledSellGrossYenTotal,
+          settledSellTaxYenTotal: settledSellTaxYenTotal,
+          settledSellNetYenTotal: settledSellNetYenTotal,
+          pendingBuyYen: pendingBuyYen,
+          pendingBuyEstUnits: pendingBuyEstUnits,
+          pendingSellUnits: pendingSellUnits,
+          pendingSellEstYen: pendingSellEstYen,
+          pendingCount: pendingCount
+        };
       }
 
       function updateCountdownAndFreshness() {
@@ -1423,11 +1791,12 @@
         return Math.round(Math.max(25, Math.min(78, baseTargetPct + tilt)) * 10) / 10;
       }
 
-      function solveRebalance(targetPct, holdingUnits, cashYen, provNav, leadPct, nightsCnt, vixCur, fomcHit) {
-        var bandPt = 4.0;
-        var minTradeYen = 3000;
-        var curFundYen = Math.round((holdingUnits * provNav) / 10000);
-        var totalYen = curFundYen + cashYen;
+      function solveRebalance(targetPct, effectiveHoldingUnits, sellableUnits, cashYen, provNav, leadPct, nightsCnt, vixCur, fomcHit) {
+        var bandPt = Number((gasState.settings && gasState.settings.rebalanceBandPt) || 4.0);
+        var minTradeYen = Number((gasState.settings && gasState.settings.minTradeYen) || 3000);
+        var availCashYen = Math.max(0, cashYen);
+        var curFundYen = Math.round((effectiveHoldingUnits * provNav) / 10000);
+        var totalYen = curFundYen + availCashYen;
         var curWeightPct = totalYen > 0 ? Math.round((curFundYen / totalYen) * 10000) / 100 : 0;
         var targetFundYen = Math.round(totalYen * (targetPct / 100));
         var rawDiffYen = targetFundYen - curFundYen;
@@ -1439,7 +1808,7 @@
         var tradeUnits = 0;
         var capNote = null;
 
-        if (driftPt <= -bandPt && rawDiffYen >= minTradeYen && cashYen >= minTradeYen) {
+        if (driftPt <= -bandPt && rawDiffYen >= minTradeYen && availCashYen >= minTradeYen) {
           if (leadPct >= 4.5) {
             action = "HOLD_BOUNCE_TRAP";
             capNote = "昼間の時間外リードが " + formatSignedPct(leadPct) + " 急反発中のため本日の買い増しは見送り推奨";
@@ -1447,30 +1816,30 @@
             var maxCashFrac = 0.45;
             if (fomcHit) {
               maxCashFrac = 0.15;
-              capNote = "FOMC発表またぎのため1回の買付上限を現金の15%に抑制";
+              capNote = "FOMC発表またぎのため1回の買付上限を待機資金の15%に抑制";
             } else if (nightsCnt >= 3 || vixCur >= 35.0) {
               maxCashFrac = 0.18;
-              capNote = "米国市場" + nightsCnt + "晩またぎ/高ボラのため1回の買付上限を現金の18%に抑制";
+              capNote = "米国市場" + nightsCnt + "晩またぎ/高ボラのため1回の買付上限を待機資金の18%に抑制";
             } else if (nightsCnt === 2) {
               maxCashFrac = 0.25;
-              capNote = "祝日挟み（米国市場2晩分）のため1回の買付上限を現金の25%に抑制";
+              capNote = "祝日挟み（米国市場2晩分）のため1回の買付上限を待機資金の25%に抑制";
             }
-            var cashCapYen = Math.floor(cashYen * maxCashFrac);
+            var cashCapYen = Math.floor(availCashYen * maxCashFrac);
             var desiredYen = rawDiffYen;
             if (cashCapYen >= minTradeYen && desiredYen > cashCapYen) {
               desiredYen = cashCapYen;
             } else {
               capNote = null;
             }
-            var roundedBuy = Math.min(cashYen, Math.max(0, Math.round(desiredYen / 1000) * 1000));
+            var roundedBuy = Math.min(availCashYen, Math.max(0, Math.round(desiredYen / 1000) * 1000));
             if (roundedBuy >= minTradeYen) {
               action = "BUY";
               orderMethod = "金額指定買付";
               tradeYen = roundedBuy;
-              tradeUnits = provNav > 0 ? Math.round((roundedBuy / provNav) * 10000) : 0;
+              tradeUnits = provNav > 0 ? Math.floor((roundedBuy * 10000) / provNav) : 0;
             }
           }
-        } else if (driftPt >= bandPt && (-rawDiffYen) >= minTradeYen && holdingUnits > 0) {
+        } else if (driftPt >= bandPt && (-rawDiffYen) >= minTradeYen && sellableUnits > 0) {
           if (leadPct <= -4.5) {
             action = "HOLD_CRASH_GUARD";
             capNote = "昼間の時間外リードが " + formatSignedPct(leadPct) + " 急落中のため本日の売却は見送り推奨";
@@ -1481,8 +1850,8 @@
               capNote = "祝日挟み（米国市場" + nightsCnt + "晩分）のため1回の利確売却を超過分の75%に調整";
             }
             var rawSellUnits = provNav > 0 ? ((excessYen / provNav) * 10000) : 0;
-            var roundedUnits = Math.min(holdingUnits, Math.max(0, Math.round(rawSellUnits / 100) * 100));
-            var estSellYen = Math.round((roundedUnits * provNav) / 10000);
+            var roundedUnits = Math.min(sellableUnits, Math.max(0, Math.round(rawSellUnits / 100) * 100));
+            var estSellYen = Math.floor((roundedUnits * provNav) / 10000);
             if (estSellYen >= minTradeYen && roundedUnits >= 100) {
               action = "SELL";
               orderMethod = "口数指定売却";
@@ -1493,23 +1862,23 @@
         }
 
         var afterFundYen = curFundYen;
-        var afterCashYen = cashYen;
-        var afterUnits = holdingUnits;
+        var afterCashYen = availCashYen;
+        var afterUnits = effectiveHoldingUnits;
         if (action === "BUY") {
           afterFundYen = curFundYen + tradeYen;
-          afterCashYen = cashYen - tradeYen;
-          afterUnits = holdingUnits + tradeUnits;
+          afterCashYen = availCashYen - tradeYen;
+          afterUnits = effectiveHoldingUnits + tradeUnits;
         } else if (action === "SELL") {
           afterFundYen = Math.max(0, curFundYen - tradeYen);
-          afterCashYen = cashYen + tradeYen;
-          afterUnits = Math.max(0, holdingUnits - tradeUnits);
+          afterCashYen = availCashYen + tradeYen;
+          afterUnits = Math.max(0, effectiveHoldingUnits - tradeUnits);
         }
         var afterTotal = afterFundYen + afterCashYen;
         var afterWeightPct = afterTotal > 0 ? Math.round((afterFundYen / afterTotal) * 10000) / 100 : 0;
 
         return {
           curFundYen: curFundYen,
-          cashYen: cashYen,
+          cashYen: availCashYen,
           totalYen: totalYen,
           curWeightPct: curWeightPct,
           targetWeightPct: targetPct,
@@ -1529,16 +1898,11 @@
         };
       }
 
-      function syncInputsFromPortfolioState() {
-        var d0Nav = (tripleData && tripleData.fund && tripleData.fund.nav) ? Number(tripleData.fund.nav) : 9347;
-        var setupYen = Math.round((portfolioState.holdingUnits * d0Nav) / 10000);
-        document.getElementById("setupFundYenInput").value = String(setupYen);
-        document.getElementById("holdingUnitsInput").value = String(portfolioState.holdingUnits);
-        document.getElementById("cashYenInput").value = String(portfolioState.cashYen);
+      function syncStrategyControls() {
         var sel = document.getElementById("baseTargetSelect");
-        sel.value = String(Math.round(portfolioState.baseTargetPct));
-        document.getElementById("btnModeDynamic").classList.toggle("active", portfolioState.mode === "dynamic");
-        document.getElementById("btnModeFixed").classList.toggle("active", portfolioState.mode === "fixed");
+        sel.value = String(Math.round(strategyState.baseTargetPct));
+        document.getElementById("btnModeDynamic").classList.toggle("active", strategyState.mode === "dynamic");
+        document.getElementById("btnModeFixed").classList.toggle("active", strategyState.mode === "fixed");
       }
 
       function renderPortfolioRebalance() {
@@ -1549,24 +1913,146 @@
         var tech = tripleData.technicals;
         var sched = activeSchedule();
 
-        var d0Nav = Number(f.nav || 9347);
+        var d0Nav = Number(f.nav || 0);
         var provNav = Number(f.provisionalExecNav || f.launchpadNav || d0Nav);
         var leadPct = Number(lead.totalLeadPct || 0);
         var nightsCnt = Number(sched.nightsAfterCutoff || 1);
         var vixCur = Number(tech.vix || 18);
         var fomcHit = Boolean(sched.fomcDatesHit && sched.fomcDatesHit.length > 0);
 
-        document.getElementById("setupFundYenLabel").textContent =
-          "前回確定時（" + f.navDateLabel + " " + formatInt(d0Nav) + "円）の評価額";
+        var targetPct = strategyState.mode === "dynamic"
+          ? calcDynamicTargetPct(strategyState.baseTargetPct, sig.score)
+          : Number(strategyState.baseTargetPct);
 
-        var targetPct = portfolioState.mode === "dynamic"
-          ? calcDynamicTargetPct(portfolioState.baseTargetPct, sig.score)
-          : Number(portfolioState.baseTargetPct);
+        var pinLeft = Math.max(4, Math.min(96, targetPct));
+        document.getElementById("allocTargetPin").style.left = pinLeft.toFixed(1) + "%";
+        document.getElementById("allocTargetTag").textContent =
+          (strategyState.mode === "dynamic" ? "動的目標 " : "固定目標 ") + targetPct.toFixed(1) + "%";
+
+        var hasGasRecords = gasState.loaded || (gasState.orders && gasState.orders.length > 0);
+        var hasActiveBalance = simOverride.active || hasGasRecords;
+
+        if (!hasActiveBalance) {
+          lastComputedPlan = null;
+          document.getElementById("recHoldingUnits").textContent = "--- 口";
+          document.getElementById("recPendingUnitsNote").textContent = "合言葉を入力すると注文記録から計算します";
+          document.getElementById("recAvgCost").textContent = "取得単価: --- 円";
+          document.getElementById("recUnrealizedPnl").textContent = "含み損益: --- 円 (--%)";
+          document.getElementById("recCashYen").textContent = "--- 円";
+          document.getElementById("recCashSub").textContent = "約定待ち注文も反映して提案を計算";
+
+          document.getElementById("allocSummaryTotal").textContent = "現在実質資産: 合言葉を入力して注文記録を読み込んでください";
+          document.getElementById("allocD0Ref").textContent = "動的目標比率: " + targetPct.toFixed(1) + "%";
+          document.getElementById("allocSegFund").style.width = targetPct.toFixed(1) + "%";
+          document.getElementById("allocLegFund").textContent = "■ 投信時価: ---円 (--%)";
+          document.getElementById("allocLegCash").textContent = "□ 待機キャッシュ: ---円 (--%)";
+
+          var actBox = document.getElementById("rebActionBox");
+          actBox.className = "calc-box primary";
+          document.getElementById("rebActionLbl").textContent = "今回の推奨リバランス注文（記録読込待ち）";
+          document.getElementById("calcOrderYen").textContent = "目標比率 " + targetPct.toFixed(1) + "%";
+          document.getElementById("calcOrderSub").textContent = "上部の「合言葉」を入力すると、記録残高・約定待ち注文から具体的な売買金額を計算します";
+          document.getElementById("calcRemainYen").textContent = "---";
+          document.getElementById("calcAfterSub").textContent = "注文記録を読み込むと表示されます";
+          document.getElementById("calcEstUnits").textContent = "---";
+          document.getElementById("calcTriggersSub").textContent = "反発時は「口数指定」で利確しキャッシュ補充";
+
+          // シナリオ表は市場価格と変動率のみ表示
+          var tbodyEmpty = document.getElementById("scenarioTbody");
+          tbodyEmpty.textContent = "";
+          (tripleData.scenarios || []).forEach(function (sc) {
+            var tr = document.createElement("tr");
+            if (Math.abs(Number(sc.nqMovePct)) < 0.01) tr.className = "current-row";
+            var pSc = Number(sc.estimatedNav || provNav);
+
+            var tdLbl = document.createElement("td");
+            tdLbl.textContent = sc.label;
+            tr.appendChild(tdLbl);
+
+            var tdNav = document.createElement("td");
+            tdNav.className = "r num";
+            tdNav.textContent = "約 " + formatInt(pSc) + "円";
+            tr.appendChild(tdNav);
+
+            var tdVs = document.createElement("td");
+            tdVs.className = "r num " + chgClass(sc.vsFridayOrD0Pct);
+            tdVs.textContent = formatSignedPct(sc.vsFridayOrD0Pct);
+            tr.appendChild(tdVs);
+
+            var tdTrade = document.createElement("td");
+            tdTrade.className = "r num";
+            tdTrade.textContent = "記録読込後";
+            tr.appendChild(tdTrade);
+
+            var tdAfter = document.createElement("td");
+            tdAfter.className = "r num";
+            tdAfter.textContent = "---";
+            tr.appendChild(tdAfter);
+
+            tbodyEmpty.appendChild(tr);
+          });
+          return;
+        }
+
+        var bal = computeBalanceFromOrders(gasState.orders, gasState.settings, provNav);
+
+        var effUnits = simOverride.active ? simOverride.holdingUnits : bal.effectiveHoldingUnits;
+        var sellUnitsCap = simOverride.active ? simOverride.holdingUnits : bal.sellableUnits;
+        var effCashYen = simOverride.active ? simOverride.cashYen : bal.cashYen;
+
+        // 記録から計算した残高カードの表示更新
+        if (simOverride.active) {
+          document.getElementById("recHoldingUnits").textContent = formatInt(effUnits) + " 口（一時試算中）";
+          document.getElementById("recPendingUnitsNote").textContent =
+            "※一時シミュレーション値（記録には保存されません）";
+          document.getElementById("recAvgCost").textContent =
+            bal.avgCostNav > 0 ? ("記録取得単価: " + formatInt(bal.avgCostNav) + " 円") : "取得単価: --- 円";
+          document.getElementById("recUnrealizedPnl").textContent = "「記録の残高に戻す」で本来の残高に戻ります";
+          document.getElementById("recCashYen").textContent = formatInt(effCashYen) + " 円（一時試算中）";
+          document.getElementById("recCashSub").textContent = "※記録には保存されません";
+        } else {
+          document.getElementById("recHoldingUnits").textContent = formatInt(bal.holdingUnits) + " 口";
+          if (bal.pendingBuyEstUnits > 0 || bal.pendingSellUnits > 0) {
+            var pNotes = [];
+            if (bal.pendingBuyEstUnits > 0) {
+              pNotes.push("約定待ち買付 +" + formatInt(bal.pendingBuyEstUnits) + "口(見込み)");
+            }
+            if (bal.pendingSellUnits > 0) {
+              pNotes.push("約定待ち売却 -" + formatInt(bal.pendingSellUnits) + "口");
+            }
+            document.getElementById("recPendingUnitsNote").textContent =
+              pNotes.join(" / ") + " → 提案反映 " + formatInt(bal.effectiveHoldingUnits) + "口";
+          } else {
+            document.getElementById("recPendingUnitsNote").textContent =
+              "約定待ち注文: なし（前回確定評価 " + formatInt(Math.round((bal.holdingUnits * d0Nav) / 10000)) + "円）";
+          }
+
+          document.getElementById("recAvgCost").textContent =
+            bal.avgCostNav > 0 ? ("取得単価: " + formatInt(bal.avgCostNav) + " 円") : "取得単価: --- 円";
+          var costBasis = Math.round((bal.holdingUnits * bal.avgCostNav) / 10000);
+          var evalSettledProv = Math.round((bal.holdingUnits * provNav) / 10000);
+          var pnlProv = evalSettledProv - costBasis;
+          var pnlPct = costBasis > 0 ? ((pnlProv / costBasis) * 100) : 0;
+          var pnlEl = document.getElementById("recUnrealizedPnl");
+          pnlEl.className = "record-bal-sub num " + (pnlProv > 0 ? "chg-up" : (pnlProv < 0 ? "chg-down" : ""));
+          pnlEl.textContent = "含み損益(予想): " + formatSignedInt(pnlProv) + "円 (" + formatSignedPct(pnlPct) + ")";
+
+          document.getElementById("recCashYen").textContent = formatInt(bal.cashYen) + " 円";
+          if (bal.pendingBuyYen > 0) {
+            document.getElementById("recCashSub").textContent =
+              "確定残 " + formatInt(bal.settledCashYen) + "円 − 約定待ち買付 " + formatInt(bal.pendingBuyYen) + "円";
+          } else {
+            document.getElementById("recCashSub").textContent =
+              "運用枠 " + formatInt(bal.budgetYen) + "円" +
+              (bal.settledSellTaxYenTotal > 0 ? ("（概算税控除 " + formatInt(bal.settledSellTaxYenTotal) + "円）") : "");
+          }
+        }
 
         var plan = solveRebalance(
           targetPct,
-          portfolioState.holdingUnits,
-          portfolioState.cashYen,
+          effUnits,
+          sellUnitsCap,
+          effCashYen,
           provNav,
           leadPct,
           nightsCnt,
@@ -1576,28 +2062,26 @@
         lastComputedPlan = plan;
 
         // 前回確定時 vs 現在実質資産バー更新
-        var d0FundYen = Math.round((portfolioState.holdingUnits * d0Nav) / 10000);
-        var d0TotalYen = d0FundYen + portfolioState.cashYen;
+        var d0FundYen = Math.round((effUnits * d0Nav) / 10000);
+        var d0TotalYen = d0FundYen + Math.max(0, effCashYen);
         var diffTotal = plan.totalYen - d0TotalYen;
         var diffStr = (diffTotal > 0 ? "+" : "") + formatInt(diffTotal) + "円";
 
         document.getElementById("allocSummaryTotal").textContent =
-          "現在実質合計: " + formatInt(plan.totalYen) + "円（前回比 " + diffStr + "）";
+          "現在実質合計: " + formatInt(plan.totalYen) + "円（前回比 " + diffStr +
+          (bal.pendingCount > 0 && !simOverride.active ? "・約定待ち反映済" : "") + "）";
         document.getElementById("allocD0Ref").textContent =
-          "前回(" + f.navDateLabel + "): 投信 " + formatInt(d0FundYen) + "円 + 現金 " + formatInt(portfolioState.cashYen) + "円";
+          "前回(" + f.navDateLabel + "): 投信 " + formatInt(d0FundYen) + "円 + 待機資金 " + formatInt(Math.max(0, effCashYen)) + "円";
 
         var barW = Math.max(0, Math.min(100, plan.curWeightPct));
         document.getElementById("allocSegFund").style.width = barW.toFixed(1) + "%";
-        var pinLeft = Math.max(4, Math.min(96, plan.targetWeightPct));
-        document.getElementById("allocTargetPin").style.left = pinLeft.toFixed(1) + "%";
-        document.getElementById("allocTargetTag").textContent =
-          (portfolioState.mode === "dynamic" ? "動的目標 " : "固定目標 ") + plan.targetWeightPct.toFixed(1) + "%";
 
         var cashPct = Math.max(0, 100 - plan.curWeightPct);
         document.getElementById("allocLegFund").textContent =
-          "■ 投信時価: " + formatInt(plan.curFundYen) + "円（" + plan.curWeightPct.toFixed(1) + "% / " + formatInt(portfolioState.holdingUnits) + "口）";
+          "■ 投信時価: " + formatInt(plan.curFundYen) + "円（" + plan.curWeightPct.toFixed(1) + "% / " +
+          formatInt(effUnits) + "口" + (bal.pendingBuyEstUnits > 0 && !simOverride.active ? "・見込み含" : "") + "）";
         document.getElementById("allocLegCash").textContent =
-          "□ 待機現金: " + formatInt(plan.cashYen) + "円（" + cashPct.toFixed(1) + "%）";
+          "□ 待機キャッシュ: " + formatInt(plan.cashYen) + "円（" + cashPct.toFixed(1) + "%）";
 
         // 3ボックス ＆ Heroカードのリアルタイム連動更新
         var actBox = document.getElementById("rebActionBox");
@@ -1609,6 +2093,7 @@
         var trigEl = document.getElementById("calcEstUnits");
         var trigSub = document.getElementById("calcTriggersSub");
         var applyBtn = document.getElementById("btnApplyAfterTrade");
+        var recOrderBtn = document.getElementById("btnRecordRecommendedOrder");
 
         var wState = sched.windowState;
         var appLbl = sched.applicationDateLabel;
@@ -1623,48 +2108,50 @@
           actLbl.textContent = "今回の推奨注文（買い増しリバランス）";
           orderEl.textContent = "金額指定 +" + formatInt(plan.tradeYen) + "円";
           orderSub.textContent =
-            "想定 +" + formatInt(plan.tradeUnits) + "口 ｜ " +
+            "見込み +" + formatInt(plan.tradeUnits) + "口 ｜ " +
             (plan.capNote ? plan.capNote : ("目標 " + plan.targetWeightPct.toFixed(1) + "% へ不足分を補充"));
           applyBtn.disabled = false;
           applyBtn.style.opacity = "1";
+          recOrderBtn.textContent = "📝 この内容（+" + formatInt(plan.tradeYen) + "円 買付）で注文を記録";
 
           document.getElementById("schedAllocVal").textContent = "金額指定 +" + formatInt(plan.tradeYen) + "円 買付";
           document.getElementById("schedAllocSub").textContent =
-            "投信 " + plan.curWeightPct.toFixed(1) + "% → 買付後 " + plan.afterWeightPct.toFixed(1) + "%（現金残 " + formatInt(plan.afterCashYen) + "円）";
+            "投信 " + plan.curWeightPct.toFixed(1) + "% → 買付後 " + plan.afterWeightPct.toFixed(1) + "%（待機残 " + formatInt(plan.afterCashYen) + "円）";
 
           if (wState === "golden_window") {
             heroTone = sig.score >= 65 ? "buy_strong" : "buy_mild";
             heroBadge = "買付OK（" + formatInt(plan.tradeYen) + "円）";
             heroHead = "【今なら買い増しOK】金額指定で " + formatInt(plan.tradeYen) + "円 買付リバランス推奨";
-            heroDet = "締切（" + sched.cutoffTimeStr + "）前チェック完了。現在バランスは 投信 " + formatInt(plan.curFundYen) + "円（" + plan.curWeightPct.toFixed(1) + "%）：現金 " + formatInt(plan.cashYen) + "円 です。目標比率 " + plan.targetWeightPct.toFixed(1) + "% に基づき、現金から「金額指定で " + formatInt(plan.tradeYen) + "円」買い増し推奨（買付後：現金残り " + formatInt(plan.afterCashYen) + "円、約定日: " + execLbl + "）。";
+            heroDet = "締切（" + sched.cutoffTimeStr + "）前チェック完了。現在バランスは 投信 " + formatInt(plan.curFundYen) + "円（" + plan.curWeightPct.toFixed(1) + "%）：待機キャッシュ " + formatInt(plan.cashYen) + "円 です。目標比率 " + plan.targetWeightPct.toFixed(1) + "% に基づき、「金額指定で " + formatInt(plan.tradeYen) + "円」買い増し推奨（買付後：待機残 " + formatInt(plan.afterCashYen) + "円、約定日: " + execLbl + "）。";
           } else {
             heroTone = "watch_buy";
             heroBadge = appLbl + " 15:05まで待機";
             heroHead = "【買い増しリバランス圏（+" + formatInt(plan.tradeYen) + "円目安）】発注は " + appLbl + " 15:05 の最終確認後";
-            heroDet = "下落により現在バランスが 投信 " + formatInt(plan.curFundYen) + "円（" + plan.curWeightPct.toFixed(1) + "%）：現金 " + formatInt(plan.cashYen) + "円 に変化し、目標比率 " + plan.targetWeightPct.toFixed(1) + "% に対して「金額指定 " + formatInt(plan.tradeYen) + "円 の買い増し（残り現金 " + formatInt(plan.afterCashYen) + "円温存）」が適正です。今入れても " + appLbl + " 15:15 に入れても同じ " + execLbl + " 約定になるため、15:05 の最終通知を見てから発注するのが最善です。";
+            heroDet = "下落により現在バランスが 投信 " + formatInt(plan.curFundYen) + "円（" + plan.curWeightPct.toFixed(1) + "%）：待機キャッシュ " + formatInt(plan.cashYen) + "円 に変化し、目標比率 " + plan.targetWeightPct.toFixed(1) + "% に対して「金額指定 " + formatInt(plan.tradeYen) + "円 の買い増し（待機残 " + formatInt(plan.afterCashYen) + "円温存）」が適正です。今入れても " + appLbl + " 15:15 に入れても同じ " + execLbl + " 約定になるため、15:05 の最終通知を見てから発注するのが最善です。";
           }
         } else if (plan.action === "SELL") {
           actBox.className = "calc-box action-sell";
           actLbl.textContent = "今回の推奨注文（利確売却リバランス）";
           orderEl.textContent = "口数指定 " + formatInt(plan.tradeUnits) + "口 売却";
           orderSub.textContent =
-            "想定現金回収 +" + formatInt(plan.tradeYen) + "円 ｜ ※必ず金額指定ではなく「口数指定」で発注";
+            "想定回収 +" + formatInt(plan.tradeYen) + "円（税引前） ｜ ※必ず金額指定ではなく「口数指定」で発注";
           applyBtn.disabled = false;
           applyBtn.style.opacity = "1";
+          recOrderBtn.textContent = "📝 この内容（" + formatInt(plan.tradeUnits) + "口 売却）で注文を記録";
 
           document.getElementById("schedAllocVal").textContent = "口数指定 " + formatInt(plan.tradeUnits) + "口 利確売";
           document.getElementById("schedAllocSub").textContent =
-            "約 +" + formatInt(plan.tradeYen) + "円 現金回収 → 現金計 " + formatInt(plan.afterCashYen) + "円";
+            "約 +" + formatInt(plan.tradeYen) + "円 回収 → 待機資金計 " + formatInt(plan.afterCashYen) + "円";
 
           heroTone = "buy_mild";
           if (wState === "golden_window") {
             heroBadge = "利確売却OK（" + formatInt(plan.tradeUnits) + "口）";
             heroHead = "【今なら利確売りOK】口数指定で " + formatInt(plan.tradeUnits) + "口（約" + formatInt(plan.tradeYen) + "円分）売却推奨";
-            heroDet = "上昇により投信比率が " + plan.curWeightPct.toFixed(1) + "%（" + formatInt(plan.curFundYen) + "円）へ膨らみ、目標比率 " + plan.targetWeightPct.toFixed(1) + "% を超過しています。必ず「口数指定で " + formatInt(plan.tradeUnits) + "口」売却し、現金残高を " + formatInt(plan.afterCashYen) + "円 に補充してください。";
+            heroDet = "上昇により投信比率が " + plan.curWeightPct.toFixed(1) + "%（" + formatInt(plan.curFundYen) + "円）へ膨らみ、目標比率 " + plan.targetWeightPct.toFixed(1) + "% を超過しています。必ず「口数指定で " + formatInt(plan.tradeUnits) + "口」売却し、待機キャッシュを補充してください。";
           } else {
             heroBadge = "利確候補（" + appLbl + " 15:05確認）";
             heroHead = "【利確リバランス圏（" + formatInt(plan.tradeUnits) + "口 売却目安）】発注は " + appLbl + " 15:05 の最終確認後";
-            heroDet = "現在バランスが 投信 " + formatInt(plan.curFundYen) + "円（" + plan.curWeightPct.toFixed(1) + "%）：現金 " + formatInt(plan.cashYen) + "円 と目標（" + plan.targetWeightPct.toFixed(1) + "%）を上回っています。" + appLbl + " 15:05 時点で急落していなければ「口数指定で " + formatInt(plan.tradeUnits) + "口（約" + formatInt(plan.tradeYen) + "円相当）」の利確売却が合理的です。";
+            heroDet = "現在バランスが 投信 " + formatInt(plan.curFundYen) + "円（" + plan.curWeightPct.toFixed(1) + "%）：待機キャッシュ " + formatInt(plan.cashYen) + "円 と目標（" + plan.targetWeightPct.toFixed(1) + "%）を上回っています。" + appLbl + " 15:05 時点で急落していなければ「口数指定で " + formatInt(plan.tradeUnits) + "口（約" + formatInt(plan.tradeYen) + "円相当）」の利確売却が合理的です。";
           }
         } else if (plan.action === "HOLD_BOUNCE_TRAP" || sig.intradayBounceTrap) {
           actBox.className = "calc-box action-danger";
@@ -1673,6 +2160,7 @@
           orderSub.textContent = plan.capNote || "時間外先物の急反発による高値掴みを回避";
           applyBtn.disabled = true;
           applyBtn.style.opacity = "0.5";
+          recOrderBtn.textContent = "📝 注文記録ページを開く";
 
           document.getElementById("schedAllocVal").textContent = "注文NG・見送り";
           document.getElementById("schedAllocSub").textContent = "昼間時間外リード急反発のため高値掴み警戒";
@@ -1685,15 +2173,16 @@
             "現在 " + plan.curWeightPct.toFixed(1) + "% vs 目標 " + plan.targetWeightPct.toFixed(1) + "%（乖離 " + (plan.driftPt > 0 ? "+" : "") + plan.driftPt.toFixed(1) + "pt）";
           applyBtn.disabled = true;
           applyBtn.style.opacity = "0.5";
+          recOrderBtn.textContent = "📝 手動で注文を記録する";
 
           document.getElementById("schedAllocVal").textContent = "売買不要（ホールド）";
           document.getElementById("schedAllocSub").textContent =
-            "現在 投信" + plan.curWeightPct.toFixed(1) + "% : 現金" + cashPct.toFixed(1) + "%（目標バンド内）";
+            "現在 投信" + plan.curWeightPct.toFixed(1) + "% : 待機" + cashPct.toFixed(1) + "%（目標バンド内）";
 
           heroTone = "wait";
           heroBadge = "売買不要（ホールド）";
-          heroHead = "【リバランス不要・ホールド（現在 投信" + plan.curWeightPct.toFixed(1) + "% : 現金" + cashPct.toFixed(1) + "%）】";
-          heroDet = "現在の資産配分（投信 " + formatInt(plan.curFundYen) + "円 / 現金 " + formatInt(plan.cashYen) + "円）は、目標比率 " + plan.targetWeightPct.toFixed(1) + "%（許容バンド ±4.0%）の範囲内です。無理に売買せず保有継続が合理的です。";
+          heroHead = "【リバランス不要・ホールド（現在 投信" + plan.curWeightPct.toFixed(1) + "% : 待機" + cashPct.toFixed(1) + "%）】";
+          heroDet = "現在の資産配分（投信 " + formatInt(plan.curFundYen) + "円 / 待機キャッシュ " + formatInt(plan.cashYen) + "円）は、目標比率 " + plan.targetWeightPct.toFixed(1) + "%（許容バンド ±4.0%）の範囲内です。無理に売買せず保有継続が合理的です。";
         }
 
         document.getElementById("heroCard").className = "card hero-card tone-" + heroTone;
@@ -1702,17 +2191,17 @@
         document.getElementById("verdictHeadline").textContent = heroHead;
         document.getElementById("verdictDetail").textContent = heroDet;
 
-        afterEl.textContent = "投信 " + plan.afterWeightPct.toFixed(1) + "% : 現金 " + formatInt(plan.afterCashYen) + "円";
+        afterEl.textContent = "投信 " + plan.afterWeightPct.toFixed(1) + "% : 待機 " + formatInt(plan.afterCashYen) + "円";
         afterSub.textContent =
           "投信 " + formatInt(plan.afterFundYen) + "円（約 " + formatInt(plan.afterUnits) + "口） / 続落待機キャッシュ " + formatInt(plan.afterCashYen) + "円";
 
-        // 次回の利確売り・買い増し発動目安基準価額（取引後の口数・現金ベース）
+        // 次回の利確売り・買い増し発動目安基準価額（取引後の口数・待機資金ベース）
         function navForWeight(wPct) {
           var w = wPct / 100;
           if (plan.afterUnits <= 0 || plan.afterCashYen <= 0 || w <= 0.01 || w >= 0.99) return null;
           return Math.round(((10000 * plan.afterCashYen) / plan.afterUnits) * (w / (1 - w)));
         }
-        var rawSellNav = navForWeight(Math.min(90, portfolioState.baseTargetPct + 4.0));
+        var rawSellNav = navForWeight(Math.min(90, strategyState.baseTargetPct + 4.0));
         var sellTriggerNav = rawSellNav
           ? Math.max(rawSellNav, Math.round(provNav * (plan.action === "BUY" ? 1.115 : 1.04)))
           : null;
@@ -1723,10 +2212,10 @@
 
         if (sellTriggerNav && buyTriggerNav) {
           trigEl.textContent = "利確 " + formatInt(sellTriggerNav) + "円 / 買増 " + formatInt(buyTriggerNav) + "円";
-          trigSub.textContent = "反発で" + formatInt(sellTriggerNav) + "円超なら口数売却で利益を現金化";
+          trigSub.textContent = "反発で" + formatInt(sellTriggerNav) + "円超なら口数売却で利益をキャッシュ化";
         } else {
           trigEl.textContent = "---";
-          trigSub.textContent = "反発時は「口数指定」で利確し現金補充";
+          trigSub.textContent = "反発時は「口数指定」で利確しキャッシュ補充";
         }
 
         // 5列シナリオ表
@@ -1756,22 +2245,22 @@
           var tdTrade = document.createElement("td");
           tdTrade.className = "r num";
           var fundSc = 0;
-          var cashSc = portfolioState.cashYen;
+          var cashSc = plan.cashYen;
 
           if (plan.action === "BUY" && pSc > 0) {
-            var uBought = Math.round((plan.tradeYen / pSc) * 10000);
-            tdTrade.textContent = "約 +" + formatInt(uBought) + "口 取得";
-            fundSc = Math.round(((portfolioState.holdingUnits + uBought) * pSc) / 10000);
-            cashSc = portfolioState.cashYen - plan.tradeYen;
+            var uBought = Math.floor((plan.tradeYen * 10000) / pSc);
+            tdTrade.textContent = "見込み +" + formatInt(uBought) + "口 取得";
+            fundSc = Math.round(((effUnits + uBought) * pSc) / 10000);
+            cashSc = plan.cashYen - plan.tradeYen;
           } else if (plan.action === "SELL" && pSc > 0) {
-            var yProceeds = Math.round((plan.tradeUnits * pSc) / 10000);
-            tdTrade.textContent = "約 +" + formatInt(yProceeds) + "円 回収";
-            fundSc = Math.round((Math.max(0, portfolioState.holdingUnits - plan.tradeUnits) * pSc) / 10000);
-            cashSc = portfolioState.cashYen + yProceeds;
+            var yProceeds = Math.floor((plan.tradeUnits * pSc) / 10000);
+            tdTrade.textContent = "見込み +" + formatInt(yProceeds) + "円 回収";
+            fundSc = Math.round((Math.max(0, effUnits - plan.tradeUnits) * pSc) / 10000);
+            cashSc = plan.cashYen + yProceeds;
           } else {
             tdTrade.textContent = "売買なし";
-            fundSc = Math.round((portfolioState.holdingUnits * pSc) / 10000);
-            cashSc = portfolioState.cashYen;
+            fundSc = Math.round((effUnits * pSc) / 10000);
+            cashSc = plan.cashYen;
           }
           tr.appendChild(tdTrade);
 
@@ -1779,7 +2268,7 @@
           var wSc = totSc > 0 ? ((fundSc / totSc) * 100) : 0;
           var tdAfter = document.createElement("td");
           tdAfter.className = "r num";
-          var profitHint = (wSc >= portfolioState.baseTargetPct + 4.0 && pSc >= (sellTriggerNav || 999999)) ? " ★利確圏" : "";
+          var profitHint = (wSc >= strategyState.baseTargetPct + 4.0 && pSc >= (sellTriggerNav || 999999)) ? " ★利確圏" : "";
           tdAfter.textContent = formatInt(totSc) + "円（投信" + wSc.toFixed(1) + "%" + profitHint + "）";
           tr.appendChild(tdAfter);
 
@@ -1937,9 +2426,12 @@
           nightsEl.textContent = "通常の翌営業日約定（米国市場 1晩分）";
         }
 
-        document.getElementById("schedAllocVal").textContent = "待機資金の " + sig.recommendedPct + "%";
+        var dynTgt = (tripleData.rebalance && tripleData.rebalance.dynamicTargetWeightPct !== undefined)
+          ? Number(tripleData.rebalance.dynamicTargetWeightPct)
+          : calcDynamicTargetPct(strategyState.baseTargetPct, sig.score);
+        document.getElementById("schedAllocVal").textContent = "目標投信比率 " + dynTgt.toFixed(1) + "%";
         document.getElementById("schedAllocSub").textContent =
-          (sig.capReasons && sig.capReasons.length) ? sig.capReasons[0] : "金額指定で分割エントリー";
+          (sig.capReasons && sig.capReasons.length) ? sig.capReasons[0] : "注文記録から推奨額を自動計算";
 
         // 2-Stage Price Board
         if (f.accuracy && f.accuracy.days) {
@@ -2040,17 +2532,72 @@
           dsRow.appendChild(chip2);
         }
 
-        if (!portfolioState.customized && tripleData.rebalance && tripleData.rebalance.config) {
+        if (!strategyState.customized && tripleData.rebalance && tripleData.rebalance.config) {
           var rCfg = tripleData.rebalance.config;
-          if (rCfg.holdingUnits !== undefined) portfolioState.holdingUnits = Math.round(Number(rCfg.holdingUnits));
-          if (rCfg.cashYen !== undefined) portfolioState.cashYen = Math.round(Number(rCfg.cashYen));
-          if (rCfg.baseTargetPct !== undefined) portfolioState.baseTargetPct = Number(rCfg.baseTargetPct);
-          if (rCfg.mode === "fixed" || rCfg.mode === "dynamic") portfolioState.mode = rCfg.mode;
-          syncInputsFromPortfolioState();
+          if (rCfg.baseTargetPct !== undefined) strategyState.baseTargetPct = Number(rCfg.baseTargetPct);
+          if (rCfg.mode === "fixed" || rCfg.mode === "dynamic") strategyState.mode = rCfg.mode;
+          syncStrategyControls();
         }
 
         renderPortfolioRebalance();
         updateCountdownAndFreshness();
+      }
+
+      function applyOrdersFromGasResponse(res) {
+        gasState.orders = Array.isArray(res.orders) ? res.orders : [];
+        if (res.settings && typeof res.settings === "object") {
+          gasState.settings = res.settings;
+          if (!strategyState.customized) {
+            if (res.settings.baseTargetPct !== undefined) strategyState.baseTargetPct = Number(res.settings.baseTargetPct);
+            if (res.settings.mode === "fixed" || res.settings.mode === "dynamic") strategyState.mode = res.settings.mode;
+            syncStrategyControls();
+          }
+        }
+        gasState.loaded = true;
+        setOrdersStaleVisual(false);
+        showOrdersBanner(null, "");
+        safeSetStorage(LS_ORDERS_CACHE_ITEM, JSON.stringify({
+          orders: gasState.orders,
+          settings: gasState.settings,
+          cachedAt: new Date().toISOString()
+        }));
+        document.getElementById("ordersSyncStatusText").textContent =
+          "注文記録 同期済（" + gasState.orders.length + "件）";
+        renderPortfolioRebalance();
+      }
+
+      function fetchOrdersFromGas() {
+        var key = (document.getElementById("ordersKeyInput").value || safeGetStorage(LS_PASSPHRASE_ITEM) || "").trim();
+        if (!key) {
+          document.getElementById("ordersSyncStatusText").textContent = "合言葉を入力すると注文記録から自動計算します";
+          return;
+        }
+        document.getElementById("ordersSyncStatusText").textContent = "注文記録を読み込み中...";
+        var url = getOrdersApiUrl() + "?key=" + encodeURIComponent(key) + "&action=list&t=" + Date.now();
+        fetch(url, { cache: "no-store" })
+          .then(function (r) {
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            return r.json();
+          })
+          .then(function (res) {
+            if (!res || !res.ok) {
+              if (res && res.error === "unauthorized") {
+                setOrdersStaleVisual(true);
+                document.getElementById("ordersSyncStatusText").textContent = "認証エラー";
+                showOrdersBanner("error", "合言葉が違います");
+              } else {
+                setOrdersStaleVisual(true);
+                showOrdersBanner("error", "記録を読み込めませんでした（再読み込み）");
+              }
+              return;
+            }
+            applyOrdersFromGasResponse(res);
+          })
+          .catch(function () {
+            setOrdersStaleVisual(true);
+            document.getElementById("ordersSyncStatusText").textContent = "通信エラー（前回の表示を残しています）";
+            showOrdersBanner("error", "記録を読み込めませんでした（再読み込み）");
+          });
       }
 
       function fetchJsonNoCache(url) {
@@ -2067,9 +2614,7 @@
           })
           .then(function (json) {
             tripleData = json;
-            try {
-              window.localStorage.setItem(STORAGE_CACHE_KEY, JSON.stringify(json));
-            } catch (e) {}
+            safeSetStorage(LS_TRIPLE_CACHE_ITEM, JSON.stringify(json));
             renderAll();
           })
           .catch(function () {
@@ -2077,89 +2622,131 @@
           });
       }
 
-      // Init controls
-      syncInputsFromPortfolioState();
+      // 初期化：合言葉とキャッシュの復元
+      syncStrategyControls();
 
-      var setupFundYenInput = document.getElementById("setupFundYenInput");
-      var holdingUnitsInput = document.getElementById("holdingUnitsInput");
-      var cashYenInput = document.getElementById("cashYenInput");
+      var savedOrdersKey = safeGetStorage(LS_PASSPHRASE_ITEM);
+      if (savedOrdersKey) {
+        document.getElementById("ordersKeyInput").value = savedOrdersKey;
+      }
+
+      var cachedOrdersRaw = safeGetStorage(LS_ORDERS_CACHE_ITEM);
+      if (cachedOrdersRaw) {
+        try {
+          var cachedOrdersObj = JSON.parse(cachedOrdersRaw);
+          if (cachedOrdersObj && Array.isArray(cachedOrdersObj.orders)) {
+            gasState.orders = cachedOrdersObj.orders;
+            if (cachedOrdersObj.settings) gasState.settings = cachedOrdersObj.settings;
+            setOrdersStaleVisual(true);
+          }
+        } catch (e) {}
+      }
+
+      document.getElementById("btnSaveOrdersKey").addEventListener("click", function () {
+        var k = (document.getElementById("ordersKeyInput").value || "").trim();
+        if (!k) {
+          showOrdersBanner("warn", "合言葉を入力してください");
+          return;
+        }
+        safeSetStorage(LS_PASSPHRASE_ITEM, k);
+        fetchOrdersFromGas();
+      });
+
+      document.getElementById("btnReloadOrders").addEventListener("click", fetchOrdersFromGas);
+      document.getElementById("btnRetryOrdersFetch").addEventListener("click", fetchOrdersFromGas);
+
+      // 「この内容で注文を記録」ボタン：triple_orders.html に入力済みの状態で遷移
+      document.getElementById("btnRecordRecommendedOrder").addEventListener("click", function () {
+        var sig = (tripleData && tripleData.signal) || {};
+        var f = (tripleData && tripleData.fund) || {};
+        var targetPct = lastComputedPlan ? lastComputedPlan.targetWeightPct : calcDynamicTargetPct(strategyState.baseTargetPct, sig.score || 50);
+        var proposedYen = (lastComputedPlan && (lastComputedPlan.action === "BUY" || lastComputedPlan.action === "SELL"))
+          ? lastComputedPlan.tradeYen
+          : 0;
+
+        var snapshotObj = {
+          score: sig.score !== undefined ? sig.score : null,
+          rank: sig.rank || null,
+          provisionalExecNav: f.provisionalExecNav || f.launchpadNav || f.nav || null,
+          recommendedPct: targetPct,
+          proposedYen: proposedYen
+        };
+
+        var params = new URLSearchParams();
+        if (lastComputedPlan && lastComputedPlan.action === "BUY") {
+          params.set("side", "BUY");
+          params.set("spec", "YEN");
+          params.set("amountYen", String(lastComputedPlan.tradeYen));
+        } else if (lastComputedPlan && lastComputedPlan.action === "SELL") {
+          params.set("side", "SELL");
+          params.set("spec", "UNITS");
+          params.set("units", String(lastComputedPlan.tradeUnits));
+        }
+        params.set("snapshot", JSON.stringify(snapshotObj));
+        window.location.href = "./triple_orders.html?" + params.toString();
+      });
+
+      // 一時シミュレーション（※記録には保存されない）
+      var simHoldingUnitsInput = document.getElementById("simHoldingUnitsInput");
+      var simCashYenInput = document.getElementById("simCashYenInput");
       var baseTargetSelect = document.getElementById("baseTargetSelect");
 
-      setupFundYenInput.addEventListener("input", function () {
-        var yenVal = parseInt(setupFundYenInput.value || "0", 10);
-        if (isNaN(yenVal) || yenVal < 0) yenVal = 0;
-        var d0Nav = (tripleData && tripleData.fund && tripleData.fund.nav) ? Number(tripleData.fund.nav) : 9347;
-        portfolioState.holdingUnits = d0Nav > 0 ? Math.round((yenVal / d0Nav) * 10000) : 0;
-        portfolioState.customized = true;
-        holdingUnitsInput.value = String(portfolioState.holdingUnits);
-        savePortfolioState();
+      function activateSimFromInputs() {
+        var f = (tripleData && tripleData.fund) || {};
+        var provNav = Number(f.provisionalExecNav || f.launchpadNav || f.nav || 0);
+        var bal = computeBalanceFromOrders(gasState.orders, gasState.settings, provNav);
+        var uRaw = parseInt(simHoldingUnitsInput.value, 10);
+        var cRaw = parseInt(simCashYenInput.value, 10);
+        simOverride.holdingUnits = (!isNaN(uRaw) && uRaw >= 0) ? uRaw : bal.effectiveHoldingUnits;
+        simOverride.cashYen = (!isNaN(cRaw) && cRaw >= 0) ? cRaw : Math.max(0, bal.cashYen);
+        simOverride.active = true;
+        document.getElementById("simActiveNotice").textContent = "一時シミュレーション適用中（※記録には保存されません）";
+        renderPortfolioRebalance();
+      }
+
+      simHoldingUnitsInput.addEventListener("input", activateSimFromInputs);
+      simCashYenInput.addEventListener("input", activateSimFromInputs);
+
+      document.getElementById("btnApplyAfterTrade").addEventListener("click", function () {
+        if (!lastComputedPlan || (lastComputedPlan.action !== "BUY" && lastComputedPlan.action !== "SELL")) return;
+        simOverride.holdingUnits = lastComputedPlan.afterUnits;
+        simOverride.cashYen = lastComputedPlan.afterCashYen;
+        simOverride.active = true;
+        simHoldingUnitsInput.value = String(simOverride.holdingUnits);
+        simCashYenInput.value = String(simOverride.cashYen);
+        document.getElementById("simActiveNotice").textContent = "推奨売買後の残高を一時試算中（※記録には保存されません）";
         renderPortfolioRebalance();
       });
 
-      holdingUnitsInput.addEventListener("input", function () {
-        var uVal = parseInt(holdingUnitsInput.value || "0", 10);
-        if (isNaN(uVal) || uVal < 0) uVal = 0;
-        var d0Nav = (tripleData && tripleData.fund && tripleData.fund.nav) ? Number(tripleData.fund.nav) : 9347;
-        portfolioState.holdingUnits = uVal;
-        portfolioState.customized = true;
-        setupFundYenInput.value = String(Math.round((uVal * d0Nav) / 10000));
-        savePortfolioState();
-        renderPortfolioRebalance();
-      });
-
-      cashYenInput.addEventListener("input", function () {
-        var cVal = parseInt(cashYenInput.value || "0", 10);
-        portfolioState.cashYen = (!isNaN(cVal) && cVal >= 0) ? cVal : 0;
-        portfolioState.customized = true;
-        savePortfolioState();
+      document.getElementById("btnResetToRecorded").addEventListener("click", function () {
+        simOverride.active = false;
+        simHoldingUnitsInput.value = "";
+        simCashYenInput.value = "";
+        document.getElementById("simActiveNotice").textContent = "現在：注文記録の残高を表示中";
         renderPortfolioRebalance();
       });
 
       baseTargetSelect.addEventListener("change", function () {
         var tVal = parseInt(baseTargetSelect.value || "50", 10);
-        portfolioState.baseTargetPct = (!isNaN(tVal) && tVal >= 10 && tVal <= 90) ? tVal : 50;
-        portfolioState.customized = true;
-        savePortfolioState();
+        strategyState.baseTargetPct = (!isNaN(tVal) && tVal >= 10 && tVal <= 90) ? tVal : 50;
+        strategyState.customized = true;
+        saveStrategyState();
         renderPortfolioRebalance();
       });
 
       document.getElementById("btnModeDynamic").addEventListener("click", function () {
-        portfolioState.mode = "dynamic";
-        portfolioState.customized = true;
-        savePortfolioState();
-        syncInputsFromPortfolioState();
+        strategyState.mode = "dynamic";
+        strategyState.customized = true;
+        saveStrategyState();
+        syncStrategyControls();
         renderPortfolioRebalance();
       });
 
       document.getElementById("btnModeFixed").addEventListener("click", function () {
-        portfolioState.mode = "fixed";
-        portfolioState.customized = true;
-        savePortfolioState();
-        syncInputsFromPortfolioState();
-        renderPortfolioRebalance();
-      });
-
-      document.getElementById("btnApplyAfterTrade").addEventListener("click", function () {
-        if (!lastComputedPlan || (lastComputedPlan.action !== "BUY" && lastComputedPlan.action !== "SELL")) return;
-        portfolioState.holdingUnits = lastComputedPlan.afterUnits;
-        portfolioState.cashYen = lastComputedPlan.afterCashYen;
-        portfolioState.customized = true;
-        savePortfolioState();
-        syncInputsFromPortfolioState();
-        renderPortfolioRebalance();
-      });
-
-      document.getElementById("btnReset70k").addEventListener("click", function () {
-        portfolioState = cloneDefaultPortfolio();
-        if (tripleData && tripleData.rebalance && tripleData.rebalance.config) {
-          var cfg = tripleData.rebalance.config;
-          if (cfg.holdingUnits !== undefined) portfolioState.holdingUnits = Math.round(Number(cfg.holdingUnits));
-          if (cfg.cashYen !== undefined) portfolioState.cashYen = Math.round(Number(cfg.cashYen));
-          if (cfg.baseTargetPct !== undefined) portfolioState.baseTargetPct = Number(cfg.baseTargetPct);
-          if (cfg.mode === "fixed" || cfg.mode === "dynamic") portfolioState.mode = cfg.mode;
-        }
-        savePortfolioState();
-        syncInputsFromPortfolioState();
+        strategyState.mode = "fixed";
+        strategyState.customized = true;
+        saveStrategyState();
+        syncStrategyControls();
         renderPortfolioRebalance();
       });
 
@@ -2182,15 +2769,18 @@
         renderAll();
       });
 
-      try {
-        var cachedRaw = window.localStorage.getItem(STORAGE_CACHE_KEY);
-        if (cachedRaw) {
-          tripleData = JSON.parse(cachedRaw);
+      var cachedTripleRaw = safeGetStorage(LS_TRIPLE_CACHE_ITEM);
+      if (cachedTripleRaw) {
+        try {
+          tripleData = JSON.parse(cachedTripleRaw);
           renderAll();
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
 
       fetchLatest();
+      if (savedOrdersKey) {
+        fetchOrdersFromGas();
+      }
       setInterval(fetchLatest, 60000);
       setInterval(updateCountdownAndFreshness, 10000);
     })();

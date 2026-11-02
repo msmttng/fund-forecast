@@ -299,6 +299,22 @@ def main() -> None:
                 now_jst=advisor_dt,
                 output_path=triple_advisor.TRIPLE_DATA_JSON_PATH,
             )
+
+            # GAS 注文記録の基準価額確定（settle）処理（同じ注文を2回 settle しない）
+            gas_data: Optional[Dict[str, Any]] = None
+            try:
+                f_info = t_data.get("fund", {})
+                if not args.dry_run:
+                    gas_data = triple_advisor.settle_pending_orders_if_needed(
+                        fund_history=f_info.get("history") or [],
+                        latest_nav_date=str(f_info.get("navDate") or ""),
+                        latest_nav=int(f_info.get("nav") or 0),
+                    )
+                else:
+                    gas_data = triple_advisor.fetch_orders_from_gas()
+            except Exception as settle_err:
+                print(f"[WARN] Order settlement check failed: {settle_err}", file=sys.stderr, flush=True)
+
             force_discord_test = (
                 iteration == 1 and os.environ.get("FORCE_DISCORD_TEST", "").strip().lower() == "true"
             )
@@ -308,6 +324,7 @@ def main() -> None:
                     now_jst=advisor_dt,
                     force_test=force_discord_test,
                     dry_run=args.dry_run,
+                    gas_data=gas_data,
                 )
             except Exception as notify_err:
                 print(f"[WARN] Discord notification failed: {notify_err}", file=sys.stderr, flush=True)

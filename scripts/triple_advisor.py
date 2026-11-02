@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import json
+import math
 import os
 import pathlib
 import sys
@@ -23,6 +24,13 @@ PORTFOLIO_JSON_PATH = ROOT_DIR / "portfolio.json"
 TRIPLE_DATA_JSON_PATH = build_data.DOCS_DIR / "triple_data.json"
 TRIPLE_NOTIFY_STATE_PATH = build_data.DOCS_DIR / "triple_notify_state.json"
 PUBLIC_TRIPLE_URL = "https://msmttng.github.io/fund-forecast/triple.html"
+PUBLIC_TRIPLE_ORDERS_URL = "https://msmttng.github.io/fund-forecast/triple_orders.html"
+DEFAULT_ORDERS_URL = (
+    "https://script.google.com/macros/s/"
+    "AKfycbwaZu4G_PhrOQItGpvqBTwjVer2KeV-1884-c5YUGpaZJV5eOkcBcYL77g9VxoyY6u32g/exec"
+)
+LOCAL_ORDERS_SECRET_PATH = ROOT_DIR / "gas_triple_orders" / ".orders_secret.json"
+TAX_RATE_SPECIFIED_ACCOUNT = 0.20315
 
 WEEKDAYS_JP = ["月", "火", "水", "木", "金", "土", "日"]
 
@@ -446,14 +454,9 @@ def find_triple_fund(app_data: Dict[str, Any]) -> Dict[str, Any]:
     raise KeyError(f"{TRIPLE_FUND_ID} が data.json 内に見つかりません")
 
 
-def load_portfolio_config(nav_d0: int) -> Dict[str, Any]:
-    """portfolio.json から現在の保有口数・現金残高・基本目標比率設定を読み込む。"""
+def load_portfolio_config(nav_d0: int = 0) -> Dict[str, Any]:
+    """portfolio.json から公開共通のリバランスルール設定（基本目標比率・モード・許容バンド・最低売買額）のみを読み込む。"""
     default_cfg: Dict[str, Any] = {
-        "setupDate": "2026-10-30",
-        "setupNav": nav_d0,
-        "investedYenAtSetup": 70000,
-        "holdingUnits": int(round(70000.0 / nav_d0 * 10000.0)) if nav_d0 > 0 else 74890,
-        "cashYen": 70000,
         "baseTargetPct": 50.0,
         "mode": "dynamic",
         "rebalanceBandPt": 4.0,
@@ -463,15 +466,366 @@ def load_portfolio_config(nav_d0: int) -> Dict[str, Any]:
         try:
             loaded = json.loads(PORTFOLIO_JSON_PATH.read_text(encoding="utf-8"))
             if isinstance(loaded, dict):
-                default_cfg.update(loaded)
-                if not default_cfg.get("holdingUnits") and default_cfg.get("investedYenAtSetup") and nav_d0 > 0:
-                    ref_nav = int(default_cfg.get("setupNav") or nav_d0)
-                    default_cfg["holdingUnits"] = int(
-                        round(float(default_cfg["investedYenAtSetup"]) / ref_nav * 10000.0)
-                    )
+                for k in ("baseTargetPct", "mode", "rebalanceBandPt", "minTradeYen"):
+                    if k in loaded:
+                        default_cfg[k] = loaded[k]
         except Exception as e:
             print(f"[WARN] Failed to load portfolio.json: {e}", file=sys.stderr)
     return default_cfg
+
+
+def parse_hhmm_minutes(time_str: str, default_minutes: int = 15 * 60 + 30) -> int:
+    """'15:30' 形式の時刻文字列を 0:00 からの経過分に変換する。"""
+    if not time_str:
+        return default_minutes
+    parts = str(time_str).strip().split(":")
+    if len(parts) < 2:
+        return default_minutes
+    try:
+        h = int(parts[0])
+        m = int(parts[1])
+        return h * 60 + m
+    except Exception:
+        return default_minutes
+
+
+def compute_order_execution_date(
+    order_date_str: str,
+    order_time_str: str = "15:00",
+    broker: str = "SBI",
+    broker_cutoffs: Optional[Dict[str, str]] = None,
+) -> Dict[str, Any]:
+    """注文日・注文時刻・証券会社ごとの締め時刻から、実質申込日と約定予定日（翌営業日）を算出する（4-2）。"""
+    cutoffs = {
+        "SBI": "15:30",
+        "楽天": "15:30",
+        "マネックス": "15:30",
+        "松井": "15:30",
+    }
+    if isinstance(broker_cutoffs, dict):
+        for k, v in broker_cutoffs.items():
+            if v:
+                cutoffs[str(k)] = str(v)
+
+    cutoff_str = cutoffs.get(str(broker or "SBI"), "15:30")
+    cutoff_min = parse_hhmm_minutes(cutoff_str, 15 * 60 + 30)
+    order_min = parse_hhmm_minutes(order_time_str, 15 * 60)
+
+    order_date = datetime.datetime.strptime(str(order_date_str).strip(), "%Y-%m-%d").date()
+    after_cutoff = order_min > cutoff_min
+
+    if is_fund_order_day(order_date) and not after_cutoff:
+        app_date = order_date
+    else:
+        cur = order_date if not after_cutoff else (order_date + datetime.timedelta(days=1))
+        while not is_fund_order_day(cur):
+            cur += datetime.timedelta(days=1)
+        app_date = cur
+
+    exec_date = build_data.next_jp_business_day(app_date)
+    app_str = app_date.strftime("%Y-%m-%d")
+    exec_str = exec_date.strftime("%Y-%m-%d")
+    return {
+        "applicationDate": app_str,
+        "applicationDateLabel": format_jp_mdw(app_str),
+        "executionDate": exec_str,
+        "executionDateLabel": format_jp_mdw(exec_str),
+        "cutoffTime": cutoff_str,
+        "isAfterCutoff": after_cutoff,
+    }
+
+
+def get_orders_credentials() -> Tuple[str, str]:
+    """環境変数（またはローカル非公開ファイル）から ORDERS_URL と ORDERS_KEY を取得する（値はログに出さない）。"""
+    orders_url = os.environ.get("ORDERS_URL", "").strip()
+    orders_key = os.environ.get("ORDERS_KEY", "").strip()
+    if (not orders_url or not orders_key) and LOCAL_ORDERS_SECRET_PATH.exists():
+        try:
+            sec = json.loads(LOCAL_ORDERS_SECRET_PATH.read_text(encoding="utf-8"))
+            if not orders_url:
+                orders_url = str(sec.get("ORDERS_URL") or "").strip()
+            if not orders_key:
+                orders_key = str(sec.get("ORDERS_KEY") or "").strip()
+        except Exception:
+            pass
+    if not orders_url:
+        orders_url = DEFAULT_ORDERS_URL
+    return orders_url, orders_key
+
+
+def fetch_orders_from_gas(
+    orders_url: Optional[str] = None,
+    orders_key: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """GAS Web アプリから action=list で orders と settings を取得する。"""
+    if orders_url is None or orders_key is None:
+        u, k = get_orders_credentials()
+        orders_url = orders_url or u
+        orders_key = orders_key or k
+    if not orders_url or not orders_key:
+        return None
+    try:
+        resp = requests.get(
+            orders_url,
+            params={"key": orders_key, "action": "list"},
+            headers={"User-Agent": build_data.USER_AGENT},
+            timeout=20,
+        )
+        if resp.status_code >= 400:
+            print(f"[WARN] GAS list HTTP {resp.status_code}", file=sys.stderr)
+            return None
+        data = resp.json()
+        if not isinstance(data, dict) or not data.get("ok"):
+            print(f"[WARN] GAS list error: {data.get('error') if isinstance(data, dict) else 'unknown'}", file=sys.stderr)
+            return None
+        return data
+    except Exception as e:
+        print(f"[WARN] Failed to fetch orders from GAS: {e}", file=sys.stderr)
+        return None
+
+
+def post_orders_to_gas(
+    payload: Dict[str, Any],
+    orders_url: Optional[str] = None,
+    orders_key: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """GAS Web アプリへ JSON ペイロードを POST（Content-Type: text/plain）する。"""
+    if orders_url is None or orders_key is None:
+        u, k = get_orders_credentials()
+        orders_url = orders_url or u
+        orders_key = orders_key or k
+    if not orders_url or not orders_key:
+        return None
+    body = dict(payload)
+    body["key"] = orders_key
+    try:
+        resp = requests.post(
+            orders_url,
+            headers={
+                "User-Agent": build_data.USER_AGENT,
+                "Content-Type": "text/plain;charset=utf-8",
+            },
+            data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+            timeout=25,
+        )
+        if resp.status_code >= 400:
+            print(f"[WARN] GAS POST HTTP {resp.status_code}", file=sys.stderr)
+            return None
+        data = resp.json()
+        if not isinstance(data, dict) or not data.get("ok"):
+            print(f"[WARN] GAS POST error: {data.get('error') if isinstance(data, dict) else 'unknown'}", file=sys.stderr)
+            return None
+        return data
+    except Exception as e:
+        print(f"[WARN] Failed to POST to GAS: {e}", file=sys.stderr)
+        return None
+
+
+def settle_pending_orders_if_needed(
+    fund_history: List[List[Any]],
+    latest_nav_date: str,
+    latest_nav: int,
+    gas_data: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    """基準価額が出ている pending 注文があれば GAS の action=settle で約定確定させる（同じ注文を2回 settle しない）。"""
+    orders_url, orders_key = get_orders_credentials()
+    if not orders_url or not orders_key:
+        return gas_data
+
+    if gas_data is None:
+        gas_data = fetch_orders_from_gas(orders_url, orders_key)
+    if not gas_data or not isinstance(gas_data.get("orders"), list):
+        return gas_data
+
+    nav_by_date: Dict[str, int] = {}
+    for item in fund_history or []:
+        if isinstance(item, (list, tuple)) and len(item) >= 2:
+            d_s = str(item[0]).strip()
+            try:
+                v_i = int(item[1])
+                if d_s and v_i > 0:
+                    nav_by_date[d_s] = v_i
+            except Exception:
+                pass
+    if latest_nav_date and int(latest_nav or 0) > 0:
+        nav_by_date[str(latest_nav_date).strip()] = int(latest_nav)
+
+    settings = gas_data.get("settings") if isinstance(gas_data.get("settings"), dict) else {}
+    broker_cutoffs = settings.get("brokers") if isinstance(settings.get("brokers"), dict) else {}
+
+    to_settle_dates: Dict[str, int] = {}
+    for ord_item in gas_data.get("orders", []):
+        if not isinstance(ord_item, dict):
+            continue
+        if str(ord_item.get("status", "")).lower() != "pending":
+            continue
+        exec_d = str(ord_item.get("execDate") or "").strip()
+        if not exec_d and ord_item.get("orderDate"):
+            try:
+                sched_info = compute_order_execution_date(
+                    order_date_str=str(ord_item["orderDate"]),
+                    order_time_str=str(ord_item.get("orderTime") or "15:00"),
+                    broker=str(ord_item.get("broker") or "SBI"),
+                    broker_cutoffs=broker_cutoffs,
+                )
+                exec_d = sched_info["executionDate"]
+                if ord_item.get("id"):
+                    post_orders_to_gas(
+                        {"action": "update", "id": ord_item["id"], "execDate": exec_d},
+                        orders_url=orders_url,
+                        orders_key=orders_key,
+                    )
+            except Exception:
+                exec_d = ""
+        if exec_d and exec_d in nav_by_date:
+            to_settle_dates[exec_d] = nav_by_date[exec_d]
+
+    if not to_settle_dates:
+        return gas_data
+
+    settle_res = post_orders_to_gas(
+        {"action": "settle", "navByDate": to_settle_dates},
+        orders_url=orders_url,
+        orders_key=orders_key,
+    )
+    if settle_res and settle_res.get("ok"):
+        settled_cnt = int(settle_res.get("settledCount") or 0)
+        if settled_cnt > 0:
+            print(f"[SETTLE] Settled {settled_cnt} pending order(s) for dates {list(to_settle_dates.keys())}.", flush=True)
+        return settle_res
+    return gas_data
+
+
+def compute_balance_from_orders(
+    orders: List[Dict[str, Any]],
+    settings: Dict[str, Any],
+    provisional_nav: int,
+) -> Dict[str, Any]:
+    """注文記録から保有口数・平均取得単価（移動平均法）・現金・約定待ち反映後残高・売却概算税を計算する（4-2・4-3）。"""
+    budget_yen = int(round(float(settings.get("budgetYen", 0))))
+
+    def _sort_key(o: Dict[str, Any]) -> Tuple[str, str, str, str]:
+        return (
+            str(o.get("execDate") or o.get("orderDate") or ""),
+            f"{o.get('orderDate', '')} {o.get('orderTime', '')}",
+            str(o.get("createdAt") or ""),
+            str(o.get("id") or ""),
+        )
+
+    sorted_orders = sorted([o for o in orders if isinstance(o, dict)], key=_sort_key)
+
+    settled_units = 0
+    avg_cost_nav = 0  # 1万口あたり移動平均取得単価（円）
+    settled_buy_yen_total = 0
+    settled_sell_gross_yen_total = 0
+    settled_sell_tax_yen_total = 0
+    settled_sell_net_yen_total = 0
+
+    pending_buy_yen = 0
+    pending_buy_est_units = 0
+    pending_sell_units = 0
+    pending_sell_est_yen = 0
+    pending_orders_list: List[Dict[str, Any]] = []
+    order_tax_map: Dict[str, Dict[str, int]] = {}
+
+    for o in sorted_orders:
+        status = str(o.get("status") or "pending").lower()
+        if status == "cancelled":
+            continue
+        side = str(o.get("side") or "BUY").upper()
+        spec = str(o.get("spec") or "YEN").upper()
+
+        if status == "settled":
+            e_nav = float(o.get("execNav") or 0)
+            e_units = int(round(float(o.get("execUnits") or 0)))
+            e_yen = int(round(float(o.get("execYen") or 0)))
+
+            if side == "BUY":
+                if e_units <= 0 and e_nav > 0 and o.get("amountYen"):
+                    e_units = math.floor(float(o["amountYen"]) * 10000.0 / e_nav)
+                if e_yen <= 0 and o.get("amountYen"):
+                    e_yen = int(round(float(o["amountYen"])))
+                if e_units > 0 and e_yen > 0:
+                    prev_cost = (settled_units * avg_cost_nav) / 10000.0
+                    new_cost = prev_cost + e_yen
+                    settled_units += e_units
+                    avg_cost_nav = int(round((new_cost * 10000.0) / settled_units)) if settled_units > 0 else 0
+                    settled_buy_yen_total += e_yen
+            elif side == "SELL":
+                if e_units <= 0:
+                    if spec == "UNITS" and o.get("units"):
+                        e_units = int(round(float(o["units"])))
+                    elif spec == "YEN" and o.get("amountYen") and e_nav > 0:
+                        e_units = math.ceil(float(o["amountYen"]) * 10000.0 / e_nav)
+                sell_u = min(settled_units, max(0, e_units))
+                if e_yen <= 0 and e_nav > 0 and sell_u > 0:
+                    e_yen = math.floor(sell_u * e_nav / 10000.0)
+                if sell_u > 0:
+                    cost_basis_yen = int(round((avg_cost_nav * sell_u) / 10000.0))
+                    gain_yen = e_yen - cost_basis_yen
+                    est_tax_yen = math.floor(gain_yen * TAX_RATE_SPECIFIED_ACCOUNT) if gain_yen > 0 else 0
+                    net_proceeds_yen = e_yen - est_tax_yen
+
+                    settled_units = max(0, settled_units - sell_u)
+                    if settled_units == 0:
+                        avg_cost_nav = 0
+                    settled_sell_gross_yen_total += e_yen
+                    settled_sell_tax_yen_total += est_tax_yen
+                    settled_sell_net_yen_total += net_proceeds_yen
+                    if o.get("id"):
+                        order_tax_map[str(o["id"])] = {
+                            "costBasisYen": cost_basis_yen,
+                            "gainYen": gain_yen,
+                            "estimatedTaxYen": est_tax_yen,
+                            "netProceedsYen": net_proceeds_yen,
+                        }
+        elif status == "pending":
+            pending_orders_list.append(o)
+            if side == "BUY":
+                if spec == "YEN" and o.get("amountYen"):
+                    amt = int(round(float(o["amountYen"])))
+                    est_u = math.floor(amt * 10000.0 / provisional_nav) if provisional_nav > 0 else 0
+                else:
+                    est_u = int(round(float(o.get("units") or 0)))
+                    amt = math.floor(est_u * provisional_nav / 10000.0) if provisional_nav > 0 else 0
+                pending_buy_yen += amt
+                pending_buy_est_units += est_u
+            elif side == "SELL":
+                if spec == "UNITS" and o.get("units"):
+                    u_s = int(round(float(o["units"])))
+                elif spec == "YEN" and o.get("amountYen") and provisional_nav > 0:
+                    u_s = math.ceil(float(o["amountYen"]) * 10000.0 / provisional_nav)
+                else:
+                    u_s = 0
+                u_s = min(max(0, settled_units - pending_sell_units), max(0, u_s))
+                est_y = math.floor(u_s * provisional_nav / 10000.0) if provisional_nav > 0 else 0
+                pending_sell_units += u_s
+                pending_sell_est_yen += est_y
+
+    settled_cash_yen = budget_yen - settled_buy_yen_total + settled_sell_net_yen_total
+    cash_yen = settled_cash_yen - pending_buy_yen
+    effective_holding_units = max(0, settled_units - pending_sell_units) + pending_buy_est_units
+    effective_cash_yen = max(0, cash_yen)
+
+    return {
+        "budgetYen": budget_yen,
+        "holdingUnits": settled_units,
+        "avgCostNav": avg_cost_nav,
+        "settledCashYen": settled_cash_yen,
+        "cashYen": cash_yen,
+        "effectiveHoldingUnits": effective_holding_units,
+        "effectiveCashYen": effective_cash_yen,
+        "settledBuyYenTotal": settled_buy_yen_total,
+        "settledSellGrossYenTotal": settled_sell_gross_yen_total,
+        "settledSellTaxYenTotal": settled_sell_tax_yen_total,
+        "settledSellNetYenTotal": settled_sell_net_yen_total,
+        "pendingBuyYen": pending_buy_yen,
+        "pendingBuyEstUnits": pending_buy_est_units,
+        "pendingSellUnits": pending_sell_units,
+        "pendingSellEstYen": pending_sell_est_yen,
+        "pendingOrdersCount": len(pending_orders_list),
+        "orderTaxMap": order_tax_map,
+    }
 
 
 def calc_dynamic_target_pct(base_target_pct: float, score: int) -> float:
@@ -619,8 +973,8 @@ def compute_portfolio_rebalance(
     fomc_hit: bool,
 ) -> Dict[str, Any]:
     """現在ポートフォリオの評価額推移と、動的リバランス・固定50:50リバランスの両プランおよび次回発動目安価額を計算する。"""
-    holding_units = int(portfolio_cfg.get("holdingUnits", 74890))
-    cash_yen = int(portfolio_cfg.get("cashYen", 70000))
+    holding_units = int(portfolio_cfg.get("holdingUnits", 0))
+    cash_yen = int(portfolio_cfg.get("cashYen", 0))
     base_target_pct = float(portfolio_cfg.get("baseTargetPct", 50.0))
     mode = str(portfolio_cfg.get("mode", "dynamic"))
     band_pt = float(portfolio_cfg.get("rebalanceBandPt", 4.0))
@@ -991,31 +1345,35 @@ def build_triple_advisor_data(
             alloc_pct = 10
             alloc_cap_reasons.append("FOMC政策金利発表をまたぐため上限10%に抑制")
 
-    # 5b. ポートフォリオ（初期設定: 投信7万円 + 現金7万円 = 合計14万円・基準50:50）のリバランス計算
+    # 5b. 公開データ用の目標投信比率計算（4-4: 個人の保有口数・現金・金額は公開データに含めない）
     portfolio_cfg = load_portfolio_config(nav_d0)
-    rebalance_data = compute_portfolio_rebalance(
-        portfolio_cfg=portfolio_cfg,
-        nav_d0=nav_d0,
-        launchpad_nav=launchpad_nav,
-        prov_nav=provisional_exec_nav,
-        score=score,
-        lead_pct=lead_pct,
-        nights_cnt=nights_cnt,
-        vix_cur=vix_cur,
-        fomc_hit=bool(sched_1530["fomcDatesHit"]),
-    )
-    active_reb = rebalance_data["activePlan"]
-    reb_val = rebalance_data["valuation"]
-    reb_action = active_reb["action"]
+    base_target_pct = float(portfolio_cfg.get("baseTargetPct", 50.0))
+    reb_mode = str(portfolio_cfg.get("mode", "dynamic"))
+    band_pt = float(portfolio_cfg.get("rebalanceBandPt", 4.0))
+    min_trade_yen = int(portfolio_cfg.get("minTradeYen", 3000))
+    dyn_target_pct = calc_dynamic_target_pct(base_target_pct, score)
+    fix_target_pct = round(max(10.0, min(90.0, base_target_pct)), 1)
 
-    # 6. 時間帯×リバランス判定×スコアに応じた最終アクション指示文の生成
+    rebalance_data: Dict[str, Any] = {
+        "config": {
+            "baseTargetPct": base_target_pct,
+            "mode": reb_mode,
+            "rebalanceBandPt": band_pt,
+            "minTradeYen": min_trade_yen,
+        },
+        "activeMode": reb_mode,
+        "dynamicTargetWeightPct": dyn_target_pct,
+        "fixedTargetWeightPct": fix_target_pct,
+    }
+
+    # 6. 時間帯×スコアに応じた市場側の公開アクション指示文の生成（個人の金額は含めない）
     w_state = sched_1530["windowState"]
     app_lbl = sched_1530["applicationDateLabel"]
     exec_lbl = sched_1530["executionDateLabel"]
-    order_ok_level = reb_action in ("BUY", "SELL")
+    order_ok_level = (not intraday_bounce_trap) and (score >= 58 or score <= 30)
     order_ready_now = (w_state == "golden_window") and order_ok_level
 
-    if reb_action == "HOLD_BOUNCE_TRAP" or intraday_bounce_trap:
+    if intraday_bounce_trap:
         headline = "【買い増し見送り／取消推奨】昼間の先物が急反発しています"
         action_badge = "注文NG・取消推奨"
         tone = "danger"
@@ -1024,70 +1382,55 @@ def build_triple_advisor_data(
             f"朝以降の時間外リードだけで {lead_pct:+.2f}% も反発しています。"
             f"高値掴みを避けるため本日の買い増しリバランスは見送り（朝注文済なら締切前に取消）が合理的です。"
         )
-    elif reb_action == "HOLD_CRASH_GUARD":
+    elif lead_pct <= -4.5 and score <= 35:
         headline = "【利確売り見送り】昼間の時間外先物が急落中のため売却待機"
         action_badge = "売却見送り"
         tone = "wait"
         detail_advice = (
-            f"投信比率は目標を上回っていますが、昼間の時間外リードが {lead_pct:+.2f}% と急落しているため、"
+            f"昼間の時間外リードが {lead_pct:+.2f}% と急落しているため、"
             f"安値投げを避けて本日の売却リバランスは見送るのが安全です。"
         )
-    elif reb_action == "BUY":
-        buy_yen = active_reb["tradeYen"]
-        tgt_w = active_reb["targetWeightPct"]
-        cur_w = reb_val["currentWeightPct"]
-        aft_cash = active_reb["afterCashYen"]
-        aft_w = active_reb["afterWeightPct"]
+    elif score >= 58:
         if w_state == "golden_window":
-            headline = f"【今なら買い増しOK】金額指定で {buy_yen:,}円 買付リバランス推奨"
-            action_badge = f"買付OK（{buy_yen:,}円）"
+            headline = f"【今なら買い増し好機】動的目標比率 {dyn_target_pct:.1f}%（スコア {score}点・ランク{rank}）"
+            action_badge = f"買付好機（目標 {dyn_target_pct:.1f}%）"
             tone = "buy_strong" if score >= 65 else "buy_mild"
             detail_advice = (
-                f"締切（{sched_1530['cutoffTimeStr']}）前チェック完了。現在バランスは 投信 {reb_val['currentFundYen']:,}円（{cur_w:.1f}%）：現金 {reb_val['currentCashYen']:,}円 です。"
-                f"押し目スコア {score}点（目標投信比率 {tgt_w:.1f}%）に基づき、現金から「金額指定で {buy_yen:,}円」買い増し推奨"
-                f"（注文後：投信 {aft_w:.1f}% / 現金残り {aft_cash:,}円、約定日: {exec_lbl}）。"
+                f"締切（{sched_1530['cutoffTimeStr']}）前チェック完了。押し目スコア {score}点（動的目標比率 {dyn_target_pct:.1f}% / 推奨投入目安 {alloc_pct}%）です。"
+                f"注文記録の残高と約定待ち注文を反映した推奨金額を確認して金額指定で発注してください（約定日: {exec_lbl}）。"
             )
         else:
-            headline = f"【買い増しリバランス圏（+{buy_yen:,}円目安）】発注は {app_lbl} 15:05 の最終通知後がベスト"
+            headline = f"【買い増しリバランス圏（目標比率 {dyn_target_pct:.1f}%）】発注は {app_lbl} 15:05 の最終通知後がベスト"
             action_badge = f"{app_lbl} 15:05まで待機"
             tone = "watch_buy"
             detail_advice = (
-                f"急落により現在バランスが 投信 {reb_val['currentFundYen']:,}円（{cur_w:.1f}%）：現金 {reb_val['currentCashYen']:,}円 に変化し、"
-                f"目標比率 {tgt_w:.1f}% に対して「金額指定 {buy_yen:,}円 の買い増し（残り現金 {aft_cash:,}円温存）」が適正です。"
+                f"下落により押し目スコアが {score}点（ランク{rank}）へ上昇し、動的目標比率は {dyn_target_pct:.1f}%（平常 {base_target_pct:.1f}%）です。"
                 f"今すぐ入れても {app_lbl} 15:15 に入れても同じ {exec_lbl} 約定になるため、{app_lbl} 15:05 の最終通知を見てから発注してください。"
             )
-    elif reb_action == "SELL":
-        sell_u = active_reb["tradeUnits"]
-        sell_y = active_reb["tradeYen"]
-        tgt_w = active_reb["targetWeightPct"]
-        cur_w = reb_val["currentWeightPct"]
-        aft_cash = active_reb["afterCashYen"]
-        aft_w = active_reb["afterWeightPct"]
+    elif score <= 30:
         if w_state == "golden_window":
-            headline = f"【今なら利確売りOK】口数指定で {sell_u:,}口（約{sell_y:,}円分）売却リバランス推奨"
-            action_badge = f"利確売却OK（{sell_u:,}口）"
+            headline = f"【今なら利確売り候補】動的目標比率 {dyn_target_pct:.1f}%（スコア {score}点・過熱圏）"
+            action_badge = f"利確候補（目標 {dyn_target_pct:.1f}%）"
             tone = "buy_mild"
             detail_advice = (
-                f"上昇により投信比率が {cur_w:.1f}%（{reb_val['currentFundYen']:,}円）へ膨らみ、目標比率 {tgt_w:.1f}% を上回っています。"
-                f"必ず金額指定ではなく「口数指定で {sell_u:,}口」売却し、約 {sell_y:,}円 を現金へ戻して次の急落用キャッシュ（計 {aft_cash:,}円）を補充してください。"
+                f"上昇により過熱圏（スコア {score}点）に入り、動的目標比率は {dyn_target_pct:.1f}% に低下しています。"
+                f"投信比率が目標バンド（±{band_pt:.1f}%）を超えている場合は、必ず金額指定ではなく「口数指定」で利確売却してください。"
             )
         else:
-            headline = f"【利確リバランス圏（{sell_u:,}口 売却目安）】発注は {app_lbl} 15:05 の最終確認後"
+            headline = f"【利確リバランス圏（目標比率 {dyn_target_pct:.1f}%）】発注は {app_lbl} 15:05 の最終確認後"
             action_badge = f"利確候補（{app_lbl} 15:05確認）"
             tone = "buy_mild"
             detail_advice = (
-                f"現在バランスが 投信 {reb_val['currentFundYen']:,}円（{cur_w:.1f}%）：現金 {reb_val['currentCashYen']:,}円 と目標（{tgt_w:.1f}%）を超過しています。"
-                f"{app_lbl} 15:05 時点で相場が崩れていなければ「口数指定で {sell_u:,}口（約{sell_y:,}円相当）」の利確売却が合理的です。"
+                f"上昇により動的目標比率が {dyn_target_pct:.1f}% となっています。"
+                f"{app_lbl} 15:05 時点で相場が崩れておらず投信比率が目標を超過していれば、「口数指定」での利確売却が合理的です。"
             )
     else:
-        cur_w = reb_val["currentWeightPct"]
-        tgt_w = active_reb["targetWeightPct"]
-        headline = f"【リバランス不要・ホールド（現在 投信{cur_w:.1f}% : 現金{100.0 - cur_w:.1f}%）】"
-        action_badge = "売買不要（ホールド）"
+        headline = f"【中立・様子見圏（動的目標比率 {dyn_target_pct:.1f}%）】許容バンド ±{band_pt:.1f}% 内ならホールド"
+        action_badge = "中立・ホールド目安"
         tone = "wait"
         detail_advice = (
-            f"現在の資産配分（投信 {reb_val['currentFundYen']:,}円 / 現金 {reb_val['currentCashYen']:,}円、投信比率 {cur_w:.1f}%）は、"
-            f"現在の目標比率 {tgt_w:.1f}%（許容バンド ±{active_reb['bandPt']:.1f}%）の範囲内です。無理に動かずこのまま保有継続でOKです。"
+            f"現在の購入指示指数は {score}点（ランク{rank}）、動的目標投信比率は {dyn_target_pct:.1f}%（許容バンド ±{band_pt:.1f}%）です。"
+            f"保有比率がバンド内であれば無理に売買せず保有継続が合理的です。"
         )
 
     reasons: List[str] = [
@@ -1179,6 +1522,7 @@ def build_triple_advisor_data(
         "generatedAt": now_jst.isoformat(timespec="seconds"),
         "updateIntervalSec": app_data.get("updateIntervalSec", 300),
         "nextUpdateAt": app_data.get("nextUpdateAt"),
+        "ordersApiUrl": DEFAULT_ORDERS_URL,
         "fund": {
             "id": TRIPLE_FUND_ID,
             "name": fund["name"],
@@ -1266,6 +1610,64 @@ def build_triple_advisor_data(
 
 
 # ============================================================================
+# GAS 注文記録連携（自動 settle・Discord 通知向けパーソナライズ計算）
+# ============================================================================
+
+def compute_personal_rebalance_from_gas(
+    triple_data: Dict[str, Any],
+    settle_first: bool = True,
+    gas_data: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    """GAS から注文記録を読み（必要なら settle 実行）、約定待ち注文を反映した個人リバランス計画をメモリ上で計算する（4-2〜4-4）。"""
+    f_info = triple_data.get("fund", {})
+    nav_d0 = int(f_info.get("nav") or 0)
+    d0_str = str(f_info.get("navDate") or "")
+    lp_nav = int(f_info.get("launchpadNav") or nav_d0)
+    prov_nav = int(f_info.get("provisionalExecNav") or lp_nav)
+    hist_list = f_info.get("history") if isinstance(f_info.get("history"), list) else []
+
+    if settle_first:
+        gas_data = settle_pending_orders_if_needed(
+            fund_history=hist_list,
+            latest_nav_date=d0_str,
+            latest_nav=nav_d0,
+            gas_data=gas_data,
+        )
+    elif gas_data is None:
+        gas_data = fetch_orders_from_gas()
+
+    if not gas_data or not isinstance(gas_data.get("orders"), list):
+        return None
+
+    orders = gas_data.get("orders", [])
+    settings = gas_data.get("settings") if isinstance(gas_data.get("settings"), dict) else {}
+    bal = compute_balance_from_orders(orders=orders, settings=settings, provisional_nav=prov_nav)
+
+    # 約定待ちを反映した後の残高で提案を計算する（4-3: 同じ買い増しを二重に提案しない）
+    personal_cfg = {
+        "holdingUnits": bal["effectiveHoldingUnits"],
+        "cashYen": bal["effectiveCashYen"],
+        "baseTargetPct": float(settings.get("baseTargetPct", triple_data.get("rebalance", {}).get("config", {}).get("baseTargetPct", 50.0))),
+        "mode": str(settings.get("mode", triple_data.get("rebalance", {}).get("config", {}).get("mode", "dynamic"))),
+        "rebalanceBandPt": float(settings.get("rebalanceBandPt", triple_data.get("rebalance", {}).get("config", {}).get("rebalanceBandPt", 4.0))),
+        "minTradeYen": int(settings.get("minTradeYen", triple_data.get("rebalance", {}).get("config", {}).get("minTradeYen", 3000))),
+    }
+    reb_plan = compute_portfolio_rebalance(
+        portfolio_cfg=personal_cfg,
+        nav_d0=nav_d0,
+        launchpad_nav=lp_nav,
+        prov_nav=prov_nav,
+        score=int(triple_data["signal"]["score"]),
+        lead_pct=float(triple_data["intradayLead"]["totalLeadPct"]),
+        nights_cnt=int(triple_data["schedule"]["nightsAfterCutoff"]),
+        vix_cur=float(triple_data["technicals"]["vix"]),
+        fomc_hit=bool(triple_data["schedule"].get("fomcDatesHit")),
+    )
+    reb_plan["balanceSummary"] = bal
+    return reb_plan
+
+
+# ============================================================================
 # Discord Webhook 通知管理（重複送信防止ステート付き）
 # ============================================================================
 
@@ -1307,17 +1709,24 @@ def _embed_color_for_signal(sig: Dict[str, Any], kind: str) -> int:
     return 0xD6423A  # 赤（注文NG）
 
 
-def build_discord_payload(triple_data: Dict[str, Any], kind: str) -> Dict[str, Any]:
-    """通知種別ごとの Discord Webhook JSON ペイロード（リバランス売買指示付き）を組み立てる。"""
+def build_discord_payload(
+    triple_data: Dict[str, Any],
+    kind: str,
+    personal_rebalance: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """通知種別ごとの Discord Webhook JSON ペイロード（GAS記録から計算したリバランス売買指示付き）を組み立てる。"""
     f_info = triple_data["fund"]
     sig = triple_data["signal"]
     lead = triple_data["intradayLead"]
     sched = triple_data["schedule"]
     tech = triple_data["technicals"]
-    reb = triple_data.get("rebalance", {})
+
+    reb = personal_rebalance if isinstance(personal_rebalance, dict) else {}
     r_val = reb.get("valuation", {})
     r_plan = reb.get("activePlan", {})
+    bal_sum = reb.get("balanceSummary", {})
     r_act = r_plan.get("action", "HOLD")
+    has_personal = bool(r_val and r_plan)
 
     score = sig["score"]
     rank = sig["rank"]
@@ -1325,6 +1734,23 @@ def build_discord_payload(triple_data: Dict[str, Any], kind: str) -> Dict[str, A
     lp_chg = f_info["launchpadChangePct"]
     d0_nav = f_info["nav"]
     prov_nav = f_info["provisionalExecNav"]
+    dyn_target_pct = float(
+        r_plan.get("targetWeightPct")
+        or triple_data.get("rebalance", {}).get("dynamicTargetWeightPct")
+        or 50.0
+    )
+
+    pending_note = ""
+    if bal_sum:
+        p_buy = int(bal_sum.get("pendingBuyYen") or 0)
+        p_sell_u = int(bal_sum.get("pendingSellUnits") or 0)
+        if p_buy > 0 or p_sell_u > 0:
+            parts_p = []
+            if p_buy > 0:
+                parts_p.append(f"約定待ち買付 {p_buy:,}円（見込 +{int(bal_sum.get('pendingBuyEstUnits') or 0):,}口）")
+            if p_sell_u > 0:
+                parts_p.append(f"約定待ち売却 {p_sell_u:,}口")
+            pending_note = f"\n※反映済みの約定待ち注文: {' / '.join(parts_p)}"
 
     kind_titles = {
         "morning_landing": f"📊 [10:15 着地＆リバランス速報] 指数 {score}/100点（ランク{rank}）",
@@ -1334,63 +1760,73 @@ def build_discord_payload(triple_data: Dict[str, Any], kind: str) -> Dict[str, A
     }
     title = kind_titles.get(kind, f"トリプルNASDAQ リバランス通知（{score}/100点）")
 
-    if kind == "cutoff_final_judge":
-        if r_act == "BUY":
+    if has_personal:
+        if kind == "cutoff_final_judge":
+            if r_act == "BUY":
+                content_line = (
+                    f"🟢 **【今なら買い増しOK】** 締切（15:30）までに **金額指定で `{r_plan['tradeYen']:,}円` 買付** 推奨！"
+                    f"（買付後：投信 `{r_plan['afterWeightPct']:.1f}%` / 現金残り `{r_plan['afterCashYen']:,}円`）"
+                )
+            elif r_act == "SELL":
+                content_line = (
+                    f"🟠 **【今なら利確売りOK】** 締切（15:30）までに **口数指定で `{r_plan['tradeUnits']:,}口`（約`{r_plan['tradeYen']:,}円`分）売却** 推奨！"
+                    f"（現金残高を `{r_plan['afterCashYen']:,}円` に補充）"
+                )
+            elif r_act == "HOLD_BOUNCE_TRAP" or sig["intradayBounceTrap"]:
+                content_line = f"⛔ **【買い増し見送り・取消推奨】** 昼間の時間外先物が **{lead['totalLeadPct']:+.2f}%** 急反発中！高値掴み注意"
+            else:
+                content_line = (
+                    f"⚪ **【本日は売買不要（ホールド）】** 現在 投信 `{r_val.get('currentFundYen', 0):,}円 ({r_val.get('currentWeightPct', 50):.1f}%)` : "
+                    f"現金 `{r_val.get('currentCashYen', 0):,}円` — 目標バンド内のため現状維持"
+                )
+        elif kind == "intraday_opportunity":
+            if r_act == "SELL":
+                content_line = (
+                    f"🟠 **【締切前の利確好機】** 昼間の先物上昇（{lead['totalLeadPct']:+.2f}%）で利確ライン到達！"
+                    f"口数指定 **`{r_plan['tradeUnits']:,}口`（約`{r_plan['tradeYen']:,}円`）売却** 候補"
+                )
+            else:
+                content_line = (
+                    f"🚨 **【締切前の買い増し好機】** 昼間の先物下落（{lead['totalLeadPct']:+.2f}%）で指数 **{score}点** に上昇！"
+                    f"金額指定 **`{r_plan.get('tradeYen', 0):,}円` 買付** 候補"
+                )
+        elif kind == "morning_landing":
             content_line = (
-                f"🟢 **【今なら買い増しOK】** 締切（15:30）までに **金額指定で `{r_plan['tradeYen']:,}円` 買付** 推奨！"
-                f"（買付後：投信 `{r_plan['afterWeightPct']:.1f}%` / 現金残り `{r_plan['afterCashYen']:,}円`）"
+                f"📊 **【10:15 着地速報】** {f_info['launchpadDateLabel']}見込 **{lp_nav:,}円（{lp_chg:+.2f}%）** ｜ "
+                f"保有投信 **{r_val.get('launchpadFundYen', 0):,}円** ＋ 現金 **{r_val.get('currentCashYen', 0):,}円**（確定発注は15:05通知まで待機）"
             )
-        elif r_act == "SELL":
-            content_line = (
-                f"🟠 **【今なら利確売りOK】** 締切（15:30）までに **口数指定で `{r_plan['tradeUnits']:,}口`（約`{r_plan['tradeYen']:,}円`分）売却** 推奨！"
-                f"（現金残高を `{r_plan['afterCashYen']:,}円` に補充）"
-            )
-        elif r_act == "HOLD_BOUNCE_TRAP" or sig["intradayBounceTrap"]:
-            content_line = f"⛔ **【買い増し見送り・取消推奨】** 昼間の時間外先物が **{lead['totalLeadPct']:+.2f}%** 急反発中！高値掴み注意"
         else:
             content_line = (
-                f"⚪ **【本日は売買不要（ホールド）】** 現在 投信 `{r_val.get('currentFundYen', 0):,}円 ({r_val.get('currentWeightPct', 50):.1f}%)` : "
-                f"現金 `{r_val.get('currentCashYen', 0):,}円` — 目標バンド内のため現状維持"
+                f"✅ **【Discord連携テスト成功】** 現在の判定: **{sig['actionBadge']}**（購入指示指数 **{score}/100点**）"
             )
-    elif kind == "intraday_opportunity":
-        if r_act == "SELL":
-            content_line = (
-                f"🟠 **【締切前の利確好機】** 昼間の先物上昇（{lead['totalLeadPct']:+.2f}%）で利確ライン到達！"
-                f"口数指定 **`{r_plan['tradeUnits']:,}口`（約`{r_plan['tradeYen']:,}円`）売却** 候補"
-            )
-        else:
-            content_line = (
-                f"🚨 **【締切前の買い増し好機】** 昼間の先物下落（{lead['totalLeadPct']:+.2f}%）で指数 **{score}点** に上昇！"
-                f"金額指定 **`{r_plan.get('tradeYen', 0):,}円` 買付** 候補"
-            )
-    elif kind == "morning_landing":
-        content_line = (
-            f"📊 **【10:15 着地速報】** {f_info['launchpadDateLabel']}見込 **{lp_nav:,}円（{lp_chg:+.2f}%）** ｜ "
-            f"保有投信 **{r_val.get('launchpadFundYen', 0):,}円** ＋ 現金 **{r_val.get('currentCashYen', 0):,}円**（確定発注は15:05通知まで待機）"
-        )
-    else:
-        content_line = (
-            f"✅ **【Discord連携テスト成功】** 現在の判定: **{sig['actionBadge']}**（購入指示指数 **{score}/100点**）"
-        )
 
-    if r_act == "BUY":
-        reb_action_str = f"🟢 **金額指定で `{r_plan['tradeYen']:,}円` 買い増し**\n（想定 `+{r_plan['tradeUnits']:,}口` → 残り現金 `{r_plan['afterCashYen']:,}円`）"
-    elif r_act == "SELL":
-        reb_action_str = f"🟠 **口数指定で `{r_plan['tradeUnits']:,}口` 利確売却**\n（想定回収 `+{r_plan['tradeYen']:,}円` → 現金計 `{r_plan['afterCashYen']:,}円`）"
+        if r_act == "BUY":
+            reb_action_str = f"🟢 **金額指定で `{r_plan['tradeYen']:,}円` 買い増し**\n（想定 `+{r_plan['tradeUnits']:,}口` → 残り現金 `{r_plan['afterCashYen']:,}円`）"
+        elif r_act == "SELL":
+            reb_action_str = f"🟠 **口数指定で `{r_plan['tradeUnits']:,}口` 利確売却**\n（想定回収 `+{r_plan['tradeYen']:,}円` → 現金計 `{r_plan['afterCashYen']:,}円`）"
+        else:
+            reb_action_str = f"⚪ **売買なし（ホールド）**\n（目標 `{dyn_target_pct:.1f}%` との差 `{r_plan.get('driftPt', 0):+.1f}pt`）"
+
+        portfolio_field_val = (
+            f"現在(約定待ち反映後): 投信 `{r_val.get('currentFundYen', 0):,}円` (**{r_val.get('currentWeightPct', 50):.1f}%**) / "
+            f"現金 `{r_val.get('currentCashYen', 0):,}円` (計 `{r_val.get('currentTotalYen', 0):,}円`)\n"
+            f"確定保有: `{int(bal_sum.get('holdingUnits', 0)):,}口` (平均取得単価 `{int(bal_sum.get('avgCostNav', 0)):,}円`)\n"
+            f"動的目標比率: **投信 {dyn_target_pct:.1f}%**\n"
+            f"{reb_action_str}{pending_note}"
+        )
     else:
-        reb_action_str = f"⚪ **売買なし（ホールド）**\n（目標 `{r_plan.get('targetWeightPct', 50):.1f}%` との差 `{r_plan.get('driftPt', 0):+.1f}pt`）"
+        content_line = f"🔔 **【{sig['actionBadge']}】** 購入指示指数 **{score}/100点（ランク{rank}）** ｜ 動的目標比率 **{dyn_target_pct:.1f}%**"
+        portfolio_field_val = (
+            f"動的目標比率: **投信 {dyn_target_pct:.1f}%**（推奨投入目安 `{sig['recommendedPct']}%`）\n"
+            f"※GAS注文記録連携（`ORDERS_URL` / `ORDERS_KEY`）から残高を取得できなかったため市場目標比率のみ表示"
+        )
 
     axes_lines = [f"・{a['label']}: **{a['score']:+.1f}** / {a['maxScore']}点" for a in sig["axes"]]
 
     fields = [
         {
             "name": "ポートフォリオ & リバランス指示",
-            "value": (
-                f"現在: 投信 `{r_val.get('currentFundYen', 0):,}円` (**{r_val.get('currentWeightPct', 50):.1f}%**) / "
-                f"現金 `{r_val.get('currentCashYen', 0):,}円` (計 `{r_val.get('currentTotalYen', 0):,}円`)\n"
-                f"動的目標比率: **投信 {r_plan.get('targetWeightPct', 50):.1f}%**\n"
-                f"{reb_action_str}"
-            ),
+            "value": portfolio_field_val,
             "inline": False,
         },
         {
@@ -1430,7 +1866,7 @@ def build_discord_payload(triple_data: Dict[str, Any], kind: str) -> Dict[str, A
 
     return {
         "username": "トリプルNASDAQ リバランスジャッジ",
-        "content": f"{content_line}\n🔗 専用サイト: {PUBLIC_TRIPLE_URL}",
+        "content": f"{content_line}\n🔗 ジャッジ: {PUBLIC_TRIPLE_URL} ｜ 📝 注文記録: {PUBLIC_TRIPLE_ORDERS_URL}",
         "embeds": [embed],
     }
 
@@ -1455,8 +1891,9 @@ def evaluate_and_notify_discord(
     now_jst: Optional[datetime.datetime] = None,
     force_test: bool = False,
     dry_run: bool = False,
+    gas_data: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
-    """時刻とスコア条件を判定し、該当時に Discord Webhook 通知を送信して通知種別を返す。"""
+    """未約定注文の settle 確認を行い、時刻とスコア条件を判定して Discord Webhook 通知を送信する。"""
     if now_jst is None:
         now_jst = datetime.datetime.now(JST)
 
@@ -1466,6 +1903,24 @@ def evaluate_and_notify_discord(
     hm = now_jst.hour * 60 + now_jst.minute
     score = int(triple_data["signal"]["score"])
     lead_pct = float(triple_data["intradayLead"]["totalLeadPct"])
+
+    # 1. 基準価額が出ている pending 注文があれば GAS へ settle を書き込む（dry_run でないとき）
+    f_info = triple_data.get("fund", {})
+    if gas_data is None:
+        if not dry_run:
+            gas_data = settle_pending_orders_if_needed(
+                fund_history=f_info.get("history") or [],
+                latest_nav_date=str(f_info.get("navDate") or ""),
+                latest_nav=int(f_info.get("nav") or 0),
+            )
+        else:
+            gas_data = fetch_orders_from_gas()
+
+    personal_reb = compute_personal_rebalance_from_gas(
+        triple_data=triple_data,
+        settle_first=False,
+        gas_data=gas_data,
+    )
 
     kind_to_send: Optional[str] = None
 
@@ -1480,7 +1935,7 @@ def evaluate_and_notify_discord(
             kind_to_send = "cutoff_final_judge"
         # 3. 営業日 13:00〜14:55 のリバランス好機急浮上アラート（買い増し急浮上 または 利確売り急浮上、1日1回）
         elif (13 * 60) <= hm <= (14 * 60 + 55) and state.get("lastOpportunityAlertDate") != today_str:
-            reb_act = triple_data.get("rebalance", {}).get("activePlan", {}).get("action", "HOLD")
+            reb_act = (personal_reb or {}).get("activePlan", {}).get("action", "HOLD")
             morning_score = state.get("morningScore") if state.get("lastMorningDate") == today_str else None
             jumped_from_morning = (morning_score is not None) and (score - int(morning_score) >= 10) and (score >= 65)
             afternoon_bargain = (reb_act == "BUY") and (score >= 68) and (lead_pct <= -1.5)
@@ -1491,7 +1946,7 @@ def evaluate_and_notify_discord(
     if not kind_to_send:
         return None
 
-    payload = build_discord_payload(triple_data, kind_to_send)
+    payload = build_discord_payload(triple_data, kind_to_send, personal_rebalance=personal_reb)
 
     if dry_run:
         print(f"[DRY-RUN] Would send Discord notification kind='{kind_to_send}' (score={score}).")

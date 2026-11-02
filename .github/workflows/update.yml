@@ -38,5 +38,7 @@ jobs:
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          ORDERS_URL: ${{ secrets.ORDERS_URL }}
+          ORDERS_KEY: ${{ secrets.ORDERS_KEY }}
           FORCE_DISCORD_TEST: ${{ inputs.test_discord_notify }}
         run: python scripts/loop_update.py --interval 300 --max-minutes 345

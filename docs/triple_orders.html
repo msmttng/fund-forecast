@@ -1,0 +1,2102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="format-detection" content="telephone=no">
+  <title>トリプルNASDAQ 注文記録 | auAMトリプル・NASDAQ100</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #F6F4EF;
+      --bg-elevated: #FFFFFF;
+      --bg-subtle: #EFECE5;
+      --bg-thead: #EAE6DD;
+      --text: #181816;
+      --text-sub: #4E4D48;
+      --text-muted: #76746E;
+      --line: #DFDBD1;
+      --line-strong: #C5C0B4;
+      --up: #1A7F5A;
+      --up-bg: rgba(26, 127, 90, 0.11);
+      --down: #C83A32;
+      --down-bg: rgba(200, 58, 50, 0.11);
+      --accent: #2B5C8F;
+      --accent-bg: rgba(43, 92, 143, 0.10);
+      --judge-buy: #13795B;
+      --judge-buy-bg: rgba(19, 121, 91, 0.12);
+      --judge-watch: #1F6FB2;
+      --judge-watch-bg: rgba(31, 111, 178, 0.12);
+      --judge-mild: #B86B14;
+      --judge-mild-bg: rgba(184, 107, 20, 0.13);
+      --judge-wait: #5E646E;
+      --judge-wait-bg: rgba(94, 100, 110, 0.12);
+      --judge-ng: #C83A32;
+      --judge-ng-bg: rgba(200, 58, 50, 0.13);
+      --shadow: 0 2px 6px rgba(24, 24, 22, 0.05);
+      --font-sans: "Noto Sans JP", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: "JetBrains Mono", "Inter", monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111317;
+        --bg-elevated: #191C22;
+        --bg-subtle: #20242C;
+        --bg-thead: #222630;
+        --text: #EDEBE6;
+        --text-sub: #B8B5AD;
+        --text-muted: #85827A;
+        --line: #2B303B;
+        --line-strong: #3E4554;
+        --up: #34B384;
+        --up-bg: rgba(52, 179, 132, 0.15);
+        --down: #EE6055;
+        --down-bg: rgba(238, 96, 85, 0.15);
+        --accent: #68A2DC;
+        --accent-bg: rgba(104, 162, 220, 0.14);
+        --judge-buy: #2FC495;
+        --judge-buy-bg: rgba(47, 196, 149, 0.16);
+        --judge-watch: #58A6FF;
+        --judge-watch-bg: rgba(88, 166, 255, 0.16);
+        --judge-mild: #F0983E;
+        --judge-mild-bg: rgba(240, 152, 62, 0.16);
+        --judge-wait: #8B949E;
+        --judge-wait-bg: rgba(139, 148, 158, 0.16);
+        --judge-ng: #F85149;
+        --judge-ng-bg: rgba(248, 81, 73, 0.16);
+        --shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    .num {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 12px;
+    }
+
+    .site-header {
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      box-shadow: var(--shadow);
+    }
+
+    .header-inner {
+      padding: 10px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .brand-badge {
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--accent);
+      white-space: nowrap;
+    }
+
+    .site-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .back-link {
+      font-size: 12px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 4px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    .back-link:hover {
+      border-color: var(--accent);
+    }
+
+    .header-sub {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-sub);
+      flex-wrap: wrap;
+    }
+
+    .freshness {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .fresh-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      display: inline-block;
+    }
+    .fresh-dot.ok { background: var(--up); }
+    .fresh-dot.stale { background: var(--down); }
+
+    .main-area {
+      padding: 14px 0 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-sub);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 7px;
+      flex-wrap: wrap;
+    }
+
+    .card-subtitle {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    /* 合言葉＆エラーバナー */
+    .auth-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .auth-form-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .input-ctrl {
+      padding: 7px 9px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--bg-elevated);
+      border: 1px solid var(--line-strong);
+      border-radius: 5px;
+      width: 100%;
+    }
+
+    .btn {
+      padding: 7px 12px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text);
+      background: var(--bg-elevated);
+      border: 1px solid var(--line-strong);
+      border-radius: 5px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: var(--font-sans);
+    }
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #FFFFFF;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover {
+      opacity: 0.92;
+      color: #FFFFFF;
+    }
+    .btn-buy {
+      background: var(--judge-buy);
+      color: #FFFFFF;
+      border-color: var(--judge-buy);
+    }
+    .btn-buy:hover {
+      opacity: 0.92;
+      color: #FFFFFF;
+    }
+    .btn-danger {
+      background: var(--down);
+      color: #FFFFFF;
+      border-color: var(--down);
+    }
+    .btn-danger:hover {
+      opacity: 0.92;
+      color: #FFFFFF;
+    }
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 11.5px;
+    }
+
+    .banner-msg {
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .banner-msg.error {
+      display: flex;
+      background: var(--down-bg);
+      color: var(--down);
+      border: 1px solid var(--down);
+    }
+    .banner-msg.warn {
+      display: flex;
+      background: var(--judge-mild-bg);
+      color: var(--judge-mild);
+      border: 1px solid var(--judge-mild);
+    }
+    .banner-msg.ok {
+      display: flex;
+      background: var(--up-bg);
+      color: var(--up);
+      border: 1px solid var(--up);
+    }
+
+    .stale-data {
+      opacity: 0.62;
+      transition: opacity 0.2s ease;
+    }
+
+    /* 残高サマリーグリッド */
+    .balance-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 720px) {
+      .balance-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 440px) {
+      .balance-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .bal-item {
+      background: var(--bg-subtle);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 11px;
+    }
+
+    .bal-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+
+    .bal-val {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.25;
+    }
+
+    .bal-sub {
+      font-size: 11.5px;
+      color: var(--text-sub);
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+
+    .chg-up { color: var(--up); }
+    .chg-down { color: var(--down); }
+    .chg-flat { color: var(--text-sub); }
+
+    .tax-note {
+      margin-top: 10px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+      padding-top: 8px;
+      border-top: 1px dashed var(--line);
+    }
+
+    /* 注文入力フォーム */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 700px) {
+      .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 440px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    .field-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .seg-group {
+      display: flex;
+      border: 1px solid var(--line-strong);
+      border-radius: 5px;
+      overflow: hidden;
+      background: var(--bg-subtle);
+    }
+
+    .seg-btn {
+      flex: 1;
+      padding: 7px 8px;
+      font-size: 12.5px;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: var(--text-sub);
+      cursor: pointer;
+      font-family: var(--font-sans);
+    }
+    .seg-btn.active-buy {
+      background: var(--judge-buy);
+      color: #FFFFFF;
+    }
+    .seg-btn.active-sell {
+      background: var(--judge-mild);
+      color: #FFFFFF;
+    }
+    .seg-btn.active-spec {
+      background: var(--accent);
+      color: #FFFFFF;
+    }
+
+    .exec-preview-box {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: var(--accent-bg);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .exec-preview-main {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .exec-preview-sub {
+      font-size: 11.5px;
+      color: var(--text-sub);
+    }
+
+    /* ページ内確認表示パネル（confirm() 不使用） */
+    .confirm-panel {
+      margin-top: 12px;
+      padding: 13px;
+      border-radius: 7px;
+      border: 2px solid var(--accent);
+      background: var(--bg-subtle);
+      display: none;
+    }
+    .confirm-panel.active {
+      display: block;
+    }
+
+    .confirm-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .confirm-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px 12px;
+      font-size: 12.5px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 480px) {
+      .confirm-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .confirm-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* 注文一覧カードリスト（スマホ幅390pxで横スクロールゼロ） */
+    .orders-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .order-item {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 11px 12px;
+      background: var(--bg-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .order-item.status-pending {
+      border: 2px solid var(--judge-mild);
+      background: var(--judge-mild-bg);
+    }
+
+    .order-item.status-cancelled {
+      opacity: 0.58;
+    }
+
+    .order-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .order-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-pending {
+      background: var(--judge-mild);
+      color: #FFFFFF;
+    }
+    .badge-settled {
+      background: var(--up-bg);
+      color: var(--up);
+      border: 1px solid var(--up);
+    }
+    .badge-cancelled {
+      background: var(--judge-wait-bg);
+      color: var(--text-muted);
+      border: 1px solid var(--line-strong);
+    }
+    .badge-buy {
+      background: var(--judge-buy-bg);
+      color: var(--judge-buy);
+      border: 1px solid var(--judge-buy);
+    }
+    .badge-sell {
+      background: var(--judge-mild-bg);
+      color: var(--judge-mild);
+      border: 1px solid var(--judge-mild);
+    }
+
+    .order-body {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px 10px;
+      font-size: 12.5px;
+    }
+    @media (max-width: 600px) {
+      .order-body {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 380px) {
+      .order-body {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .order-meta-lbl {
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+    .order-meta-val {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .order-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 6px;
+      border-top: 1px dashed var(--line);
+      font-size: 11.5px;
+      color: var(--text-sub);
+    }
+
+    .inline-cancel-confirm {
+      margin-top: 6px;
+      padding: 8px 10px;
+      border-radius: 5px;
+      background: var(--down-bg);
+      border: 1px solid var(--down);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--down);
+    }
+
+    .site-footer {
+      border-top: 1px solid var(--line);
+      padding: 18px 0 32px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="header-top">
+        <div class="brand-wrap">
+          <span class="brand-badge num">3x NASDAQ</span>
+          <span class="site-title">トリプルNASDAQ 注文記録</span>
+        </div>
+        <div class="nav-links">
+          <a href="./triple.html" class="back-link">← リバランス＆購入ジャッジへ戻る</a>
+          <a href="./index.html" class="back-link">全ファンド予報へ →</a>
+        </div>
+      </div>
+      <div class="header-sub">
+        <span>auAMトリプル・NASDAQ100 為替ヘッジ無し（注文履歴・残高自動計算）</span>
+        <div class="freshness">
+          <span class="fresh-dot" id="freshDot"></span>
+          <span id="syncStatusText" class="num">記録を確認中...</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-area container">
+    <!-- 合言葉・接続ステータスバー -->
+    <section class="card" aria-label="合言葉とデータ同期設定">
+      <div class="auth-bar">
+        <div class="auth-form-row">
+          <label for="ordersKeyInput" class="field-label" style="white-space: nowrap;">合言葉:</label>
+          <input type="password" id="ordersKeyInput" class="input-ctrl num" style="max-width: 240px;" placeholder="32文字の合言葉を入力" autocomplete="off">
+          <button type="button" class="btn btn-primary" id="btnSaveKey">保存して読み込む</button>
+          <button type="button" class="btn" id="btnReloadOrders">再読み込み</button>
+        </div>
+        <div style="font-size: 11.5px; color: var(--text-muted);" id="keySavedHint">
+          初回のみ入力（この端末のブラウザに保存されます）
+        </div>
+      </div>
+
+      <div class="banner-msg" id="authErrorBanner" style="margin-top: 8px;">
+        <span id="authErrorText">合言葉が違います</span>
+        <button type="button" class="btn btn-sm" id="btnRetryFetch">再試行</button>
+      </div>
+    </section>
+
+    <!-- 1. 現在の残高サマリー -->
+    <section class="card" id="balanceSection" aria-label="現在の残高サマリー">
+      <div class="card-title">
+        <span>現在の残高（注文記録から自動計算）</span>
+        <span class="card-subtitle num" id="navRefSubtitle">基準価額読込中...</span>
+      </div>
+
+      <div class="balance-grid">
+        <div class="bal-item">
+          <div class="bal-lbl">保有口数（約定済み）</div>
+          <div class="bal-val num" id="balHoldingUnits">--- 口</div>
+          <div class="bal-sub num" id="balPendingUnitsNote">約定待ち注文: なし</div>
+        </div>
+
+        <div class="bal-item">
+          <div class="bal-lbl">評価額（予想基準価額 ／ 最新確定基準価額）</div>
+          <div class="bal-val num" id="balEvalProv">予想: --- 円</div>
+          <div class="bal-sub num" id="balEvalLatest">最新確定: --- 円</div>
+        </div>
+
+        <div class="bal-item">
+          <div class="bal-lbl">平均取得単価（1万口あたり・移動平均）</div>
+          <div class="bal-val num" id="balAvgCost">--- 円</div>
+          <div class="bal-sub num" id="balCostBasisSub">累計買付原価: --- 円</div>
+        </div>
+
+        <div class="bal-item">
+          <div class="bal-lbl">含み損益（予想基準価額 ／ 最新確定基準価額）</div>
+          <div class="bal-val num" id="balPnlProv">--- 円 (--%)</div>
+          <div class="bal-sub num" id="balPnlLatest">最新確定比: --- 円 (--%)</div>
+        </div>
+
+        <div class="bal-item">
+          <div class="bal-lbl">現金（待機キャッシュ・約定待ち買付控除後）</div>
+          <div class="bal-val num" id="balCashYen">--- 円</div>
+          <div class="bal-sub num" id="balCashSub">運用枠: --- 円</div>
+        </div>
+
+        <div class="bal-item">
+          <div class="bal-lbl">投信比率（予想ベース実質 ／ 最新確定ベース）</div>
+          <div class="bal-val num" id="balWeightProv">--- %</div>
+          <div class="bal-sub num" id="balWeightSub">最新確定: --- % ｜ 動的目標: --- %</div>
+        </div>
+      </div>
+
+      <p class="tax-note">
+        ※売却時の税額（特定口座・源泉徴収あり 20.315%・利益のときのみ算出）は<strong>概算</strong>です。実際の税額および受渡金額は証券会社の取引報告書が正となります。
+      </p>
+    </section>
+
+    <!-- 2. 注文の記録フォーム -->
+    <section class="card" id="orderFormSection" aria-label="注文の記録フォーム">
+      <div class="card-title">
+        <span id="formSectionTitle">注文を記録する</span>
+        <button type="button" class="btn btn-sm" id="btnCancelEditMode" style="display: none;">編集をやめて新規入力に戻す</button>
+      </div>
+
+      <input type="hidden" id="editOrderId" value="">
+
+      <div class="form-grid">
+        <div class="field-group">
+          <label class="field-label" for="inputOrderDate">申込日（注文を出した日）</label>
+          <input type="date" id="inputOrderDate" class="input-ctrl num" required>
+          <div class="field-hint">初期値は今日</div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="inputOrderTime">注文した時刻（必須）</label>
+          <input type="time" id="inputOrderTime" class="input-ctrl num" required>
+          <div class="field-hint">締め時刻の前後判定と提案根拠に使用</div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="inputBroker">証券会社（締め時刻判定）</label>
+          <select id="inputBroker" class="input-ctrl">
+            <option value="SBI">SBI証券（15:30締切）</option>
+            <option value="楽天">楽天証券（15:30締切）</option>
+            <option value="マネックス">マネックス証券（15:30締切）</option>
+            <option value="松井">松井証券（15:30締切）</option>
+          </select>
+          <div class="field-hint" id="brokerCutoffHint">締切時刻: 15:30（締め後・休日は翌営業日申込）</div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">売買区分</span>
+          <div class="seg-group" role="group" aria-label="売買区分">
+            <button type="button" class="seg-btn active-buy" id="btnSideBuy" data-side="BUY">買付 (BUY)</button>
+            <button type="button" class="seg-btn" id="btnSideSell" data-side="SELL">売却 (SELL)</button>
+          </div>
+          <div class="field-hint">買付は金額指定、売却は口数指定が基本</div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">指定方法</span>
+          <div class="seg-group" role="group" aria-label="指定方法">
+            <button type="button" class="seg-btn active-spec" id="btnSpecYen" data-spec="YEN">金額指定 (円)</button>
+            <button type="button" class="seg-btn" id="btnSpecUnits" data-spec="UNITS">口数指定 (口)</button>
+          </div>
+          <div class="field-hint" id="specHintText">買付金額（円）を入力してください</div>
+        </div>
+
+        <div class="field-group" id="amountFieldWrap">
+          <label class="field-label" for="inputAmountYen">注文金額（円）</label>
+          <input type="number" id="inputAmountYen" class="input-ctrl num" min="100" step="1000" placeholder="例: 10000">
+          <div class="field-hint" id="amountEstSub">予想基準価額での見込み口数を自動試算</div>
+        </div>
+
+        <div class="field-group" id="unitsFieldWrap" style="display: none;">
+          <label class="field-label" for="inputUnits">注文口数（口）</label>
+          <input type="number" id="inputUnits" class="input-ctrl num" min="1" step="100" placeholder="例: 10000">
+          <div class="field-hint" id="unitsEstSub">予想基準価額での見込み金額を自動試算</div>
+        </div>
+
+        <div class="field-group" style="grid-column: 1 / -1;">
+          <label class="field-label" for="inputNote">メモ（任意）</label>
+          <input type="text" id="inputNote" class="input-ctrl" placeholder="例: 15:05通知を見て発注">
+        </div>
+      </div>
+
+      <!-- 約定予定日のその場プレビュー -->
+      <div class="exec-preview-box">
+        <div>
+          <div class="exec-preview-main num" id="previewExecDateText">約定予定日: 計算中...</div>
+          <div class="exec-preview-sub num" id="previewAppDateSub">実質申込日: ---</div>
+        </div>
+        <div class="exec-preview-sub num" id="previewSimulationText"></div>
+      </div>
+
+      <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-primary" id="btnOpenConfirm">内容を確認する</button>
+        <button type="button" class="btn" id="btnResetForm">入力をクリア</button>
+      </div>
+
+      <!-- ページ内確認表示（confirm() 不使用） -->
+      <div class="confirm-panel" id="confirmPanel" role="region" aria-label="注文内容の確認">
+        <div class="confirm-title" id="confirmPanelTitle">以下の内容で記録します。よろしいですか？</div>
+        <div class="confirm-list" id="confirmSummaryList"></div>
+        <div class="confirm-actions">
+          <button type="button" class="btn btn-buy" id="btnSubmitOrder">この内容で記録する</button>
+          <button type="button" class="btn" id="btnCloseConfirm">戻る（修正する）</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 注文記録一覧（新しい順） -->
+    <section class="card" id="ordersListSection" aria-label="注文記録一覧">
+      <div class="card-title">
+        <span>注文記録一覧（新しい順）</span>
+        <span class="card-subtitle num" id="ordersCountText">0 件</span>
+      </div>
+      <div class="orders-list" id="ordersListContainer">
+        <div style="color: var(--text-muted); font-size: 12.5px; padding: 8px 0;">記録を読み込んでいます...</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>※このページは注文の記録・残高計算専用です（証券会社への発注は行いません）。売却時の概算税（20.315%）は特定口座・源泉ありの概算値であり、実際の税額は証券会社の取引報告書が正となります。</p>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var DEFAULT_ORDERS_URL = "https://script.google.com/macros/s/AKfycbwaZu4G_PhrOQItGpvqBTwjVer2KeV-1884-c5YUGpaZJV5eOkcBcYL77g9VxoyY6u32g/exec";
+      var DATA_BRANCH_URL = "https://raw.githubusercontent.com/msmttng/fund-forecast/data/triple_data.json";
+      var DATA_LOCAL_URL = "./triple_data.json";
+
+      var LS_PASSPHRASE_ITEM = "triple_orders_passphrase_v1";
+      var LS_ORDERS_CACHE_ITEM = "triple_orders_cache_v1";
+      var LS_TRIPLE_CACHE_ITEM = "triple_ndx_data_cache_v1";
+      var TAX_RATE = 0.20315;
+      var WEEKDAYS_JP = ["日", "月", "火", "水", "木", "金", "土"];
+
+      // 日本の祝日リスト（2025〜2027年・内閣府公表準拠）
+      var JP_HOLIDAYS = {
+        "2025-01-01": "元日", "2025-01-13": "成人の日", "2025-02-11": "建国記念の日", "2025-02-23": "天皇誕生日",
+        "2025-02-24": "振替休日", "2025-03-20": "春分の日", "2025-04-29": "昭和の日", "2025-05-03": "憲法記念日",
+        "2025-05-04": "みどりの日", "2025-05-05": "こどもの日", "2025-05-06": "振替休日", "2025-07-21": "海の日",
+        "2025-08-11": "山の日", "2025-09-15": "敬老の日", "2025-09-23": "秋分の日", "2025-10-13": "スポーツの日",
+        "2025-11-03": "文化の日", "2025-11-23": "勤労感謝の日", "2025-11-24": "振替休日",
+        "2026-01-01": "元日", "2026-01-12": "成人の日", "2026-02-11": "建国記念の日", "2026-02-23": "天皇誕生日",
+        "2026-03-20": "春分の日", "2026-04-29": "昭和の日", "2026-05-03": "憲法記念日", "2026-05-04": "みどりの日",
+        "2026-05-05": "こどもの日", "2026-05-06": "振替休日", "2026-07-20": "海の日", "2026-08-11": "山の日",
+        "2026-09-21": "敬老の日", "2026-09-22": "国民の休日", "2026-09-23": "秋分の日", "2026-10-12": "スポーツの日",
+        "2026-11-03": "文化の日", "2026-11-23": "勤労感謝の日",
+        "2027-01-01": "元日", "2027-01-11": "成人の日", "2027-02-11": "建国記念の日", "2027-02-23": "天皇誕生日",
+        "2027-03-21": "春分の日", "2027-03-22": "振替休日", "2027-04-29": "昭和の日", "2027-05-03": "憲法記念日",
+        "2027-05-04": "みどりの日", "2027-05-05": "こどもの日", "2027-07-19": "海の日", "2027-08-11": "山の日",
+        "2027-09-20": "敬老の日", "2027-09-23": "秋分の日", "2027-10-11": "スポーツの日", "2027-11-03": "文化の日",
+        "2027-11-23": "勤労感謝の日"
+      };
+
+      var tripleData = null;
+      var gasState = {
+        orders: [],
+        settings: {
+          budgetYen: 0,
+          baseTargetPct: 50,
+          mode: "dynamic",
+          rebalanceBandPt: 4.0,
+          minTradeYen: 3000,
+          defaultBroker: "SBI",
+          brokers: { "SBI": "15:30", "楽天": "15:30", "マネックス": "15:30", "松井": "15:30" }
+        },
+        loaded: false,
+        stale: false
+      };
+
+      var formSide = "BUY";
+      var formSpec = "YEN";
+      var pendingSnapshotFromUrl = null;
+
+      function safeGetStorage(k) {
+        try {
+          return window.localStorage.getItem(k);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function safeSetStorage(k, v) {
+        try {
+          window.localStorage.setItem(k, v);
+        } catch (e) {}
+      }
+
+      function formatInt(n) {
+        if (n === null || n === undefined || isNaN(n)) return "---";
+        return Math.round(Number(n)).toLocaleString("ja-JP");
+      }
+
+      function formatSignedInt(n) {
+        if (n === null || n === undefined || isNaN(n)) return "---";
+        var v = Math.round(Number(n));
+        return (v > 0 ? "+" : "") + v.toLocaleString("ja-JP");
+      }
+
+      function formatSignedPct(n, digits) {
+        if (n === null || n === undefined || isNaN(n)) return "0.00%";
+        var d = digits !== undefined ? digits : 2;
+        var num = Number(n);
+        return (num > 0 ? "+" : "") + num.toFixed(d) + "%";
+      }
+
+      function getNowJstParts() {
+        var now = new Date();
+        var jstMs = now.getTime() + (now.getTimezoneOffset() + 540) * 60000;
+        var jst = new Date(jstMs);
+        var yyyy = jst.getFullYear();
+        var mm = ("0" + (jst.getMonth() + 1)).slice(-2);
+        var dd = ("0" + jst.getDate()).slice(-2);
+        var hh = ("0" + jst.getHours()).slice(-2);
+        var mi = ("0" + jst.getMinutes()).slice(-2);
+        return {
+          dateStr: yyyy + "-" + mm + "-" + dd,
+          timeStr: hh + ":" + mi
+        };
+      }
+
+      function parseDateYMD(dStr) {
+        var m = String(dStr || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!m) return null;
+        return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      }
+
+      function toDateYMD(dt) {
+        var y = dt.getFullYear();
+        var m = ("0" + (dt.getMonth() + 1)).slice(-2);
+        var d = ("0" + dt.getDate()).slice(-2);
+        return y + "-" + m + "-" + d;
+      }
+
+      function formatDateLabel(dStr) {
+        var dt = parseDateYMD(dStr);
+        if (!dt) return dStr || "---";
+        return (dt.getMonth() + 1) + "/" + dt.getDate() + "(" + WEEKDAYS_JP[dt.getDay()] + ")";
+      }
+
+      function isJpBusinessDay(dt) {
+        var w = dt.getDay();
+        if (w === 0 || w === 6) return false;
+        var m = dt.getMonth() + 1;
+        var d = dt.getDate();
+        if ((m === 12 && d === 31) || (m === 1 && d <= 3)) return false;
+        var ymd = toDateYMD(dt);
+        return !JP_HOLIDAYS[ymd];
+      }
+
+      function easterSunday(year) {
+        var a = year % 19;
+        var b = Math.floor(year / 100);
+        var c = year % 100;
+        var d = Math.floor(b / 4);
+        var e = b % 4;
+        var f = Math.floor((b + 8) / 25);
+        var g = Math.floor((b - f + 1) / 3);
+        var h = (19 * a + b - d - g + 15) % 30;
+        var i = Math.floor(c / 4);
+        var k = c % 4;
+        var l = (32 + 2 * e + 2 * i - h - k) % 7;
+        var m = Math.floor((a + 11 * h + 22 * l) / 451);
+        var month = Math.floor((h + l - 7 * m + 114) / 31);
+        var day = ((h + l - 7 * m + 114) % 31) + 1;
+        return new Date(year, month - 1, day);
+      }
+
+      function nthWeekdayOfMonth(year, month1, weekdaySun0, n) {
+        var first = new Date(year, month1 - 1, 1);
+        var offset = (weekdaySun0 - first.getDay() + 7) % 7;
+        return new Date(year, month1 - 1, 1 + offset + 7 * (n - 1));
+      }
+
+      function lastWeekdayOfMonth(year, month1, weekdaySun0) {
+        var lastDay = new Date(year, month1, 0);
+        var offset = (lastDay.getDay() - weekdaySun0 + 7) % 7;
+        return new Date(year, month1 - 1, lastDay.getDate() - offset);
+      }
+
+      function observedUsHoliday(dt) {
+        var w = dt.getDay();
+        if (w === 6) return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() - 1);
+        if (w === 0) return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + 1);
+        return dt;
+      }
+
+      function getUsHolidaysMap(year) {
+        var map = {};
+        var nyd = observedUsHoliday(new Date(year, 0, 1));
+        if (nyd.getFullYear() === year) map[toDateYMD(nyd)] = true;
+        var nextNyd = observedUsHoliday(new Date(year + 1, 0, 1));
+        if (nextNyd.getFullYear() === year) map[toDateYMD(nextNyd)] = true;
+
+        map[toDateYMD(nthWeekdayOfMonth(year, 1, 1, 3))] = true;
+        map[toDateYMD(nthWeekdayOfMonth(year, 2, 1, 3))] = true;
+        var es = easterSunday(year);
+        var gf = new Date(es.getFullYear(), es.getMonth(), es.getDate() - 2);
+        map[toDateYMD(gf)] = true;
+        map[toDateYMD(lastWeekdayOfMonth(year, 5, 1))] = true;
+        map[toDateYMD(observedUsHoliday(new Date(year, 5, 19)))] = true;
+        map[toDateYMD(observedUsHoliday(new Date(year, 6, 4)))] = true;
+        map[toDateYMD(nthWeekdayOfMonth(year, 9, 1, 1))] = true;
+        map[toDateYMD(nthWeekdayOfMonth(year, 11, 4, 4))] = true;
+        map[toDateYMD(observedUsHoliday(new Date(year, 11, 25)))] = true;
+        return map;
+      }
+
+      function isUsTradingDay(dt) {
+        var w = dt.getDay();
+        if (w === 0 || w === 6) return false;
+        var map = getUsHolidaysMap(dt.getFullYear());
+        return !map[toDateYMD(dt)];
+      }
+
+      function isFundOrderDay(dt) {
+        return isJpBusinessDay(dt) && isUsTradingDay(dt);
+      }
+
+      function nextJpBusinessDay(dt) {
+        var cur = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + 1);
+        while (!isJpBusinessDay(cur)) {
+          cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + 1);
+        }
+        return cur;
+      }
+
+      function parseHHMM(s, defMin) {
+        var m = String(s || "").trim().match(/^(\d{1,2}):(\d{2})$/);
+        if (!m) return defMin;
+        return Number(m[1]) * 60 + Number(m[2]);
+      }
+
+      // 4-2: 申込日・注文時刻・証券会社別締め時刻から実質申込日と約定予定日を計算
+      function computeOrderScheduleForInput(orderDateStr, orderTimeStr, broker) {
+        var brokersMap = (gasState.settings && gasState.settings.brokers) || {};
+        var cutoffStr = brokersMap[broker] || "15:30";
+        var cutoffMin = parseHHMM(cutoffStr, 15 * 60 + 30);
+        var orderMin = parseHHMM(orderTimeStr, 15 * 60);
+        var afterCutoff = orderMin > cutoffMin;
+
+        var dt = parseDateYMD(orderDateStr);
+        if (!dt) {
+          var nowParts = getNowJstParts();
+          dt = parseDateYMD(nowParts.dateStr);
+        }
+
+        var appDt;
+        if (isFundOrderDay(dt) && !afterCutoff) {
+          appDt = dt;
+        } else {
+          var cur = afterCutoff
+            ? new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + 1)
+            : new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+          while (!isFundOrderDay(cur)) {
+            cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + 1);
+          }
+          appDt = cur;
+        }
+
+        var execDt = nextJpBusinessDay(appDt);
+        return {
+          applicationDate: toDateYMD(appDt),
+          applicationDateLabel: formatDateLabel(toDateYMD(appDt)),
+          executionDate: toDateYMD(execDt),
+          executionDateLabel: formatDateLabel(toDateYMD(execDt)),
+          cutoffTime: cutoffStr,
+          isAfterCutoff: afterCutoff,
+          isHolidayOrder: !isFundOrderDay(dt)
+        };
+      }
+
+      // 4-2 & 4-3: 注文記録から残高・平均取得単価（移動平均法）・約定待ち・概算税を計算
+      function computeBalanceFromOrders(orders, settings, provNav) {
+        var budgetYen = Number((settings && settings.budgetYen) || 0);
+        var sorted = (orders || []).slice().sort(function (a, b) {
+          var da = a.execDate || a.orderDate || "";
+          var db = b.execDate || b.orderDate || "";
+          if (da !== db) return da < db ? -1 : 1;
+          var oa = (a.orderDate || "") + " " + (a.orderTime || "");
+          var ob = (b.orderDate || "") + " " + (b.orderTime || "");
+          if (oa !== ob) return oa < ob ? -1 : 1;
+          var ca = a.createdAt || "";
+          var cb = b.createdAt || "";
+          if (ca !== cb) return ca < cb ? -1 : 1;
+          return String(a.id) < String(b.id) ? -1 : 1;
+        });
+
+        var settledUnits = 0;
+        var avgCostNav = 0;
+        var settledBuyYenTotal = 0;
+        var settledSellGrossYenTotal = 0;
+        var settledSellTaxYenTotal = 0;
+        var settledSellNetYenTotal = 0;
+
+        var pendingBuyYen = 0;
+        var pendingBuyEstUnits = 0;
+        var pendingSellUnits = 0;
+        var pendingSellEstYen = 0;
+        var pendingCount = 0;
+        var orderTaxMap = {};
+
+        for (var i = 0; i < sorted.length; i++) {
+          var o = sorted[i];
+          var st = String(o.status || "pending").toLowerCase();
+          if (st === "cancelled") continue;
+          var side = String(o.side || "BUY").toUpperCase();
+          var spec = String(o.spec || "YEN").toUpperCase();
+
+          if (st === "settled") {
+            var eNav = Number(o.execNav || 0);
+            var eUnits = Number(o.execUnits || 0);
+            var eYen = Number(o.execYen || 0);
+            if (side === "BUY") {
+              if (eUnits <= 0 && eNav > 0 && o.amountYen) {
+                eUnits = Math.floor((Number(o.amountYen) * 10000) / eNav);
+              }
+              if (eYen <= 0 && o.amountYen) {
+                eYen = Math.round(Number(o.amountYen));
+              }
+              if (eUnits > 0 && eYen > 0) {
+                var prevCost = (settledUnits * avgCostNav) / 10000;
+                var newCost = prevCost + eYen;
+                settledUnits += eUnits;
+                avgCostNav = settledUnits > 0 ? Math.round((newCost * 10000) / settledUnits) : 0;
+                settledBuyYenTotal += eYen;
+              }
+            } else if (side === "SELL") {
+              if (eUnits <= 0) {
+                if (spec === "UNITS" && o.units) eUnits = Math.round(Number(o.units));
+                else if (spec === "YEN" && o.amountYen && eNav > 0) eUnits = Math.ceil((Number(o.amountYen) * 10000) / eNav);
+              }
+              var sellU = Math.min(settledUnits, Math.max(0, eUnits));
+              if (eYen <= 0 && eNav > 0 && sellU > 0) {
+                eYen = Math.floor((sellU * eNav) / 10000);
+              }
+              if (sellU > 0) {
+                var costBasisYen = Math.round((avgCostNav * sellU) / 10000);
+                var gainYen = eYen - costBasisYen;
+                var estTaxYen = gainYen > 0 ? Math.floor(gainYen * TAX_RATE) : 0;
+                var netProceedsYen = eYen - estTaxYen;
+
+                settledUnits = Math.max(0, settledUnits - sellU);
+                if (settledUnits === 0) avgCostNav = 0;
+
+                settledSellGrossYenTotal += eYen;
+                settledSellTaxYenTotal += estTaxYen;
+                settledSellNetYenTotal += netProceedsYen;
+                orderTaxMap[o.id] = {
+                  costBasisYen: costBasisYen,
+                  gainYen: gainYen,
+                  estimatedTaxYen: estTaxYen,
+                  netProceedsYen: netProceedsYen
+                };
+              }
+            }
+          } else if (st === "pending") {
+            pendingCount += 1;
+            if (side === "BUY") {
+              var amt = 0;
+              var estU = 0;
+              if (spec === "YEN" && o.amountYen) {
+                amt = Math.round(Number(o.amountYen));
+                estU = provNav > 0 ? Math.floor((amt * 10000) / provNav) : 0;
+              } else if (o.units) {
+                estU = Math.round(Number(o.units));
+                amt = provNav > 0 ? Math.floor((estU * provNav) / 10000) : 0;
+              }
+              pendingBuyYen += amt;
+              pendingBuyEstUnits += estU;
+            } else if (side === "SELL") {
+              var uSell = 0;
+              if (spec === "UNITS" && o.units) {
+                uSell = Math.round(Number(o.units));
+              } else if (spec === "YEN" && o.amountYen && provNav > 0) {
+                uSell = Math.ceil((Number(o.amountYen) * 10000) / provNav);
+              }
+              uSell = Math.min(Math.max(0, settledUnits - pendingSellUnits), Math.max(0, uSell));
+              var estSellY = provNav > 0 ? Math.floor((uSell * provNav) / 10000) : 0;
+              pendingSellUnits += uSell;
+              pendingSellEstYen += estSellY;
+            }
+          }
+        }
+
+        var settledCashYen = budgetYen - settledBuyYenTotal + settledSellNetYenTotal;
+        var cashYen = settledCashYen - pendingBuyYen;
+        var effectiveHoldingUnits = Math.max(0, settledUnits - pendingSellUnits) + pendingBuyEstUnits;
+
+        return {
+          budgetYen: budgetYen,
+          holdingUnits: settledUnits,
+          avgCostNav: avgCostNav,
+          settledCashYen: settledCashYen,
+          cashYen: cashYen,
+          effectiveHoldingUnits: effectiveHoldingUnits,
+          settledBuyYenTotal: settledBuyYenTotal,
+          settledSellGrossYenTotal: settledSellGrossYenTotal,
+          settledSellTaxYenTotal: settledSellTaxYenTotal,
+          settledSellNetYenTotal: settledSellNetYenTotal,
+          pendingBuyYen: pendingBuyYen,
+          pendingBuyEstUnits: pendingBuyEstUnits,
+          pendingSellUnits: pendingSellUnits,
+          pendingSellEstYen: pendingSellEstYen,
+          pendingCount: pendingCount,
+          orderTaxMap: orderTaxMap
+        };
+      }
+
+      function getOrdersApiUrl() {
+        if (tripleData && tripleData.ordersApiUrl) return tripleData.ordersApiUrl;
+        return DEFAULT_ORDERS_URL;
+      }
+
+      function showBanner(kind, msg) {
+        var el = document.getElementById("authErrorBanner");
+        var txt = document.getElementById("authErrorText");
+        if (!kind) {
+          el.className = "banner-msg";
+          el.style.display = "none";
+          return;
+        }
+        el.className = "banner-msg " + kind;
+        el.style.display = "flex";
+        txt.textContent = msg;
+      }
+
+      function setStaleVisual(isStale) {
+        gasState.stale = isStale;
+        document.getElementById("balanceSection").classList.toggle("stale-data", isStale);
+        document.getElementById("ordersListSection").classList.toggle("stale-data", isStale);
+        var dot = document.getElementById("freshDot");
+        dot.className = "fresh-dot " + (isStale ? "stale" : "ok");
+      }
+
+      function renderBalance() {
+        var f = (tripleData && tripleData.fund) || {};
+        var reb = (tripleData && tripleData.rebalance) || {};
+        var latestNav = Number(f.nav || 0);
+        var provNav = Number(f.provisionalExecNav || f.launchpadNav || latestNav || 0);
+        var dynTargetPct = Number(reb.dynamicTargetWeightPct || (gasState.settings && gasState.settings.baseTargetPct) || 50);
+
+        if (latestNav > 0) {
+          document.getElementById("navRefSubtitle").textContent =
+            "最新確定(" + (f.navDateLabel || "--") + "): " + formatInt(latestNav) + "円 ｜ 予想基準価額: 約 " + formatInt(provNav) + "円";
+        }
+
+        if (!gasState.loaded && (!gasState.orders || gasState.orders.length === 0)) {
+          document.getElementById("balHoldingUnits").textContent = "--- 口";
+          document.getElementById("balPendingUnitsNote").textContent = "合言葉を入力すると注文記録から自動計算されます";
+          document.getElementById("balEvalProv").textContent = "予想: --- 円";
+          document.getElementById("balEvalLatest").textContent = "最新確定: --- 円";
+          document.getElementById("balAvgCost").textContent = "--- 円";
+          document.getElementById("balCostBasisSub").textContent = "累計買付原価: --- 円";
+          document.getElementById("balPnlProv").textContent = "--- 円 (--%)";
+          document.getElementById("balPnlLatest").textContent = "最新確定比: --- 円 (--%)";
+          document.getElementById("balCashYen").textContent = "--- 円";
+          document.getElementById("balCashSub").textContent = "合言葉を入力して記録を読み込んでください";
+          document.getElementById("balWeightProv").textContent = "--- %";
+          document.getElementById("balWeightSub").textContent = "動的目標: " + dynTargetPct.toFixed(1) + "%";
+          return null;
+        }
+
+        var bal = computeBalanceFromOrders(gasState.orders, gasState.settings, provNav);
+
+        document.getElementById("balHoldingUnits").textContent = formatInt(bal.holdingUnits) + " 口";
+        if (bal.pendingBuyEstUnits > 0 || bal.pendingSellUnits > 0) {
+          var pParts = [];
+          if (bal.pendingBuyEstUnits > 0) {
+            pParts.push("買付見込み +" + formatInt(bal.pendingBuyEstUnits) + "口");
+          }
+          if (bal.pendingSellUnits > 0) {
+            pParts.push("売却待ち -" + formatInt(bal.pendingSellUnits) + "口");
+          }
+          document.getElementById("balPendingUnitsNote").textContent =
+            "約定待ち反映後(見込み): " + formatInt(bal.effectiveHoldingUnits) + "口（" + pParts.join(" / ") + "）";
+        } else {
+          document.getElementById("balPendingUnitsNote").textContent = "約定待ち注文: なし";
+        }
+
+        var evalLatest = latestNav > 0 ? Math.round((bal.holdingUnits * latestNav) / 10000) : 0;
+        var evalProv = provNav > 0 ? Math.round((bal.holdingUnits * provNav) / 10000) : 0;
+        var evalEffProv = provNav > 0 ? Math.round((bal.effectiveHoldingUnits * provNav) / 10000) : 0;
+
+        document.getElementById("balEvalProv").textContent =
+          "予想: " + formatInt(evalProv) + " 円" +
+          (bal.pendingBuyEstUnits > 0 || bal.pendingSellUnits > 0 ? ("（見込み込 " + formatInt(evalEffProv) + "円）") : "");
+        document.getElementById("balEvalLatest").textContent =
+          "最新確定(" + (f.navDateLabel || "前回") + "): " + formatInt(evalLatest) + " 円";
+
+        document.getElementById("balAvgCost").textContent =
+          bal.avgCostNav > 0 ? (formatInt(bal.avgCostNav) + " 円") : "--- 円";
+        var curCostBasis = Math.round((bal.holdingUnits * bal.avgCostNav) / 10000);
+        document.getElementById("balCostBasisSub").textContent =
+          "保有取得原価: " + formatInt(curCostBasis) + " 円";
+
+        var pnlProv = evalProv - curCostBasis;
+        var pnlProvPct = curCostBasis > 0 ? ((pnlProv / curCostBasis) * 100) : 0;
+        var pnlLatest = evalLatest - curCostBasis;
+        var pnlLatestPct = curCostBasis > 0 ? ((pnlLatest / curCostBasis) * 100) : 0;
+
+        var pnlProvEl = document.getElementById("balPnlProv");
+        pnlProvEl.className = "bal-val num " + (pnlProv > 0 ? "chg-up" : (pnlProv < 0 ? "chg-down" : "chg-flat"));
+        pnlProvEl.textContent = formatSignedInt(pnlProv) + " 円 (" + formatSignedPct(pnlProvPct) + ")";
+
+        var pnlLatEl = document.getElementById("balPnlLatest");
+        pnlLatEl.className = "bal-sub num " + (pnlLatest > 0 ? "chg-up" : (pnlLatest < 0 ? "chg-down" : "chg-flat"));
+        pnlLatEl.textContent = "最新確定比: " + formatSignedInt(pnlLatest) + " 円 (" + formatSignedPct(pnlLatestPct) + ")";
+
+        document.getElementById("balCashYen").textContent = formatInt(bal.cashYen) + " 円";
+        if (bal.pendingBuyYen > 0) {
+          document.getElementById("balCashSub").textContent =
+            "確定待機残 " + formatInt(bal.settledCashYen) + "円 − 約定待ち買付 " + formatInt(bal.pendingBuyYen) + "円（運用枠 " + formatInt(bal.budgetYen) + "円）";
+        } else {
+          document.getElementById("balCashSub").textContent =
+            "運用枠: " + formatInt(bal.budgetYen) + " 円" +
+            (bal.settledSellTaxYenTotal > 0 ? ("（累計概算税控除 " + formatInt(bal.settledSellTaxYenTotal) + "円）") : "");
+        }
+
+        var totEffProv = evalEffProv + Math.max(0, bal.cashYen);
+        var wEffProv = totEffProv > 0 ? ((evalEffProv / totEffProv) * 100) : 0;
+        var totLatest = evalLatest + Math.max(0, bal.settledCashYen);
+        var wLatest = totLatest > 0 ? ((evalLatest / totLatest) * 100) : 0;
+
+        document.getElementById("balWeightProv").textContent = wEffProv.toFixed(1) + " %";
+        document.getElementById("balWeightSub").textContent =
+          "最新確定: " + wLatest.toFixed(1) + "% ｜ 動的目標: " + dynTargetPct.toFixed(1) + "%";
+
+        return bal;
+      }
+
+      function updateFormPreview() {
+        var dStr = document.getElementById("inputOrderDate").value;
+        var tStr = document.getElementById("inputOrderTime").value;
+        var broker = document.getElementById("inputBroker").value || "SBI";
+        var sched = computeOrderScheduleForInput(dStr, tStr, broker);
+
+        document.getElementById("brokerCutoffHint").textContent =
+          broker + "証券 締切時刻: " + sched.cutoffTime + "（締め後・休日は翌営業日申込）";
+
+        var cutNotice = "";
+        if (sched.isHolidayOrder) {
+          cutNotice = "（休場日のため翌営業日 " + sched.applicationDateLabel + " 申込扱い）";
+        } else if (sched.isAfterCutoff) {
+          cutNotice = "（" + sched.cutoffTime + " 締め後のため翌営業日 " + sched.applicationDateLabel + " 申込扱い）";
+        } else {
+          cutNotice = "（当日 " + sched.applicationDateLabel + " " + sched.cutoffTime + " 締切内）";
+        }
+
+        document.getElementById("previewExecDateText").textContent =
+          "約定予定日: " + sched.executionDateLabel + " [" + sched.executionDate + "]";
+        document.getElementById("previewAppDateSub").textContent =
+          "実質申込日: " + sched.applicationDateLabel + " " + cutNotice;
+
+        var f = (tripleData && tripleData.fund) || {};
+        var provNav = Number(f.provisionalExecNav || f.launchpadNav || f.nav || 0);
+        var bal = computeBalanceFromOrders(gasState.orders, gasState.settings, provNav);
+
+        var simText = "";
+        if (formSpec === "YEN") {
+          var amt = parseInt(document.getElementById("inputAmountYen").value || "0", 10);
+          if (!isNaN(amt) && amt > 0 && provNav > 0) {
+            if (formSide === "BUY") {
+              var estU = Math.floor((amt * 10000) / provNav);
+              simText = "予想基準価額(" + formatInt(provNav) + "円)での見込み口数: 約 +" + formatInt(estU) + " 口";
+              document.getElementById("amountEstSub").textContent = simText;
+            } else {
+              var estSellU = Math.min(bal.holdingUnits, Math.ceil((amt * 10000) / provNav));
+              var costB = Math.round((bal.avgCostNav * estSellU) / 10000);
+              var gain = amt - costB;
+              var tax = gain > 0 ? Math.floor(gain * TAX_RATE) : 0;
+              simText = "見込み売却口数: 約 " + formatInt(estSellU) + "口 ｜ 概算税: " + formatInt(tax) + "円";
+              document.getElementById("amountEstSub").textContent = simText;
+            }
+          } else {
+            document.getElementById("amountEstSub").textContent = "予想基準価額での見込み口数を自動試算";
+          }
+        } else {
+          var uVal = parseInt(document.getElementById("inputUnits").value || "0", 10);
+          if (!isNaN(uVal) && uVal > 0 && provNav > 0) {
+            var estY = Math.floor((uVal * provNav) / 10000);
+            if (formSide === "SELL") {
+              var costBS = Math.round((bal.avgCostNav * uVal) / 10000);
+              var gainS = estY - costBS;
+              var taxS = gainS > 0 ? Math.floor(gainS * TAX_RATE) : 0;
+              simText = "見込み受取(税引前): 約 " + formatInt(estY) + "円 ｜ 概算税: " + formatInt(taxS) + "円（税引後概算 " + formatInt(estY - taxS) + "円）";
+            } else {
+              simText = "予想基準価額(" + formatInt(provNav) + "円)での見込み金額: 約 " + formatInt(estY) + " 円";
+            }
+            document.getElementById("unitsEstSub").textContent = simText;
+          } else {
+            document.getElementById("unitsEstSub").textContent = "予想基準価額での見込み金額を自動試算";
+          }
+        }
+        document.getElementById("previewSimulationText").textContent = simText;
+        return sched;
+      }
+
+      function buildCurrentSnapshot(proposedYen) {
+        if (pendingSnapshotFromUrl) {
+          return pendingSnapshotFromUrl;
+        }
+        var sig = (tripleData && tripleData.signal) || {};
+        var f = (tripleData && tripleData.fund) || {};
+        var reb = (tripleData && tripleData.rebalance) || {};
+        return {
+          score: sig.score !== undefined ? sig.score : null,
+          rank: sig.rank || null,
+          provisionalExecNav: f.provisionalExecNav || f.launchpadNav || f.nav || null,
+          recommendedPct: reb.dynamicTargetWeightPct !== undefined ? reb.dynamicTargetWeightPct : (sig.recommendedPct || null),
+          proposedYen: proposedYen !== undefined ? proposedYen : null
+        };
+      }
+
+      function renderOrdersList(bal) {
+        var container = document.getElementById("ordersListContainer");
+        container.textContent = "";
+        var orders = (gasState.orders || []).slice();
+        document.getElementById("ordersCountText").textContent = orders.length + " 件";
+
+        if (orders.length === 0) {
+          var emptyDiv = document.createElement("div");
+          emptyDiv.style.color = "var(--text-muted)";
+          emptyDiv.style.padding = "8px 0";
+          emptyDiv.textContent = "記録された注文はありません。";
+          container.appendChild(emptyDiv);
+          return;
+        }
+
+        // 新しい順（orderDate + orderTime + createdAt の降順）
+        orders.sort(function (a, b) {
+          var oa = (a.orderDate || "") + " " + (a.orderTime || "");
+          var ob = (b.orderDate || "") + " " + (b.orderTime || "");
+          if (oa !== ob) return oa > ob ? -1 : 1;
+          var ca = a.createdAt || "";
+          var cb = b.createdAt || "";
+          if (ca !== cb) return ca > cb ? -1 : 1;
+          return String(a.id) > String(b.id) ? -1 : 1;
+        });
+
+        var f = (tripleData && tripleData.fund) || {};
+        var provNav = Number(f.provisionalExecNav || f.launchpadNav || f.nav || 0);
+
+        orders.forEach(function (o) {
+          var st = String(o.status || "pending").toLowerCase();
+          var side = String(o.side || "BUY").toUpperCase();
+          var spec = String(o.spec || "YEN").toUpperCase();
+
+          var card = document.createElement("div");
+          card.className = "order-item status-" + st;
+
+          var head = document.createElement("div");
+          head.className = "order-head";
+
+          var badges = document.createElement("div");
+          badges.className = "order-badges";
+
+          var stBadge = document.createElement("span");
+          if (st === "pending") {
+            stBadge.className = "badge badge-pending";
+            stBadge.textContent = "⏳ 約定待ち";
+          } else if (st === "settled") {
+            stBadge.className = "badge badge-settled";
+            stBadge.textContent = "✓ 約定済み";
+          } else {
+            stBadge.className = "badge badge-cancelled";
+            stBadge.textContent = "取消済み";
+          }
+          badges.appendChild(stBadge);
+
+          var sideBadge = document.createElement("span");
+          sideBadge.className = "badge " + (side === "BUY" ? "badge-buy" : "badge-sell");
+          sideBadge.textContent = (side === "BUY" ? "買付" : "売却") + "（" + (spec === "YEN" ? "金額指定" : "口数指定") + "）";
+          badges.appendChild(sideBadge);
+
+          var brokerSpan = document.createElement("span");
+          brokerSpan.className = "num";
+          brokerSpan.style.fontSize = "12px";
+          brokerSpan.style.fontWeight = "700";
+          brokerSpan.textContent = (o.broker || "SBI") + "証券";
+          badges.appendChild(brokerSpan);
+
+          head.appendChild(badges);
+
+          var actionBtns = document.createElement("div");
+          actionBtns.style.display = "flex";
+          actionBtns.style.gap = "6px";
+
+          var editBtn = document.createElement("button");
+          editBtn.type = "button";
+          editBtn.className = "btn btn-sm";
+          editBtn.textContent = "編集";
+          editBtn.addEventListener("click", function () {
+            startEditOrder(o);
+          });
+          actionBtns.appendChild(editBtn);
+
+          var cancelConfirmRow = document.createElement("div");
+          cancelConfirmRow.className = "inline-cancel-confirm";
+          cancelConfirmRow.style.display = "none";
+
+          if (st !== "cancelled") {
+            var cancelBtn = document.createElement("button");
+            cancelBtn.type = "button";
+            cancelBtn.className = "btn btn-sm";
+            cancelBtn.textContent = "取消";
+            cancelBtn.addEventListener("click", function () {
+              cancelConfirmRow.style.display = "flex";
+            });
+            actionBtns.appendChild(cancelBtn);
+          }
+
+          head.appendChild(actionBtns);
+          card.appendChild(head);
+
+          var body = document.createElement("div");
+          body.className = "order-body";
+
+          function addCell(lbl, val) {
+            var d = document.createElement("div");
+            var l = document.createElement("div");
+            l.className = "order-meta-lbl";
+            l.textContent = lbl;
+            var v = document.createElement("div");
+            v.className = "order-meta-val num";
+            v.textContent = val;
+            d.appendChild(l);
+            d.appendChild(v);
+            body.appendChild(d);
+          }
+
+          addCell("申込日時", formatDateLabel(o.orderDate) + " " + (o.orderTime || "--:--"));
+          addCell("約定予定日／約定日", formatDateLabel(o.execDate));
+
+          if (spec === "YEN") {
+            addCell("注文金額", formatInt(o.amountYen) + " 円");
+          } else {
+            addCell("注文口数", formatInt(o.units) + " 口");
+          }
+
+          if (st === "settled") {
+            addCell("約定基準価額", formatInt(o.execNav) + " 円");
+            addCell("約定口数", formatInt(o.execUnits) + " 口");
+            var taxInfo = bal && bal.orderTaxMap && bal.orderTaxMap[o.id];
+            if (side === "SELL" && taxInfo) {
+              addCell(
+                "約定金額（概算税控除後）",
+                formatInt(o.execYen) + "円（概算税 -" + formatInt(taxInfo.estimatedTaxYen) + "円 → 受取 " + formatInt(taxInfo.netProceedsYen) + "円）"
+              );
+            } else {
+              addCell("約定金額", formatInt(o.execYen) + " 円");
+            }
+          } else if (st === "pending") {
+            if (side === "BUY" && spec === "YEN" && o.amountYen && provNav > 0) {
+              var estU = Math.floor((Number(o.amountYen) * 10000) / provNav);
+              addCell("見込み口数（予想価額 " + formatInt(provNav) + "円）", "見込み +" + formatInt(estU) + " 口");
+            } else if (side === "SELL" && spec === "UNITS" && o.units && provNav > 0) {
+              var estY = Math.floor((Number(o.units) * provNav) / 10000);
+              addCell("見込み受取額（予想価額 " + formatInt(provNav) + "円）", "見込み " + formatInt(estY) + " 円");
+            }
+          }
+
+          card.appendChild(body);
+
+          // 取消の確認バー（confirm() 不使用）
+          var cancelMsg = document.createElement("span");
+          cancelMsg.textContent = "この注文を取り消しますか？（残高計算から除外されます）";
+          cancelConfirmRow.appendChild(cancelMsg);
+
+          var cancelActWrap = document.createElement("div");
+          cancelActWrap.style.display = "flex";
+          cancelActWrap.style.gap = "6px";
+
+          var btnDoCancel = document.createElement("button");
+          btnDoCancel.type = "button";
+          btnDoCancel.className = "btn btn-sm btn-danger";
+          btnDoCancel.textContent = "取消を確定する";
+          btnDoCancel.addEventListener("click", function () {
+            executeCancelOrder(o.id, btnDoCancel);
+          });
+
+          var btnAbortCancel = document.createElement("button");
+          btnAbortCancel.type = "button";
+          btnAbortCancel.className = "btn btn-sm";
+          btnAbortCancel.textContent = "やめる";
+          btnAbortCancel.addEventListener("click", function () {
+            cancelConfirmRow.style.display = "none";
+          });
+
+          cancelActWrap.appendChild(btnDoCancel);
+          cancelActWrap.appendChild(btnAbortCancel);
+          cancelConfirmRow.appendChild(cancelActWrap);
+          card.appendChild(cancelConfirmRow);
+
+          var foot = document.createElement("div");
+          foot.className = "order-foot";
+
+          var noteSpan = document.createElement("span");
+          noteSpan.textContent = o.note ? ("メモ: " + o.note) : "メモ: なし";
+          foot.appendChild(noteSpan);
+
+          var snapSpan = document.createElement("span");
+          snapSpan.className = "num";
+          if (o.snapshot) {
+            try {
+              var sp = typeof o.snapshot === "string" ? JSON.parse(o.snapshot) : o.snapshot;
+              if (sp && sp.score !== undefined && sp.score !== null) {
+                snapSpan.textContent =
+                  "注文時ジャッジ: " + sp.score + "点 (ランク" + (sp.rank || "-") +
+                  " / 予想" + formatInt(sp.provisionalExecNav) + "円)";
+              }
+            } catch (e) {}
+          }
+          foot.appendChild(snapSpan);
+
+          card.appendChild(foot);
+          container.appendChild(card);
+        });
+      }
+
+      function renderAll() {
+        var bal = renderBalance();
+        updateFormPreview();
+        renderOrdersList(bal);
+      }
+
+      function setSide(side) {
+        formSide = side === "SELL" ? "SELL" : "BUY";
+        document.getElementById("btnSideBuy").className = "seg-btn" + (formSide === "BUY" ? " active-buy" : "");
+        document.getElementById("btnSideSell").className = "seg-btn" + (formSide === "SELL" ? " active-sell" : "");
+        updateFormPreview();
+      }
+
+      function setSpec(spec) {
+        formSpec = spec === "UNITS" ? "UNITS" : "YEN";
+        document.getElementById("btnSpecYen").className = "seg-btn" + (formSpec === "YEN" ? " active-spec" : "");
+        document.getElementById("btnSpecUnits").className = "seg-btn" + (formSpec === "UNITS" ? " active-spec" : "");
+        document.getElementById("amountFieldWrap").style.display = formSpec === "YEN" ? "flex" : "none";
+        document.getElementById("unitsFieldWrap").style.display = formSpec === "UNITS" ? "flex" : "none";
+        document.getElementById("specHintText").textContent =
+          formSpec === "YEN" ? "注文金額（円）を入力してください" : "注文口数（口）を入力してください";
+        updateFormPreview();
+      }
+
+      function resetFormToDefault() {
+        var nowParts = getNowJstParts();
+        document.getElementById("editOrderId").value = "";
+        document.getElementById("formSectionTitle").textContent = "注文を記録する";
+        document.getElementById("btnCancelEditMode").style.display = "none";
+        document.getElementById("inputOrderDate").value = nowParts.dateStr;
+        document.getElementById("inputOrderTime").value = nowParts.timeStr;
+        document.getElementById("inputBroker").value = (gasState.settings && gasState.settings.defaultBroker) || "SBI";
+        document.getElementById("inputAmountYen").value = "";
+        document.getElementById("inputUnits").value = "";
+        document.getElementById("inputNote").value = "";
+        document.getElementById("confirmPanel").classList.remove("active");
+        setSide("BUY");
+        setSpec("YEN");
+      }
+
+      function startEditOrder(o) {
+        document.getElementById("editOrderId").value = o.id;
+        document.getElementById("formSectionTitle").textContent = "注文を編集する（ID: " + o.id + "）";
+        document.getElementById("btnCancelEditMode").style.display = "inline-block";
+        document.getElementById("inputOrderDate").value = o.orderDate || getNowJstParts().dateStr;
+        document.getElementById("inputOrderTime").value = o.orderTime || getNowJstParts().timeStr;
+        document.getElementById("inputBroker").value = o.broker || "SBI";
+        setSide(o.side || "BUY");
+        setSpec(o.spec || "YEN");
+        document.getElementById("inputAmountYen").value = o.amountYen !== null && o.amountYen !== undefined ? String(o.amountYen) : "";
+        document.getElementById("inputUnits").value = o.units !== null && o.units !== undefined ? String(o.units) : "";
+        document.getElementById("inputNote").value = o.note || "";
+        document.getElementById("confirmPanel").classList.remove("active");
+        updateFormPreview();
+        document.getElementById("orderFormSection").scrollIntoView({ behavior: "smooth" });
+      }
+
+      function openConfirmPanel() {
+        var dStr = document.getElementById("inputOrderDate").value;
+        var tStr = document.getElementById("inputOrderTime").value;
+        var broker = document.getElementById("inputBroker").value || "SBI";
+        var amt = parseInt(document.getElementById("inputAmountYen").value || "0", 10);
+        var uVal = parseInt(document.getElementById("inputUnits").value || "0", 10);
+        var note = document.getElementById("inputNote").value || "";
+        var editId = document.getElementById("editOrderId").value;
+
+        if (!dStr || !tStr) {
+          showBanner("warn", "申込日と注文時刻を入力してください");
+          return;
+        }
+        if (formSpec === "YEN" && (isNaN(amt) || amt <= 0)) {
+          showBanner("warn", "注文金額（円）を正の数値で入力してください");
+          return;
+        }
+        if (formSpec === "UNITS" && (isNaN(uVal) || uVal <= 0)) {
+          showBanner("warn", "注文口数（口）を正の数値で入力してください");
+          return;
+        }
+        showBanner(null, "");
+
+        var sched = computeOrderScheduleForInput(dStr, tStr, broker);
+        var listEl = document.getElementById("confirmSummaryList");
+        listEl.textContent = "";
+
+        var items = [
+          ["操作", editId ? ("既存注文の更新 (" + editId + ")") : "新規注文の追加"],
+          ["申込日・時刻", formatDateLabel(dStr) + " " + tStr],
+          ["証券会社", broker + "証券（締切 " + sched.cutoffTime + "）"],
+          ["売買・指定", (formSide === "BUY" ? "買付 (BUY)" : "売却 (SELL)") + " ／ " + (formSpec === "YEN" ? "金額指定" : "口数指定")],
+          ["注文数量", formSpec === "YEN" ? (formatInt(amt) + " 円") : (formatInt(uVal) + " 口")],
+          ["約定予定日", sched.executionDateLabel + " (" + sched.executionDate + ")"],
+          ["メモ", note || "（なし）"]
+        ];
+
+        items.forEach(function (pair) {
+          var row = document.createElement("div");
+          row.innerHTML = "";
+          var kSpan = document.createElement("span");
+          kSpan.style.color = "var(--text-muted)";
+          kSpan.textContent = pair[0] + ": ";
+          var vStrong = document.createElement("strong");
+          vStrong.className = "num";
+          vStrong.textContent = pair[1];
+          row.appendChild(kSpan);
+          row.appendChild(vStrong);
+          listEl.appendChild(row);
+        });
+
+        document.getElementById("confirmPanel").classList.add("active");
+      }
+
+      function submitOrderFromConfirm() {
+        var key = (document.getElementById("ordersKeyInput").value || safeGetStorage(LS_PASSPHRASE_ITEM) || "").trim();
+        if (!key) {
+          showBanner("error", "上部の入力欄に合言葉を入力して保存してください");
+          return;
+        }
+
+        var dStr = document.getElementById("inputOrderDate").value;
+        var tStr = document.getElementById("inputOrderTime").value;
+        var broker = document.getElementById("inputBroker").value || "SBI";
+        var amt = parseInt(document.getElementById("inputAmountYen").value || "0", 10);
+        var uVal = parseInt(document.getElementById("inputUnits").value || "0", 10);
+        var note = document.getElementById("inputNote").value || "";
+        var editId = document.getElementById("editOrderId").value;
+        var sched = computeOrderScheduleForInput(dStr, tStr, broker);
+
+        var payload = {
+          key: key,
+          action: editId ? "update" : "add",
+          orderDate: dStr,
+          orderTime: tStr,
+          side: formSide,
+          spec: formSpec,
+          amountYen: formSpec === "YEN" ? amt : null,
+          units: formSpec === "UNITS" ? uVal : null,
+          broker: broker,
+          execDate: sched.executionDate,
+          note: note
+        };
+        if (editId) {
+          payload.id = editId;
+          payload.recalcSettlement = true;
+        } else {
+          payload.snapshot = buildCurrentSnapshot(formSpec === "YEN" ? amt : null);
+        }
+
+        var btn = document.getElementById("btnSubmitOrder");
+        btn.disabled = true;
+        btn.textContent = "記録中...";
+
+        fetch(getOrdersApiUrl(), {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        })
+          .then(function (r) {
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            return r.json();
+          })
+          .then(function (res) {
+            btn.disabled = false;
+            btn.textContent = "この内容で記録する";
+            if (!res || !res.ok) {
+              if (res && res.error === "unauthorized") {
+                showBanner("error", "合言葉が違います");
+              } else {
+                showBanner("error", "記録に失敗しました: " + ((res && res.error) || "不明なエラー"));
+              }
+              return;
+            }
+            applyGasResponse(res);
+            resetFormToDefault();
+            showBanner("ok", editId ? "注文内容を更新しました" : "注文を記録しました");
+          })
+          .catch(function () {
+            btn.disabled = false;
+            btn.textContent = "この内容で記録する";
+            showBanner("error", "記録を読み込めませんでした（再読み込み）");
+          });
+      }
+
+      function executeCancelOrder(orderId, btnEl) {
+        var key = (document.getElementById("ordersKeyInput").value || safeGetStorage(LS_PASSPHRASE_ITEM) || "").trim();
+        if (!key) {
+          showBanner("error", "合言葉を入力してください");
+          return;
+        }
+        btnEl.disabled = true;
+        btnEl.textContent = "取消処理中...";
+
+        fetch(getOrdersApiUrl(), {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            key: key,
+            action: "cancel",
+            id: orderId
+          })
+        })
+          .then(function (r) {
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            return r.json();
+          })
+          .then(function (res) {
+            if (!res || !res.ok) {
+              if (res && res.error === "unauthorized") {
+                showBanner("error", "合言葉が違います");
+              } else {
+                showBanner("error", "取消に失敗しました");
+              }
+              btnEl.disabled = false;
+              btnEl.textContent = "取消を確定する";
+              return;
+            }
+            applyGasResponse(res);
+            showBanner("ok", "注文を取り消しました");
+          })
+          .catch(function () {
+            btnEl.disabled = false;
+            btnEl.textContent = "取消を確定する";
+            showBanner("error", "記録を読み込めませんでした（再読み込み）");
+          });
+      }
+
+      function applyGasResponse(res) {
+        gasState.orders = Array.isArray(res.orders) ? res.orders : [];
+        if (res.settings && typeof res.settings === "object") {
+          gasState.settings = res.settings;
+        }
+        gasState.loaded = true;
+        setStaleVisual(false);
+        safeSetStorage(LS_ORDERS_CACHE_ITEM, JSON.stringify({
+          orders: gasState.orders,
+          settings: gasState.settings,
+          cachedAt: new Date().toISOString()
+        }));
+        var nowParts = getNowJstParts();
+        document.getElementById("syncStatusText").textContent = "同期済 " + nowParts.timeStr;
+        renderAll();
+      }
+
+      function fetchOrdersFromGas() {
+        var key = (document.getElementById("ordersKeyInput").value || safeGetStorage(LS_PASSPHRASE_ITEM) || "").trim();
+        if (!key) {
+          document.getElementById("syncStatusText").textContent = "合言葉未設定";
+          showBanner("warn", "合言葉を入力して「保存して読み込む」を押してください");
+          return;
+        }
+
+        document.getElementById("syncStatusText").textContent = "記録を読み込み中...";
+        var url = getOrdersApiUrl() + "?key=" + encodeURIComponent(key) + "&action=list&t=" + Date.now();
+        fetch(url, { cache: "no-store" })
+          .then(function (r) {
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            return r.json();
+          })
+          .then(function (res) {
+            if (!res || !res.ok) {
+              if (res && res.error === "unauthorized") {
+                setStaleVisual(true);
+                document.getElementById("syncStatusText").textContent = "認証エラー";
+                showBanner("error", "合言葉が違います");
+              } else {
+                setStaleVisual(true);
+                showBanner("error", "記録を読み込めませんでした（再読み込み）");
+              }
+              return;
+            }
+            showBanner(null, "");
+            applyGasResponse(res);
+          })
+          .catch(function () {
+            setStaleVisual(true);
+            document.getElementById("syncStatusText").textContent = "通信エラー（前回表示）";
+            showBanner("error", "記録を読み込めませんでした（再読み込み）");
+          });
+      }
+
+      function fetchTripleMarketData() {
+        return fetch(DATA_BRANCH_URL + "?t=" + Date.now(), { cache: "no-store" })
+          .then(function (r) {
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            return r.json();
+          })
+          .catch(function () {
+            return fetch(DATA_LOCAL_URL + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) {
+              if (!r.ok) throw new Error("HTTP " + r.status);
+              return r.json();
+            });
+          })
+          .then(function (json) {
+            tripleData = json;
+            safeSetStorage(LS_TRIPLE_CACHE_ITEM, JSON.stringify(json));
+            renderAll();
+          })
+          .catch(function () {
+            renderAll();
+          });
+      }
+
+      function applyQueryParamsPrefill() {
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var side = params.get("side");
+          var spec = params.get("spec");
+          var amt = params.get("amountYen");
+          var units = params.get("units");
+          var note = params.get("note");
+          var snapRaw = params.get("snapshot");
+
+          if (side === "BUY" || side === "SELL") {
+            setSide(side);
+          }
+          if (spec === "YEN" || spec === "UNITS") {
+            setSpec(spec);
+          }
+          if (amt && !isNaN(Number(amt)) && Number(amt) > 0) {
+            document.getElementById("inputAmountYen").value = String(Math.round(Number(amt)));
+          }
+          if (units && !isNaN(Number(units)) && Number(units) > 0) {
+            document.getElementById("inputUnits").value = String(Math.round(Number(units)));
+          }
+          if (note) {
+            document.getElementById("inputNote").value = note;
+          }
+          if (snapRaw) {
+            try {
+              pendingSnapshotFromUrl = JSON.parse(snapRaw);
+            } catch (e) {}
+          }
+          updateFormPreview();
+        } catch (e) {}
+      }
+
+      // 初期化
+      var savedKey = safeGetStorage(LS_PASSPHRASE_ITEM);
+      if (savedKey) {
+        document.getElementById("ordersKeyInput").value = savedKey;
+        document.getElementById("keySavedHint").textContent = "合言葉: この端末のブラウザに保存済み";
+      }
+
+      var cachedTriple = safeGetStorage(LS_TRIPLE_CACHE_ITEM);
+      if (cachedTriple) {
+        try {
+          tripleData = JSON.parse(cachedTriple);
+        } catch (e) {}
+      }
+
+      var cachedOrders = safeGetStorage(LS_ORDERS_CACHE_ITEM);
+      if (cachedOrders) {
+        try {
+          var cObj = JSON.parse(cachedOrders);
+          if (cObj && Array.isArray(cObj.orders)) {
+            gasState.orders = cObj.orders;
+            if (cObj.settings) gasState.settings = cObj.settings;
+            setStaleVisual(true);
+          }
+        } catch (e) {}
+      }
+
+      resetFormToDefault();
+      applyQueryParamsPrefill();
+      renderAll();
+
+      // イベント登録
+      document.getElementById("btnSaveKey").addEventListener("click", function () {
+        var k = (document.getElementById("ordersKeyInput").value || "").trim();
+        if (!k) {
+          showBanner("warn", "合言葉を入力してください");
+          return;
+        }
+        safeSetStorage(LS_PASSPHRASE_ITEM, k);
+        document.getElementById("keySavedHint").textContent = "合言葉: この端末のブラウザに保存済み";
+        fetchOrdersFromGas();
+      });
+
+      document.getElementById("btnReloadOrders").addEventListener("click", fetchOrdersFromGas);
+      document.getElementById("btnRetryFetch").addEventListener("click", fetchOrdersFromGas);
+
+      document.getElementById("btnSideBuy").addEventListener("click", function () {
+        setSide("BUY");
+        setSpec("YEN");
+      });
+      document.getElementById("btnSideSell").addEventListener("click", function () {
+        setSide("SELL");
+        setSpec("UNITS");
+      });
+      document.getElementById("btnSpecYen").addEventListener("click", function () {
+        setSpec("YEN");
+      });
+      document.getElementById("btnSpecUnits").addEventListener("click", function () {
+        setSpec("UNITS");
+      });
+
+      ["inputOrderDate", "inputOrderTime", "inputBroker", "inputAmountYen", "inputUnits"].forEach(function (id) {
+        var el = document.getElementById(id);
+        el.addEventListener("input", updateFormPreview);
+        el.addEventListener("change", updateFormPreview);
+      });
+
+      document.getElementById("btnOpenConfirm").addEventListener("click", openConfirmPanel);
+      document.getElementById("btnCloseConfirm").addEventListener("click", function () {
+        document.getElementById("confirmPanel").classList.remove("active");
+      });
+      document.getElementById("btnSubmitOrder").addEventListener("click", submitOrderFromConfirm);
+      document.getElementById("btnResetForm").addEventListener("click", resetFormToDefault);
+      document.getElementById("btnCancelEditMode").addEventListener("click", resetFormToDefault);
+
+      fetchTripleMarketData().then(function () {
+        if (savedKey) {
+          fetchOrdersFromGas();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
