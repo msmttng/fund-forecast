@@ -675,6 +675,85 @@
       color: var(--text-muted);
       line-height: 1.6;
     }
+
+    .standalone-key-hint {
+      display: none;
+      margin-top: 8px;
+      padding: 8px 11px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--accent-bg);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      line-height: 1.45;
+    }
+
+    .qr-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(10, 12, 16, 0.86);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .qr-modal-overlay.active {
+      display: flex;
+    }
+    .qr-modal-dialog {
+      width: 100%;
+      max-width: 440px;
+      background: var(--bg-elevated);
+      color: var(--text);
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .qr-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .qr-modal-title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .qr-video-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-height: 65vh;
+      background: #000000;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+    .qr-video-el {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .qr-modal-status {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-sub);
+      min-height: 1.5em;
+      text-align: center;
+    }
+    .qr-modal-status.warn {
+      color: var(--judge-mild);
+    }
+    .qr-modal-status.error {
+      color: var(--down);
+    }
   </style>
 </head>
 <body>
@@ -707,12 +786,17 @@
         <div class="auth-form-row">
           <label for="ordersKeyInput" class="field-label" style="white-space: nowrap;">合言葉:</label>
           <input type="password" id="ordersKeyInput" class="input-ctrl num" style="max-width: 240px;" placeholder="32文字の合言葉を入力" autocomplete="off">
+          <button type="button" class="btn" id="btnScanQrKey">📷 QRで読み取る</button>
           <button type="button" class="btn btn-primary" id="btnSaveKey">保存して読み込む</button>
           <button type="button" class="btn" id="btnReloadOrders">再読み込み</button>
         </div>
         <div style="font-size: 11.5px; color: var(--text-muted);" id="keySavedHint">
           初回のみ入力（この端末のブラウザに保存されます）
         </div>
+      </div>
+
+      <div class="standalone-key-hint" id="standaloneKeyHint">
+        ホーム画面のアプリは Safari と保存場所が別です。📷 ボタンで QR を読み取ってください
       </div>
 
       <div class="banner-msg" id="authErrorBanner" style="margin-top: 8px;">
@@ -898,6 +982,21 @@
     </div>
   </footer>
 
+  <!-- カメラで合言葉 QR を読み取る全画面モーダル -->
+  <div class="qr-modal-overlay" id="qrModalOverlay" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+    <div class="qr-modal-dialog" id="qrModalDialog">
+      <div class="qr-modal-header">
+        <span class="qr-modal-title" id="qrModalTitle">📷 合言葉の QR を読み取る</span>
+        <button type="button" class="btn btn-sm" id="btnCloseQrModal">閉じる</button>
+      </div>
+      <div class="qr-video-wrap">
+        <video id="qrCameraVideo" class="qr-video-el" playsinline muted autoplay></video>
+      </div>
+      <canvas id="qrScanCanvas" style="display: none;"></canvas>
+      <div class="qr-modal-status" id="qrModalStatus">カメラを起動しています...</div>
+    </div>
+  </div>
+
   <script>
     (function () {
       "use strict";
@@ -905,6 +1004,7 @@
       var DEFAULT_ORDERS_URL = "https://script.google.com/macros/s/AKfycbwaZu4G_PhrOQItGpvqBTwjVer2KeV-1884-c5YUGpaZJV5eOkcBcYL77g9VxoyY6u32g/exec";
       var DATA_BRANCH_URL = "https://raw.githubusercontent.com/msmttng/fund-forecast/data/triple_data.json";
       var DATA_LOCAL_URL = "./triple_data.json";
+      var JSQR_CDN_URL = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";
 
       var LS_PASSPHRASE_ITEM = "triple_orders_passphrase_v1";
       var LS_ORDERS_CACHE_ITEM = "triple_orders_cache_v1";
@@ -2086,12 +2186,12 @@
         } catch (e) {}
       }
 
-      // URL の #key=（合言葉）から合言葉を取り出して localStorage に保存し、即座に URL から # 以下を消去する
-      // ※ # の値は画面にもコンソールにも一切出力しない
-      function consumePassphraseFromHash() {
-        var rawHash = window.location.hash || "";
-        if (!rawHash || rawHash.length <= 1) return false;
+      // ハッシュ文字列（#key=...）から合言葉の値を取り出す共通関数
+      // ※合言葉の値は画面にもコンソールにも一切出力しない
+      function extractPassphraseFromHashPart(rawHash) {
+        if (!rawHash) return "";
         var hashBody = rawHash.charAt(0) === "#" ? rawHash.slice(1) : rawHash;
+        if (!hashBody) return "";
         var extracted = "";
         try {
           var hp = new URLSearchParams(hashBody);
@@ -2106,6 +2206,12 @@
             }
           }
         }
+        return extracted;
+      }
+
+      // URL の #key=（合言葉）から合言葉を取り出して localStorage に保存し、即座に URL から # 以下を消去する
+      function consumePassphraseFromHash() {
+        var extracted = extractPassphraseFromHashPart(window.location.hash || "");
         if (!extracted) return false;
 
         try {
@@ -2119,6 +2225,231 @@
         return true;
       }
 
+      // QR で読み取った文字列から合言葉を判定・抽出する（3パターン判定）
+      // 1. #key= を含む URL ならその値を取り出す
+      // 2. URL でなく、空白なしの 16 文字以上の文字列ならそのまま合言葉とみなす
+      // 3. どちらでもなければ「合言葉の QR ではありません」を返す
+      function parseQrPassphraseText(rawText) {
+        var s = String(rawText || "").trim();
+        if (!s) {
+          return { ok: false, message: "合言葉の QR ではありません" };
+        }
+        var isUrlLike = /^[a-z][a-z0-9+.-]*:\/\//i.test(s);
+        var hashIdx = s.indexOf("#");
+        if (hashIdx >= 0) {
+          var fromHash = extractPassphraseFromHashPart(s.slice(hashIdx));
+          if (fromHash && !/\s/.test(fromHash)) {
+            return { ok: true, key: fromHash, source: "url_hash" };
+          }
+          return { ok: false, message: "合言葉の QR ではありません" };
+        }
+        if (isUrlLike) {
+          return { ok: false, message: "合言葉の QR ではありません" };
+        }
+        if (!/\s/.test(s) && s.length >= 16) {
+          return { ok: true, key: s, source: "raw_key" };
+        }
+        return { ok: false, message: "合言葉の QR ではありません" };
+      }
+
+      function isStandaloneApp() {
+        try {
+          if (window.navigator && window.navigator.standalone === true) return true;
+          if (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) return true;
+        } catch (e) {}
+        return false;
+      }
+
+      function updateStandaloneKeyHint() {
+        var hintEl = document.getElementById("standaloneKeyHint");
+        if (!hintEl) return;
+        var hasSaved = Boolean((safeGetStorage(LS_PASSPHRASE_ITEM) || "").trim());
+        hintEl.style.display = (!hasSaved && isStandaloneApp()) ? "block" : "none";
+      }
+
+      function applySavedKeyUiAndFetch(keyVal) {
+        safeSetStorage(LS_PASSPHRASE_ITEM, keyVal);
+        document.getElementById("ordersKeyInput").value = "";
+        document.getElementById("ordersKeyInput").placeholder = "合言葉は保存済み（変更時のみ入力）";
+        document.getElementById("keySavedHint").textContent = "合言葉: この端末のブラウザに保存済み";
+        updateStandaloneKeyHint();
+        showBanner("ok", "合言葉を保存しました", 4000);
+        fetchOrdersFromGas();
+      }
+
+      // jsQR の遅延読み込み（ボタンを押したときに初めて読み込む）
+      var jsQrLoadPromise = null;
+      function loadJsQrOnce() {
+        if (typeof window.jsQR === "function") {
+          return Promise.resolve(window.jsQR);
+        }
+        if (jsQrLoadPromise) {
+          return jsQrLoadPromise;
+        }
+        jsQrLoadPromise = new Promise(function (resolve, reject) {
+          var script = document.createElement("script");
+          script.src = JSQR_CDN_URL;
+          script.async = true;
+          script.onload = function () {
+            if (typeof window.jsQR === "function") {
+              resolve(window.jsQR);
+            } else {
+              jsQrLoadPromise = null;
+              reject(new Error("jsqr_load_error"));
+            }
+          };
+          script.onerror = function () {
+            jsQrLoadPromise = null;
+            reject(new Error("jsqr_load_error"));
+          };
+          document.head.appendChild(script);
+        });
+        return jsQrLoadPromise;
+      }
+
+      var qrMediaStream = null;
+      var qrScanRafId = null;
+      var qrScanActive = false;
+
+      function stopQrCamera() {
+        qrScanActive = false;
+        if (qrScanRafId) {
+          cancelAnimationFrame(qrScanRafId);
+          qrScanRafId = null;
+        }
+        if (qrMediaStream) {
+          try {
+            qrMediaStream.getTracks().forEach(function (track) {
+              try {
+                track.stop();
+              } catch (e) {}
+            });
+          } catch (e) {}
+          qrMediaStream = null;
+        }
+        var video = document.getElementById("qrCameraVideo");
+        if (video) {
+          try {
+            video.pause();
+            video.srcObject = null;
+          } catch (e) {}
+        }
+      }
+
+      function closeQrModal() {
+        stopQrCamera();
+        var overlay = document.getElementById("qrModalOverlay");
+        if (overlay) {
+          overlay.classList.remove("active");
+        }
+      }
+
+      function processQrImageData(imgData) {
+        if (!imgData || typeof window.jsQR !== "function") return false;
+        var code = window.jsQR(imgData.data, imgData.width, imgData.height, {
+          inversionAttempts: "dontInvert"
+        });
+        if (!code || !code.data) return false;
+        var parsed = parseQrPassphraseText(code.data);
+        if (parsed.ok && parsed.key) {
+          closeQrModal();
+          applySavedKeyUiAndFetch(parsed.key);
+          return true;
+        }
+        var stEl = document.getElementById("qrModalStatus");
+        if (stEl) {
+          stEl.className = "qr-modal-status warn";
+          stEl.textContent = parsed.message || "合言葉の QR ではありません";
+        }
+        return false;
+      }
+
+      function tickQrVideoScan() {
+        if (!qrScanActive) return;
+        var video = document.getElementById("qrCameraVideo");
+        var canvas = document.getElementById("qrScanCanvas");
+        if (video && canvas && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          var ctx = canvas.getContext("2d", { willReadFrequently: true });
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          if (processQrImageData(imgData)) {
+            return;
+          }
+        }
+        qrScanRafId = requestAnimationFrame(tickQrVideoScan);
+      }
+
+      function getCameraErrorJapanese(err) {
+        var name = (err && err.name) || "";
+        var msg = (err && err.message) || "";
+        if (msg === "jsqr_load_error") {
+          return "QR読み取りライブラリの読み込みに失敗しました（通信状態を確認してください）";
+        }
+        if (name === "NotAllowedError" || name === "PermissionDeniedError" || name === "SecurityError") {
+          return "カメラの使用が許可されませんでした。ブラウザや端末の設定でカメラを許可してください";
+        }
+        if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+          return "カメラが見つかりませんでした";
+        }
+        if (name === "NotReadableError" || name === "TrackStartError") {
+          return "カメラを起動できませんでした（他のアプリで使用中の可能性があります）";
+        }
+        return "カメラが使えないため読み取りを終了しました（カメラ非対応または未許可です）";
+      }
+
+      function openQrScannerModal() {
+        stopQrCamera();
+        var overlay = document.getElementById("qrModalOverlay");
+        var stEl = document.getElementById("qrModalStatus");
+        overlay.classList.add("active");
+        stEl.className = "qr-modal-status";
+        stEl.textContent = "カメラを起動しています...";
+
+        if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") {
+          closeQrModal();
+          showBanner("error", "この環境はカメラ機能に非対応のため読み取りできません");
+          return;
+        }
+
+        Promise.all([
+          loadJsQrOnce(),
+          navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" },
+            audio: false
+          })
+        ])
+          .then(function (results) {
+            var stream = results[1];
+            if (!overlay.classList.contains("active")) {
+              stream.getTracks().forEach(function (t) {
+                try { t.stop(); } catch (e) {}
+              });
+              return;
+            }
+            qrMediaStream = stream;
+            var video = document.getElementById("qrCameraVideo");
+            video.setAttribute("playsinline", "true");
+            video.muted = true;
+            video.autoplay = true;
+            video.srcObject = stream;
+            var playProm = video.play();
+            if (playProm && typeof playProm.catch === "function") {
+              playProm.catch(function () {});
+            }
+            stEl.className = "qr-modal-status";
+            stEl.textContent = "合言葉の QR コードを枠内に映してください";
+            qrScanActive = true;
+            qrScanRafId = requestAnimationFrame(tickQrVideoScan);
+          })
+          .catch(function (err) {
+            var reasonJp = getCameraErrorJapanese(err);
+            closeQrModal();
+            showBanner("error", reasonJp);
+          });
+      }
+
       // 初期化
       var savedFromHash = consumePassphraseFromHash();
       var savedKey = safeGetStorage(LS_PASSPHRASE_ITEM);
@@ -2127,6 +2458,7 @@
         document.getElementById("ordersKeyInput").placeholder = "合言葉は保存済み（変更時のみ入力）";
         document.getElementById("keySavedHint").textContent = "合言葉: この端末のブラウザに保存済み";
       }
+      updateStandaloneKeyHint();
       if (savedFromHash) {
         showBanner("ok", "合言葉を保存しました", 5000);
       }
@@ -2163,13 +2495,18 @@
           return;
         }
         if (typed) {
-          safeSetStorage(LS_PASSPHRASE_ITEM, typed);
-          document.getElementById("ordersKeyInput").value = "";
-          document.getElementById("ordersKeyInput").placeholder = "合言葉は保存済み（変更時のみ入力）";
-          document.getElementById("keySavedHint").textContent = "合言葉: この端末のブラウザに保存済み";
-          showBanner("ok", "合言葉を保存しました", 4000);
+          applySavedKeyUiAndFetch(typed);
+        } else {
+          fetchOrdersFromGas();
         }
-        fetchOrdersFromGas();
+      });
+
+      document.getElementById("btnScanQrKey").addEventListener("click", openQrScannerModal);
+      document.getElementById("btnCloseQrModal").addEventListener("click", closeQrModal);
+      document.getElementById("qrModalOverlay").addEventListener("click", function (e) {
+        if (e.target === document.getElementById("qrModalOverlay")) {
+          closeQrModal();
+        }
       });
 
       document.getElementById("btnReloadOrders").addEventListener("click", fetchOrdersFromGas);
