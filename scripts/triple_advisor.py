@@ -723,7 +723,7 @@ def compute_balance_from_orders(
         now_jst = datetime.datetime.now(JST)
     budget_yen = int(round(float(settings.get("budgetYen", 140000))))
     plan_mode = "rebalance" if str(settings.get("planMode") or "").strip() == "rebalance" else "tsumitate"
-    monthly_yen = int(round(float(settings.get("monthlyYen", 50000))))
+    monthly_yen = int(round(float(settings.get("monthlyYen", 20000))))
     monthly_day = int(round(float(settings.get("monthlyDay", 10))))
     if monthly_day < 1 or monthly_day > 28:
         monthly_day = 10
@@ -1851,7 +1851,7 @@ def build_discord_payload(
     title = kind_titles.get(kind, f"トリプルNASDAQ 通知（{score}/100点）")
 
     if is_tsumitate_mode:
-        monthly_yen = int(bal_sum.get("monthlyYen") or 50000)
+        monthly_yen = int(bal_sum.get("monthlyYen") or 20000)
         monthly_day = int(bal_sum.get("monthlyDay") or 10)
         ts_status = str(bal_sum.get("tsumitateStatus") or "未注文")
         ts_info = bal_sum.get("thisMonthTsumitateOrder")

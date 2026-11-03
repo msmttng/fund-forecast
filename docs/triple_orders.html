@@ -898,11 +898,11 @@
     <section class="card tsumitate-card" id="tsumitateCardSection" aria-label="今月の積立">
       <div class="card-title">
         <span>今月の積立</span>
-        <span class="card-subtitle num" id="tsumitateCardSubtitle">毎月10日・50,000円</span>
+        <span class="card-subtitle num" id="tsumitateCardSubtitle">毎月10日・20,000円</span>
       </div>
       <div class="tsumitate-body">
         <div class="tsumitate-info">
-          <div class="tsumitate-main-text num" id="tsumitateMainText">次の積立：11/10（火） 50,000円</div>
+          <div class="tsumitate-main-text num" id="tsumitateMainText">次の積立：11/10（火） 20,000円</div>
           <div class="tsumitate-sub-text num" id="tsumitateSubText">毎月10日（15:30 締切）</div>
           <div class="tsumitate-est-text num" id="tsumitateEstUnitsText"></div>
         </div>
@@ -968,7 +968,7 @@
       <!-- 運用モード・積立額・積立日・運用枠の設定変更バー（4-2） -->
       <div style="margin-top: 10px; padding: 8px 10px; background: var(--bg-subtle); border: 1px solid var(--line); border-radius: 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px;">
         <span style="color: var(--text-sub);" id="budgetSettingNoteText">
-          ⚙ <strong>運用設定</strong>：<span id="currentPlanModeLabel">毎月積立モード</span>（毎月<span class="num" id="currentMonthlyDaySpan">10</span>日・<span class="num" id="currentMonthlyYenSpan">50,000</span>円）
+          ⚙ <strong>運用設定</strong>：<span id="currentPlanModeLabel">毎月積立モード</span>（毎月<span class="num" id="currentMonthlyDaySpan">10</span>日・<span class="num" id="currentMonthlyYenSpan">20,000</span>円）
           <span id="currentBudgetSummaryWrap" style="display: none;"> ／ 運用枠: <span class="num" id="currentBudgetSpan">140,000</span> 円</span>
         </span>
         <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
@@ -989,8 +989,8 @@
 
           <div class="field-group">
             <label class="field-label" for="inputMonthlyYen">毎月の積立額（円）</label>
-            <input type="number" id="inputMonthlyYen" class="input-ctrl num" min="1000" step="1000" placeholder="50000">
-            <div class="field-hint">初期値 50,000円（余裕があれば増やせます）</div>
+            <input type="number" id="inputMonthlyYen" class="input-ctrl num" min="1000" step="1000" placeholder="20000">
+            <div class="field-hint">初期値 20,000円（余裕があれば増やせます）</div>
           </div>
 
           <div class="field-group">
@@ -1079,7 +1079,7 @@
 
         <div class="field-group" id="amountFieldWrap">
           <label class="field-label" for="inputAmountYen">注文金額（円）</label>
-          <input type="number" id="inputAmountYen" class="input-ctrl num" min="100" step="1000" placeholder="例: 50000">
+          <input type="number" id="inputAmountYen" class="input-ctrl num" min="100" step="1000" placeholder="例: 20000">
           <div class="field-hint" id="amountEstSub">予想基準価額での見込み口数を自動試算</div>
         </div>
 
@@ -1198,7 +1198,7 @@
           minTradeYen: 3000,
           defaultBroker: "SBI",
           planMode: "tsumitate",
-          monthlyYen: 50000,
+          monthlyYen: 20000,
           monthlyDay: 10,
           tsumitateStart: "2026-11",
           brokers: { "SBI": "15:30", "楽天": "15:30", "マネックス": "15:30", "松井": "15:30" }
@@ -1467,7 +1467,7 @@
       // 4-2 & 4-3: 今月の積立の状態・締め切り・次の営業日を計算
       function computeTsumitateScheduleState(orders, settings, optNowParts) {
         var nowParts = optNowParts || getNowJstParts();
-        var monthlyYen = Number(settings && settings.monthlyYen !== undefined ? settings.monthlyYen : 50000);
+        var monthlyYen = Number(settings && settings.monthlyYen !== undefined ? settings.monthlyYen : 20000);
         var monthlyDay = Number(settings && settings.monthlyDay !== undefined ? settings.monthlyDay : 10);
         if (isNaN(monthlyDay) || monthlyDay < 1 || monthlyDay > 28) monthlyDay = 10;
         var tsumitateStart = (settings && settings.tsumitateStart) ? String(settings.tsumitateStart).trim() : "2026-11";
@@ -1841,7 +1841,7 @@
         var provNav = Number(f.provisionalExecNav || f.launchpadNav || latestNav || 0);
         var dynTargetPct = Number(reb.dynamicTargetWeightPct || (gasState.settings && gasState.settings.baseTargetPct) || 50);
         var planMode = (gasState.settings && gasState.settings.planMode === "rebalance") ? "rebalance" : "tsumitate";
-        var monthlyYen = Number((gasState.settings && gasState.settings.monthlyYen) || 50000);
+        var monthlyYen = Number((gasState.settings && gasState.settings.monthlyYen) || 20000);
         var monthlyDay = Number((gasState.settings && gasState.settings.monthlyDay) || 10);
 
         document.getElementById("currentPlanModeLabel").textContent =
@@ -2359,7 +2359,7 @@
 
       function prefillTsumitateOrder() {
         var nowParts = getNowJstParts();
-        var monthlyYen = Number((gasState.settings && gasState.settings.monthlyYen) || 50000);
+        var monthlyYen = Number((gasState.settings && gasState.settings.monthlyYen) || 20000);
         document.getElementById("editOrderId").value = "";
         document.getElementById("formSectionTitle").textContent = "注文を記録する（今月の積立）";
         document.getElementById("btnCancelEditMode").style.display = "none";
@@ -3015,7 +3015,7 @@
         var wrap = document.getElementById("budgetEditInline");
         var s = gasState.settings || {};
         document.getElementById("inputPlanMode").value = s.planMode === "rebalance" ? "rebalance" : "tsumitate";
-        document.getElementById("inputMonthlyYen").value = String(s.monthlyYen || 50000);
+        document.getElementById("inputMonthlyYen").value = String(s.monthlyYen || 20000);
         document.getElementById("inputMonthlyDay").value = String(s.monthlyDay || 10);
         document.getElementById("inputBudgetYen").value = String(s.budgetYen || 140000);
         wrap.classList.add("active");

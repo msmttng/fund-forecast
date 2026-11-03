@@ -1580,7 +1580,7 @@
           minTradeYen: 3000,
           defaultBroker: "SBI",
           planMode: "tsumitate",
-          monthlyYen: 50000,
+          monthlyYen: 20000,
           monthlyDay: 10,
           tsumitateStart: "2026-11",
           brokers: { "SBI": "15:30", "楽天": "15:30", "マネックス": "15:30", "松井": "15:30" }
@@ -1837,7 +1837,7 @@
       // 4-2 & 4-3: 今月の積立の状態・締め切り・次の営業日を計算
       function computeTsumitateScheduleState(orders, settings, optNowParts) {
         var nowParts = optNowParts || getNowJstParts();
-        var monthlyYen = Number(settings && settings.monthlyYen !== undefined ? settings.monthlyYen : 50000);
+        var monthlyYen = Number(settings && settings.monthlyYen !== undefined ? settings.monthlyYen : 20000);
         var monthlyDay = Number(settings && settings.monthlyDay !== undefined ? settings.monthlyDay : 10);
         if (isNaN(monthlyDay) || monthlyDay < 1 || monthlyDay > 28) monthlyDay = 10;
         var tsumitateStart = (settings && settings.tsumitateStart) ? String(settings.tsumitateStart).trim() : "2026-11";
@@ -2481,7 +2481,7 @@
 
         var planMode = (gasState.settings && gasState.settings.planMode === "rebalance") ? "rebalance" : "tsumitate";
         var isTsumitate = planMode === "tsumitate";
-        var monthlyYen = Number((gasState.settings && gasState.settings.monthlyYen) || 50000);
+        var monthlyYen = Number((gasState.settings && gasState.settings.monthlyYen) || 20000);
         var estMonthlyUnits = provNav > 0 ? Math.floor((monthlyYen * 10000) / provNav) : 0;
 
         // モード別の表示切り替え（積立モードでは 50:50 比率バーや待機キャッシュ試算・比率設定を非表示にする）
@@ -3723,7 +3723,7 @@
         var sig = (tripleData && tripleData.signal) || {};
         var f = (tripleData && tripleData.fund) || {};
         var planMode = (gasState.settings && gasState.settings.planMode === "rebalance") ? "rebalance" : "tsumitate";
-        var monthlyYen = Number((gasState.settings && gasState.settings.monthlyYen) || 50000);
+        var monthlyYen = Number((gasState.settings && gasState.settings.monthlyYen) || 20000);
 
         if (planMode === "tsumitate") {
           var tsSnap = {
