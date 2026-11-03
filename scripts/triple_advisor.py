@@ -715,6 +715,7 @@ def compute_balance_from_orders(
     sorted_orders = sorted([o for o in orders if isinstance(o, dict)], key=_sort_key)
 
     settled_units = 0
+    cost_basis_yen_total = 0  # 保有分の取得金額合計（円）
     avg_cost_nav = 0  # 1万口あたり移動平均取得単価（円）
     settled_buy_yen_total = 0
     settled_sell_gross_yen_total = 0
@@ -746,10 +747,9 @@ def compute_balance_from_orders(
                 if e_yen <= 0 and o.get("amountYen"):
                     e_yen = int(round(float(o["amountYen"])))
                 if e_units > 0 and e_yen > 0:
-                    prev_cost = (settled_units * avg_cost_nav) / 10000.0
-                    new_cost = prev_cost + e_yen
+                    cost_basis_yen_total += e_yen
                     settled_units += e_units
-                    avg_cost_nav = int(round((new_cost * 10000.0) / settled_units)) if settled_units > 0 else 0
+                    avg_cost_nav = int(round((cost_basis_yen_total * 10000.0) / settled_units)) if settled_units > 0 else 0
                     settled_buy_yen_total += e_yen
             elif side == "SELL":
                 if e_units <= 0:
@@ -767,6 +767,7 @@ def compute_balance_from_orders(
                     net_proceeds_yen = e_yen - est_tax_yen
 
                     settled_units = max(0, settled_units - sell_u)
+                    cost_basis_yen_total = max(0, cost_basis_yen_total - cost_basis_yen) if settled_units > 0 else 0
                     if settled_units == 0:
                         avg_cost_nav = 0
                     settled_sell_gross_yen_total += e_yen
@@ -810,6 +811,7 @@ def compute_balance_from_orders(
     return {
         "budgetYen": budget_yen,
         "holdingUnits": settled_units,
+        "costBasisYen": cost_basis_yen_total,
         "avgCostNav": avg_cost_nav,
         "settledCashYen": settled_cash_yen,
         "cashYen": cash_yen,
@@ -861,7 +863,7 @@ def _solve_single_mode_rebalance(
     fomc_hit: bool,
 ) -> Dict[str, Any]:
     """指定された目標投信比率に対するリバランス売買計画（金額指定買い増し／口数指定利確売却／ホールド）を計算する。"""
-    cur_fund_yen = int(round(holding_units * prov_nav / 10000.0))
+    cur_fund_yen = int(math.floor(holding_units * prov_nav / 10000.0))
     total_yen = cur_fund_yen + cash_yen
     cur_weight_pct = round((cur_fund_yen / total_yen * 100.0), 2) if total_yen > 0 else 0.0
     target_fund_yen = int(round(total_yen * (target_pct / 100.0)))
@@ -980,15 +982,15 @@ def compute_portfolio_rebalance(
     band_pt = float(portfolio_cfg.get("rebalanceBandPt", 4.0))
     min_trade_yen = int(portfolio_cfg.get("minTradeYen", 3000))
 
-    d0_fund_yen = int(round(holding_units * nav_d0 / 10000.0))
+    d0_fund_yen = int(math.floor(holding_units * nav_d0 / 10000.0))
     d0_total_yen = d0_fund_yen + cash_yen
     d0_weight_pct = round((d0_fund_yen / d0_total_yen * 100.0), 2) if d0_total_yen > 0 else 0.0
 
-    lp_fund_yen = int(round(holding_units * launchpad_nav / 10000.0))
+    lp_fund_yen = int(math.floor(holding_units * launchpad_nav / 10000.0))
     lp_total_yen = lp_fund_yen + cash_yen
     lp_weight_pct = round((lp_fund_yen / lp_total_yen * 100.0), 2) if lp_total_yen > 0 else 0.0
 
-    cur_fund_yen = int(round(holding_units * prov_nav / 10000.0))
+    cur_fund_yen = int(math.floor(holding_units * prov_nav / 10000.0))
     cur_total_yen = cur_fund_yen + cash_yen
     cur_weight_pct = round((cur_fund_yen / cur_total_yen * 100.0), 2) if cur_total_yen > 0 else 0.0
 

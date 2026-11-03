@@ -736,33 +736,48 @@
         </div>
 
         <div class="bal-item">
-          <div class="bal-lbl">評価額（予想基準価額 ／ 最新確定基準価額）</div>
-          <div class="bal-val num" id="balEvalProv">予想: --- 円</div>
-          <div class="bal-sub num" id="balEvalLatest">最新確定: --- 円</div>
+          <div class="bal-lbl">評価額（最新確定基準価額 ／ 予想基準価額）</div>
+          <div class="bal-val num" id="balEvalProv">最新確定: --- 円</div>
+          <div class="bal-sub num" id="balEvalLatest">予想: --- 円</div>
         </div>
 
         <div class="bal-item">
           <div class="bal-lbl">平均取得単価（1万口あたり・移動平均）</div>
           <div class="bal-val num" id="balAvgCost">--- 円</div>
-          <div class="bal-sub num" id="balCostBasisSub">累計買付原価: --- 円</div>
+          <div class="bal-sub num" id="balCostBasisSub">取得金額: --- 円</div>
         </div>
 
         <div class="bal-item">
-          <div class="bal-lbl">含み損益（予想基準価額 ／ 最新確定基準価額）</div>
+          <div class="bal-lbl">含み損益（最新確定基準価額 ／ 予想基準価額）</div>
           <div class="bal-val num" id="balPnlProv">--- 円 (--%)</div>
-          <div class="bal-sub num" id="balPnlLatest">最新確定比: --- 円 (--%)</div>
+          <div class="bal-sub num" id="balPnlLatest">予想価額比: --- 円 (--%)</div>
         </div>
 
         <div class="bal-item">
           <div class="bal-lbl">現金（待機キャッシュ・約定待ち買付控除後）</div>
           <div class="bal-val num" id="balCashYen">--- 円</div>
-          <div class="bal-sub num" id="balCashSub">運用枠: --- 円</div>
+          <div class="bal-sub num" id="balCashSub">運用枠: --- 円（運用枠は設定で変更できます）</div>
         </div>
 
         <div class="bal-item">
           <div class="bal-lbl">投信比率（予想ベース実質 ／ 最新確定ベース）</div>
           <div class="bal-val num" id="balWeightProv">--- %</div>
           <div class="bal-sub num" id="balWeightSub">最新確定: --- % ｜ 動的目標: --- %</div>
+        </div>
+      </div>
+
+      <!-- 運用枠（settings.budgetYen）の設定変更バー -->
+      <div style="margin-top: 10px; padding: 8px 10px; background: var(--bg-subtle); border: 1px solid var(--line); border-radius: 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px;">
+        <span style="color: var(--text-sub);" id="budgetSettingNoteText">
+          ⚙ <strong>運用枠は設定で変更できます</strong>（現在: <span class="num" id="currentBudgetSpan">140,000</span> 円 ／ スプレッドシート <code>settings</code> の <code>budgetYen</code> と連動）
+        </span>
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-sm" id="btnToggleBudgetEdit">運用枠を変更</button>
+          <div id="budgetEditInline" style="display: none; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <input type="number" id="inputBudgetYen" class="input-ctrl num" style="width: 130px; padding: 4px 8px; font-size: 12.5px;" min="10000" step="10000" placeholder="140000">
+            <button type="button" class="btn btn-sm btn-primary" id="btnSaveBudgetYen">保存</button>
+            <button type="button" class="btn btn-sm" id="btnCancelBudgetEdit">閉じる</button>
+          </div>
         </div>
       </div>
 
@@ -1151,6 +1166,7 @@
         });
 
         var settledUnits = 0;
+        var costBasisYenTotal = 0;
         var avgCostNav = 0;
         var settledBuyYenTotal = 0;
         var settledSellGrossYenTotal = 0;
@@ -1183,10 +1199,9 @@
                 eYen = Math.round(Number(o.amountYen));
               }
               if (eUnits > 0 && eYen > 0) {
-                var prevCost = (settledUnits * avgCostNav) / 10000;
-                var newCost = prevCost + eYen;
+                costBasisYenTotal += eYen;
                 settledUnits += eUnits;
-                avgCostNav = settledUnits > 0 ? Math.round((newCost * 10000) / settledUnits) : 0;
+                avgCostNav = settledUnits > 0 ? Math.round((costBasisYenTotal * 10000) / settledUnits) : 0;
                 settledBuyYenTotal += eYen;
               }
             } else if (side === "SELL") {
@@ -1205,6 +1220,7 @@
                 var netProceedsYen = eYen - estTaxYen;
 
                 settledUnits = Math.max(0, settledUnits - sellU);
+                costBasisYenTotal = settledUnits > 0 ? Math.max(0, costBasisYenTotal - costBasisYen) : 0;
                 if (settledUnits === 0) avgCostNav = 0;
 
                 settledSellGrossYenTotal += eYen;
@@ -1254,6 +1270,7 @@
         return {
           budgetYen: budgetYen,
           holdingUnits: settledUnits,
+          costBasisYen: costBasisYenTotal,
           avgCostNav: avgCostNav,
           settledCashYen: settledCashYen,
           cashYen: cashYen,
@@ -1312,20 +1329,24 @@
         if (!gasState.loaded && (!gasState.orders || gasState.orders.length === 0)) {
           document.getElementById("balHoldingUnits").textContent = "--- 口";
           document.getElementById("balPendingUnitsNote").textContent = "合言葉を入力すると注文記録から自動計算されます";
-          document.getElementById("balEvalProv").textContent = "予想: --- 円";
-          document.getElementById("balEvalLatest").textContent = "最新確定: --- 円";
+          document.getElementById("balEvalProv").textContent = "最新確定: --- 円";
+          document.getElementById("balEvalLatest").textContent = "予想: --- 円";
           document.getElementById("balAvgCost").textContent = "--- 円";
-          document.getElementById("balCostBasisSub").textContent = "累計買付原価: --- 円";
+          document.getElementById("balCostBasisSub").textContent = "取得金額: --- 円";
           document.getElementById("balPnlProv").textContent = "--- 円 (--%)";
-          document.getElementById("balPnlLatest").textContent = "最新確定比: --- 円 (--%)";
+          document.getElementById("balPnlLatest").textContent = "予想価額比: --- 円 (--%)";
           document.getElementById("balCashYen").textContent = "--- 円";
-          document.getElementById("balCashSub").textContent = "合言葉を入力して記録を読み込んでください";
+          document.getElementById("balCashSub").textContent = "合言葉を入力して記録を読み込んでください（運用枠は設定で変更できます）";
           document.getElementById("balWeightProv").textContent = "--- %";
           document.getElementById("balWeightSub").textContent = "動的目標: " + dynTargetPct.toFixed(1) + "%";
           return null;
         }
 
         var bal = computeBalanceFromOrders(gasState.orders, gasState.settings, provNav);
+        var curBudgetSpan = document.getElementById("currentBudgetSpan");
+        if (curBudgetSpan && bal.budgetYen > 0) {
+          curBudgetSpan.textContent = formatInt(bal.budgetYen);
+        }
 
         document.getElementById("balHoldingUnits").textContent = formatInt(bal.holdingUnits) + " 口";
         if (bal.pendingBuyEstUnits > 0 || bal.pendingSellUnits > 0) {
@@ -1342,43 +1363,44 @@
           document.getElementById("balPendingUnitsNote").textContent = "約定待ち注文: なし";
         }
 
-        var evalLatest = latestNav > 0 ? Math.round((bal.holdingUnits * latestNav) / 10000) : 0;
-        var evalProv = provNav > 0 ? Math.round((bal.holdingUnits * provNav) / 10000) : 0;
-        var evalEffProv = provNav > 0 ? Math.round((bal.effectiveHoldingUnits * provNav) / 10000) : 0;
+        // 評価額は「保有口数 × 基準価額 ÷ 10,000（切り捨て）」で算出（SBI証券の表示と一致）
+        var evalLatest = latestNav > 0 ? Math.floor((bal.holdingUnits * latestNav) / 10000) : 0;
+        var evalProv = provNav > 0 ? Math.floor((bal.holdingUnits * provNav) / 10000) : 0;
+        var evalEffProv = provNav > 0 ? Math.floor((bal.effectiveHoldingUnits * provNav) / 10000) : 0;
 
         document.getElementById("balEvalProv").textContent =
-          "予想: " + formatInt(evalProv) + " 円" +
-          (bal.pendingBuyEstUnits > 0 || bal.pendingSellUnits > 0 ? ("（見込み込 " + formatInt(evalEffProv) + "円）") : "");
+          (f.navDateLabel || "11/2") + "確定: " + formatInt(evalLatest) + " 円";
         document.getElementById("balEvalLatest").textContent =
-          "最新確定(" + (f.navDateLabel || "前回") + "): " + formatInt(evalLatest) + " 円";
+          "予想(" + formatInt(provNav) + "円): " + formatInt(evalProv) + " 円" +
+          (bal.pendingBuyEstUnits > 0 || bal.pendingSellUnits > 0 ? ("（見込み込 " + formatInt(evalEffProv) + "円）") : "");
 
         document.getElementById("balAvgCost").textContent =
           bal.avgCostNav > 0 ? (formatInt(bal.avgCostNav) + " 円") : "--- 円";
-        var curCostBasis = Math.round((bal.holdingUnits * bal.avgCostNav) / 10000);
+        var curCostBasis = bal.costBasisYen > 0 ? bal.costBasisYen : Math.round((bal.holdingUnits * bal.avgCostNav) / 10000);
         document.getElementById("balCostBasisSub").textContent =
-          "保有取得原価: " + formatInt(curCostBasis) + " 円";
+          "取得金額: " + formatInt(curCostBasis) + " 円";
 
-        var pnlProv = evalProv - curCostBasis;
-        var pnlProvPct = curCostBasis > 0 ? ((pnlProv / curCostBasis) * 100) : 0;
         var pnlLatest = evalLatest - curCostBasis;
         var pnlLatestPct = curCostBasis > 0 ? ((pnlLatest / curCostBasis) * 100) : 0;
+        var pnlProv = evalProv - curCostBasis;
+        var pnlProvPct = curCostBasis > 0 ? ((pnlProv / curCostBasis) * 100) : 0;
 
         var pnlProvEl = document.getElementById("balPnlProv");
-        pnlProvEl.className = "bal-val num " + (pnlProv > 0 ? "chg-up" : (pnlProv < 0 ? "chg-down" : "chg-flat"));
-        pnlProvEl.textContent = formatSignedInt(pnlProv) + " 円 (" + formatSignedPct(pnlProvPct) + ")";
+        pnlProvEl.className = "bal-val num " + (pnlLatest > 0 ? "chg-up" : (pnlLatest < 0 ? "chg-down" : "chg-flat"));
+        pnlProvEl.textContent = formatSignedInt(pnlLatest) + " 円 (" + formatSignedPct(pnlLatestPct) + ")";
 
         var pnlLatEl = document.getElementById("balPnlLatest");
-        pnlLatEl.className = "bal-sub num " + (pnlLatest > 0 ? "chg-up" : (pnlLatest < 0 ? "chg-down" : "chg-flat"));
-        pnlLatEl.textContent = "最新確定比: " + formatSignedInt(pnlLatest) + " 円 (" + formatSignedPct(pnlLatestPct) + ")";
+        pnlLatEl.className = "bal-sub num " + (pnlProv > 0 ? "chg-up" : (pnlProv < 0 ? "chg-down" : "chg-flat"));
+        pnlLatEl.textContent = "予想価額比: " + formatSignedInt(pnlProv) + " 円 (" + formatSignedPct(pnlProvPct) + ")";
 
         document.getElementById("balCashYen").textContent = formatInt(bal.cashYen) + " 円";
         if (bal.pendingBuyYen > 0) {
           document.getElementById("balCashSub").textContent =
-            "確定待機残 " + formatInt(bal.settledCashYen) + "円 − 約定待ち買付 " + formatInt(bal.pendingBuyYen) + "円（運用枠 " + formatInt(bal.budgetYen) + "円）";
+            "確定待機残 " + formatInt(bal.settledCashYen) + "円 − 約定待ち買付 " + formatInt(bal.pendingBuyYen) + "円（運用枠 " + formatInt(bal.budgetYen) + "円 ※運用枠は設定で変更できます）";
         } else {
           document.getElementById("balCashSub").textContent =
-            "運用枠: " + formatInt(bal.budgetYen) + " 円" +
-            (bal.settledSellTaxYenTotal > 0 ? ("（累計概算税控除 " + formatInt(bal.settledSellTaxYenTotal) + "円）") : "");
+            "運用枠: " + formatInt(bal.budgetYen) + " 円（運用枠は設定で変更できます）" +
+            (bal.settledSellTaxYenTotal > 0 ? ("・累計概算税控除 " + formatInt(bal.settledSellTaxYenTotal) + "円") : "");
         }
 
         var totEffProv = evalEffProv + Math.max(0, bal.cashYen);
@@ -1519,8 +1541,13 @@
           var badges = document.createElement("div");
           badges.className = "order-badges";
 
+          var isInitBalRow = (o.id === "o_20261030_150000_init") || (o.snapshot && String(o.snapshot).indexOf("isInitialBalance") >= 0);
+
           var stBadge = document.createElement("span");
-          if (st === "pending") {
+          if (isInitBalRow && st === "settled") {
+            stBadge.className = "badge badge-settled";
+            stBadge.textContent = "✓ 初期保有残高";
+          } else if (st === "pending") {
             stBadge.className = "badge badge-pending";
             stBadge.textContent = "⏳ 約定待ち";
           } else if (st === "settled") {
@@ -1534,7 +1561,11 @@
 
           var sideBadge = document.createElement("span");
           sideBadge.className = "badge " + (side === "BUY" ? "badge-buy" : "badge-sell");
-          sideBadge.textContent = (side === "BUY" ? "買付" : "売却") + "（" + (spec === "YEN" ? "金額指定" : "口数指定") + "）";
+          if (isInitBalRow) {
+            sideBadge.textContent = "SBI保有残高（起点）";
+          } else {
+            sideBadge.textContent = (side === "BUY" ? "買付" : "売却") + "（" + (spec === "YEN" ? "金額指定" : "口数指定") + "）";
+          }
           badges.appendChild(sideBadge);
 
           var brokerSpan = document.createElement("span");
@@ -1593,34 +1624,41 @@
             body.appendChild(d);
           }
 
-          addCell("申込日時", formatDateLabel(o.orderDate) + " " + (o.orderTime || "--:--"));
-          addCell("約定予定日／約定日", formatDateLabel(o.execDate));
-
-          if (spec === "YEN") {
-            addCell("注文金額", formatInt(o.amountYen) + " 円");
+          if (isInitBalRow && st === "settled") {
+            addCell("基準日", formatDateLabel(o.execDate || o.orderDate) + " 時点");
+            addCell("保有口数", formatInt(o.execUnits || o.units) + " 口");
+            addCell("取得金額（原価）", formatInt(o.execYen || o.amountYen) + " 円");
+            addCell("平均取得単価（1万口）", formatInt(o.execNav) + " 円");
           } else {
-            addCell("注文口数", formatInt(o.units) + " 口");
-          }
+            addCell("申込日時", formatDateLabel(o.orderDate) + " " + (o.orderTime || "--:--"));
+            addCell("約定予定日／約定日", formatDateLabel(o.execDate));
 
-          if (st === "settled") {
-            addCell("約定基準価額", formatInt(o.execNav) + " 円");
-            addCell("約定口数", formatInt(o.execUnits) + " 口");
-            var taxInfo = bal && bal.orderTaxMap && bal.orderTaxMap[o.id];
-            if (side === "SELL" && taxInfo) {
-              addCell(
-                "約定金額（概算税控除後）",
-                formatInt(o.execYen) + "円（概算税 -" + formatInt(taxInfo.estimatedTaxYen) + "円 → 受取 " + formatInt(taxInfo.netProceedsYen) + "円）"
-              );
+            if (spec === "YEN") {
+              addCell("注文金額", formatInt(o.amountYen) + " 円");
             } else {
-              addCell("約定金額", formatInt(o.execYen) + " 円");
+              addCell("注文口数", formatInt(o.units) + " 口");
             }
-          } else if (st === "pending") {
-            if (side === "BUY" && spec === "YEN" && o.amountYen && provNav > 0) {
-              var estU = Math.floor((Number(o.amountYen) * 10000) / provNav);
-              addCell("見込み口数（予想価額 " + formatInt(provNav) + "円）", "見込み +" + formatInt(estU) + " 口");
-            } else if (side === "SELL" && spec === "UNITS" && o.units && provNav > 0) {
-              var estY = Math.floor((Number(o.units) * provNav) / 10000);
-              addCell("見込み受取額（予想価額 " + formatInt(provNav) + "円）", "見込み " + formatInt(estY) + " 円");
+
+            if (st === "settled") {
+              addCell("約定基準価額", formatInt(o.execNav) + " 円");
+              addCell("約定口数", formatInt(o.execUnits) + " 口");
+              var taxInfo = bal && bal.orderTaxMap && bal.orderTaxMap[o.id];
+              if (side === "SELL" && taxInfo) {
+                addCell(
+                  "約定金額（概算税控除後）",
+                  formatInt(o.execYen) + "円（概算税 -" + formatInt(taxInfo.estimatedTaxYen) + "円 → 受取 " + formatInt(taxInfo.netProceedsYen) + "円）"
+                );
+              } else {
+                addCell("約定金額", formatInt(o.execYen) + " 円");
+              }
+            } else if (st === "pending") {
+              if (side === "BUY" && spec === "YEN" && o.amountYen && provNav > 0) {
+                var estU = Math.floor((Number(o.amountYen) * 10000) / provNav);
+                addCell("見込み口数（予想価額 " + formatInt(provNav) + "円）", "見込み +" + formatInt(estU) + " 口");
+              } else if (side === "SELL" && spec === "UNITS" && o.units && provNav > 0) {
+                var estY = Math.floor((Number(o.units) * provNav) / 10000);
+                addCell("見込み受取額（予想価額 " + formatInt(provNav) + "円）", "見込み " + formatInt(estY) + " 円");
+              }
             }
           }
 
@@ -1824,7 +1862,12 @@
         };
         if (editId) {
           payload.id = editId;
-          payload.recalcSettlement = true;
+          if (editId === "o_20261030_150000_init") {
+            payload.recalcSettlement = false;
+            delete payload.execDate;
+          } else {
+            payload.recalcSettlement = true;
+          }
         } else {
           payload.snapshot = buildCurrentSnapshot(formSpec === "YEN" ? amt : null);
         }
@@ -2061,6 +2104,65 @@
 
       document.getElementById("btnReloadOrders").addEventListener("click", fetchOrdersFromGas);
       document.getElementById("btnRetryFetch").addEventListener("click", fetchOrdersFromGas);
+
+      document.getElementById("btnToggleBudgetEdit").addEventListener("click", function () {
+        var wrap = document.getElementById("budgetEditInline");
+        var inp = document.getElementById("inputBudgetYen");
+        inp.value = String((gasState.settings && gasState.settings.budgetYen) || 140000);
+        wrap.style.display = "flex";
+        document.getElementById("btnToggleBudgetEdit").style.display = "none";
+      });
+
+      document.getElementById("btnCancelBudgetEdit").addEventListener("click", function () {
+        document.getElementById("budgetEditInline").style.display = "none";
+        document.getElementById("btnToggleBudgetEdit").style.display = "inline-flex";
+      });
+
+      document.getElementById("btnSaveBudgetYen").addEventListener("click", function () {
+        var key = (document.getElementById("ordersKeyInput").value || safeGetStorage(LS_PASSPHRASE_ITEM) || "").trim();
+        if (!key) {
+          showBanner("error", "上部の入力欄に合言葉を入力して保存してください");
+          return;
+        }
+        var bVal = parseInt(document.getElementById("inputBudgetYen").value || "0", 10);
+        if (isNaN(bVal) || bVal <= 0) {
+          showBanner("warn", "運用枠（円）を正の数値で入力してください");
+          return;
+        }
+        var btnSaveB = document.getElementById("btnSaveBudgetYen");
+        btnSaveB.disabled = true;
+        btnSaveB.textContent = "保存中...";
+        fetch(getOrdersApiUrl(), {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            key: key,
+            action: "update",
+            settings: { budgetYen: bVal }
+          })
+        })
+          .then(function (r) {
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            return r.json();
+          })
+          .then(function (res) {
+            btnSaveB.disabled = false;
+            btnSaveB.textContent = "保存";
+            if (!res || !res.ok) {
+              showBanner("error", "運用枠の更新に失敗しました");
+              return;
+            }
+            document.getElementById("budgetEditInline").style.display = "none";
+            document.getElementById("btnToggleBudgetEdit").style.display = "inline-flex";
+            applyGasResponse(res);
+            showBanner("ok", "運用枠を " + formatInt(bVal) + " 円に更新しました");
+          })
+          .catch(function () {
+            btnSaveB.disabled = false;
+            btnSaveB.textContent = "保存";
+            showBanner("error", "記録を読み込めませんでした（再読み込み）");
+          });
+      });
 
       document.getElementById("btnSideBuy").addEventListener("click", function () {
         setSide("BUY");
