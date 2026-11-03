@@ -1293,17 +1293,43 @@
         return DEFAULT_ORDERS_URL;
       }
 
-      function showBanner(kind, msg) {
+      var bannerAutoHideTimer = null;
+      var keepOkBannerUntil = 0;
+
+      function showBanner(kind, msg, durationMs) {
         var el = document.getElementById("authErrorBanner");
         var txt = document.getElementById("authErrorText");
+        var retryBtn = document.getElementById("btnRetryFetch");
         if (!kind) {
+          if (Date.now() < keepOkBannerUntil && el.classList.contains("ok")) {
+            return;
+          }
           el.className = "banner-msg";
           el.style.display = "none";
           return;
         }
+        if (bannerAutoHideTimer) {
+          clearTimeout(bannerAutoHideTimer);
+          bannerAutoHideTimer = null;
+        }
         el.className = "banner-msg " + kind;
         el.style.display = "flex";
         txt.textContent = msg;
+        if (retryBtn) {
+          retryBtn.style.display = kind === "error" ? "inline-flex" : "none";
+        }
+        if (durationMs && durationMs > 0) {
+          keepOkBannerUntil = Date.now() + durationMs;
+          bannerAutoHideTimer = setTimeout(function () {
+            keepOkBannerUntil = 0;
+            if (el.classList.contains("ok")) {
+              el.className = "banner-msg";
+              el.style.display = "none";
+            }
+          }, durationMs);
+        } else {
+          keepOkBannerUntil = 0;
+        }
       }
 
       function setStaleVisual(isStale) {
@@ -2060,11 +2086,49 @@
         } catch (e) {}
       }
 
+      // URL の #key=（合言葉）から合言葉を取り出して localStorage に保存し、即座に URL から # 以下を消去する
+      // ※ # の値は画面にもコンソールにも一切出力しない
+      function consumePassphraseFromHash() {
+        var rawHash = window.location.hash || "";
+        if (!rawHash || rawHash.length <= 1) return false;
+        var hashBody = rawHash.charAt(0) === "#" ? rawHash.slice(1) : rawHash;
+        var extracted = "";
+        try {
+          var hp = new URLSearchParams(hashBody);
+          extracted = (hp.get("key") || "").trim();
+        } catch (e) {
+          var m = hashBody.match(/(?:^|&)key=([^&]*)/);
+          if (m && m[1]) {
+            try {
+              extracted = decodeURIComponent(m[1]).trim();
+            } catch (e2) {
+              extracted = m[1].trim();
+            }
+          }
+        }
+        if (!extracted) return false;
+
+        try {
+          window.localStorage.setItem(LS_PASSPHRASE_ITEM, extracted);
+        } catch (e) {}
+
+        try {
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        } catch (e) {}
+
+        return true;
+      }
+
       // 初期化
+      var savedFromHash = consumePassphraseFromHash();
       var savedKey = safeGetStorage(LS_PASSPHRASE_ITEM);
       if (savedKey) {
-        document.getElementById("ordersKeyInput").value = savedKey;
+        document.getElementById("ordersKeyInput").value = "";
+        document.getElementById("ordersKeyInput").placeholder = "合言葉は保存済み（変更時のみ入力）";
         document.getElementById("keySavedHint").textContent = "合言葉: この端末のブラウザに保存済み";
+      }
+      if (savedFromHash) {
+        showBanner("ok", "合言葉を保存しました", 5000);
       }
 
       var cachedTriple = safeGetStorage(LS_TRIPLE_CACHE_ITEM);
@@ -2092,13 +2156,19 @@
 
       // イベント登録
       document.getElementById("btnSaveKey").addEventListener("click", function () {
-        var k = (document.getElementById("ordersKeyInput").value || "").trim();
+        var typed = (document.getElementById("ordersKeyInput").value || "").trim();
+        var k = typed || (safeGetStorage(LS_PASSPHRASE_ITEM) || "").trim();
         if (!k) {
           showBanner("warn", "合言葉を入力してください");
           return;
         }
-        safeSetStorage(LS_PASSPHRASE_ITEM, k);
-        document.getElementById("keySavedHint").textContent = "合言葉: この端末のブラウザに保存済み";
+        if (typed) {
+          safeSetStorage(LS_PASSPHRASE_ITEM, typed);
+          document.getElementById("ordersKeyInput").value = "";
+          document.getElementById("ordersKeyInput").placeholder = "合言葉は保存済み（変更時のみ入力）";
+          document.getElementById("keySavedHint").textContent = "合言葉: この端末のブラウザに保存済み";
+          showBanner("ok", "合言葉を保存しました", 4000);
+        }
         fetchOrdersFromGas();
       });
 
@@ -2193,11 +2263,10 @@
       document.getElementById("btnResetForm").addEventListener("click", resetFormToDefault);
       document.getElementById("btnCancelEditMode").addEventListener("click", resetFormToDefault);
 
-      fetchTripleMarketData().then(function () {
-        if (savedKey) {
-          fetchOrdersFromGas();
-        }
-      });
+      fetchTripleMarketData();
+      if (savedKey) {
+        fetchOrdersFromGas();
+      }
     })();
   </script>
 </body>
