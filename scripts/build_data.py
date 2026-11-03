@@ -113,6 +113,87 @@ def is_jp_business_day(d: datetime.date) -> bool:
     return True
 
 
+def _easter_sunday(year: int) -> datetime.date:
+    """グレゴリオ暦の復活祭（イースター）日曜日を算出する（聖金曜日 Good Friday 判定用）。"""
+    a = year % 19
+    b = year // 100
+    c = year % 100
+    d = b // 4
+    e = b % 4
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i = c // 4
+    k = c % 4
+    l_val = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l_val) // 451
+    month = (h + l_val - 7 * m + 114) // 31
+    day = ((h + l_val - 7 * m + 114) % 31) + 1
+    return datetime.date(year, month, day)
+
+
+def _nth_weekday_of_month(year: int, month: int, weekday: int, n: int) -> datetime.date:
+    """指定年月の第 n 週の指定曜日 (0=月..6=日) を返す。"""
+    first = datetime.date(year, month, 1)
+    offset = (weekday - first.weekday()) % 7
+    return first + datetime.timedelta(days=offset + 7 * (n - 1))
+
+
+def _last_weekday_of_month(year: int, month: int, weekday: int) -> datetime.date:
+    """指定年月の最終の指定曜日 (0=月..6=日) を返す。"""
+    if month == 12:
+        last_day = datetime.date(year, 12, 31)
+    else:
+        last_day = datetime.date(year, month + 1, 1) - datetime.timedelta(days=1)
+    offset = (last_day.weekday() - weekday) % 7
+    return last_day - datetime.timedelta(days=offset)
+
+
+def _observed_us_holiday(d: datetime.date) -> datetime.date:
+    """米国の固定祝日が土曜なら前日金曜、日曜なら翌日月曜の振替休場日を返す。"""
+    if d.weekday() == 5:
+        return d - datetime.timedelta(days=1)
+    if d.weekday() == 6:
+        return d + datetime.timedelta(days=1)
+    return d
+
+
+def get_us_market_holidays(year: int) -> Dict[datetime.date, str]:
+    """NYSE / NASDAQ / CME 株式先物終日休場日の辞書を返す。"""
+    holidays: Dict[datetime.date, str] = {}
+    nyd = _observed_us_holiday(datetime.date(year, 1, 1))
+    if nyd.year == year:
+        holidays[nyd] = "米国元日休場"
+    next_nyd = _observed_us_holiday(datetime.date(year + 1, 1, 1))
+    if next_nyd.year == year:
+        holidays[next_nyd] = "米国元日振替休場"
+    holidays[_nth_weekday_of_month(year, 1, 0, 3)] = "キング牧師記念日(米休場)"
+    holidays[_nth_weekday_of_month(year, 2, 0, 3)] = "大統領の日(米休場)"
+    holidays[_easter_sunday(year) - datetime.timedelta(days=2)] = "聖金曜日(米休場)"
+    holidays[_last_weekday_of_month(year, 5, 0)] = "メモリアルデー(米休場)"
+    holidays[_observed_us_holiday(datetime.date(year, 6, 19))] = "ジューンティーンス(米休場)"
+    holidays[_observed_us_holiday(datetime.date(year, 7, 4))] = "米独立記念日(米休場)"
+    holidays[_nth_weekday_of_month(year, 9, 0, 1)] = "レイバー・デー(米休場)"
+    holidays[_nth_weekday_of_month(year, 11, 3, 4)] = "感謝祭(米休場)"
+    holidays[_observed_us_holiday(datetime.date(year, 12, 25))] = "クリスマス(米休場)"
+    return holidays
+
+
+def is_us_trading_day(d: datetime.date) -> bool:
+    """米国市場の通常取引日（土日・米国市場祝日を除く）かどうかを判定する。"""
+    if d.weekday() >= 5:
+        return False
+    return d not in get_us_market_holidays(d.year)
+
+
+def last_us_trading_day_before(d_str: str) -> str:
+    """指定日 ('YYYY-MM-DD') より前の最新の米国市場取引日 ('YYYY-MM-DD') を返す。"""
+    cur = datetime.datetime.strptime(d_str, "%Y-%m-%d").date() - datetime.timedelta(days=1)
+    while not is_us_trading_day(cur):
+        cur -= datetime.timedelta(days=1)
+    return cur.strftime("%Y-%m-%d")
+
+
 def next_jp_business_day(d: datetime.date) -> datetime.date:
     """指定日の翌営業日を返す。"""
     cur = d + datetime.timedelta(days=1)
@@ -319,8 +400,53 @@ def fetch_yahoo_chart(symbol: str, range_str: str = "10d", interval: str = "1d",
     return res[0]
 
 
+class _USDstTz(datetime.tzinfo):
+    """米国夏時間（3月第2日曜 02:00〜11月第1日曜 02:00）対応の tzinfo（Windows tzdata 不在時のフォールバック用）。"""
+
+    def __init__(self, std_hours: int, std_name: str, dst_name: str) -> None:
+        self._std_hours = std_hours
+        self._std_offset = datetime.timedelta(hours=std_hours)
+        self._dst_offset = datetime.timedelta(hours=std_hours + 1)
+        self._std_name = std_name
+        self._dst_name = dst_name
+
+    def _is_dst_local(self, dt: Optional[datetime.datetime]) -> bool:
+        if dt is None:
+            return False
+        y = dt.year
+        mar_sun2 = _nth_weekday_of_month(y, 3, 6, 2)
+        nov_sun1 = _nth_weekday_of_month(y, 11, 6, 1)
+        start_local = datetime.datetime(y, 3, mar_sun2.day, 2, 0)
+        end_local = datetime.datetime(y, 11, nov_sun1.day, 2, 0)
+        naive = dt.replace(tzinfo=None)
+        return start_local <= naive < end_local
+
+    def utcoffset(self, dt: Optional[datetime.datetime]) -> datetime.timedelta:
+        return self._dst_offset if self._is_dst_local(dt) else self._std_offset
+
+    def dst(self, dt: Optional[datetime.datetime]) -> datetime.timedelta:
+        return datetime.timedelta(hours=1) if self._is_dst_local(dt) else datetime.timedelta(0)
+
+    def tzname(self, dt: Optional[datetime.datetime]) -> str:
+        return self._dst_name if self._is_dst_local(dt) else self._std_name
+
+    def fromutc(self, dt: datetime.datetime) -> datetime.datetime:
+        utc_naive = dt.replace(tzinfo=None)
+        y = utc_naive.year
+        mar_sun2 = _nth_weekday_of_month(y, 3, 6, 2)
+        nov_sun1 = _nth_weekday_of_month(y, 11, 6, 1)
+        start_utc = datetime.datetime(y, 3, mar_sun2.day, 2 - self._std_hours, 0)
+        end_utc = datetime.datetime(y, 11, nov_sun1.day, 1 - self._std_hours, 0)
+        offset = self._dst_offset if (start_utc <= utc_naive < end_utc) else self._std_offset
+        return (utc_naive + offset).replace(tzinfo=self)
+
+
+_US_EASTERN_TZ = _USDstTz(-5, "EST", "EDT")
+_US_CENTRAL_TZ = _USDstTz(-6, "CST", "CDT")
+
+
 def resolve_tz(tz_name: Optional[str], gmtoffset: Optional[int] = None) -> datetime.tzinfo:
-    """タイムゾーン名または gmtoffset から tzinfo を返す（Windows tzdata 不在環境にも対応）。"""
+    """タイムゾーン名または gmtoffset から tzinfo を返す（Windows tzdata 不在環境でも米国夏時間境界を正確に処理）。"""
     if tz_name in ("Asia/Tokyo", "JST"):
         return JST
     if tz_name:
@@ -328,11 +454,13 @@ def resolve_tz(tz_name: Optional[str], gmtoffset: Optional[int] = None) -> datet
             return zoneinfo.ZoneInfo(tz_name)
         except Exception:
             pass
+    if tz_name == "America/New_York":
+        return _US_EASTERN_TZ
+    if tz_name == "America/Chicago":
+        return _US_CENTRAL_TZ
     if gmtoffset is not None:
         return datetime.timezone(datetime.timedelta(seconds=int(gmtoffset)))
     fallback_hours = {
-        "America/New_York": -4,
-        "America/Chicago": -5,
         "Europe/London": 0,
     }
     if tz_name in fallback_hours:
@@ -1105,13 +1233,24 @@ def get_us_futures_change(
     as_of_iso = datetime.datetime.fromtimestamp(reg_time, JST).isoformat()
 
     # 日足マップ (local_date -> close)
+    # Yahoo 1d チャート末尾には現在進行中の Globex バー (時刻 != 00:00 ET または日曜・米国祝日) が付与されるため、
+    # 00:00 ET の確定日足バー（かつ米国市場通常営業日）のみを格納し、新セッション価格での上書き・混入を防ぐ
     daily_map: Dict[str, float] = {}
     for t, c in zip(daily.get("timestamp", []), daily["indicators"]["quote"][0]["close"]):
-        if c is not None:
-            daily_map[get_bar_local_date(int(t), tz_name, gmtoffset)] = float(c)
+        if c is None:
+            continue
+        t_int = int(t)
+        dt_bar_et = datetime.datetime.fromtimestamp(t_int, tz_et)
+        if dt_bar_et.hour != 0 or dt_bar_et.minute != 0:
+            continue
+        if not is_us_trading_day(dt_bar_et.date()):
+            continue
+        d_et_str = dt_bar_et.strftime("%Y-%m-%d")
+        if d_et_str not in daily_map:
+            daily_map[d_et_str] = float(c)
     sorted_daily = sorted(daily_map.items())
 
-    # 15分足から各営業日の清算時刻終了足（15:45 ET または 13:15 ET）と Globex 引け足（16:45 ET）を抽出
+    # 15分足から各米国営業日の清算時刻終了足（15:45 ET または 13:15 ET）と Globex 引け足（16:45 ET）を抽出
     settle_bar_start_dt = (
         datetime.datetime(2000, 1, 1, settle_hour_et, settle_min_et) - datetime.timedelta(minutes=15)
     )
@@ -1125,6 +1264,8 @@ def get_us_futures_change(
             if c is None:
                 continue
             dt_et = datetime.datetime.fromtimestamp(int(t), tz_et)
+            if not is_us_trading_day(dt_et.date()):
+                continue
             d_et = dt_et.strftime("%Y-%m-%d")
             hm_et = dt_et.strftime("%H:%M")
             if hm_et == settle_hhmm:
@@ -1141,48 +1282,105 @@ def get_us_futures_change(
                 return s15[0]
         return d_close
 
-    # 1. 起点 (base): 株式と同じ米国取引日（align_base_date）または D0 より前の最終営業日の清算値
-    before_d0 = [(d, c) for d, c in sorted_daily if d < d0_str]
-    if align_base_date and align_base_date in daily_map:
-        base_date = align_base_date
-        base_raw = daily_map[align_base_date]
-    elif before_d0:
-        base_date, base_raw = before_d0[-1]
-    else:
-        base_date, base_raw = (sorted_daily[-1] if sorted_daily else (d0_str, reg_price))
-    base_val = resolve_settled_close(base_date, base_raw)
-
-    # 2. 現在値 (cur): D1 より前の最新米国取引日の清算時刻前なら現在値、清算時刻経過後はその日の清算値で固定
-    candidate_dates = {d for d, _ in sorted_daily if d < d1_str} | {d for d in settle_15m_map.keys() if d < d1_str}
-    now_et = now_jst.astimezone(tz_et)
-    reg_dt_et = datetime.datetime.fromtimestamp(reg_time, tz_et)
-    # 18:00 ET 以降は翌営業日の Globex セッションなので現地日付にそのまま入れない
-    if reg_dt_et.hour < 18 and reg_dt_et.strftime("%Y-%m-%d") < d1_str:
-        candidate_dates.add(reg_dt_et.strftime("%Y-%m-%d"))
-
-    cur_date = max(candidate_dates) if candidate_dates else base_date
-
-    if cur_date <= base_date:
-        cur_val = base_val
-        r_idx = 0.0
-    else:
-        cutoff_et = datetime.datetime.strptime(cur_date, "%Y-%m-%d").replace(
+    def get_settled_price_for_date(d_et: str) -> Tuple[Optional[float], Optional[str]]:
+        """指定した米国取引日 d_et の確定清算値（または清算時刻15分足終値）と asOf (ISO文字列) を返す。"""
+        d_cutoff_et = datetime.datetime.strptime(d_et, "%Y-%m-%d").replace(
             hour=settle_hour_et, minute=settle_min_et, second=0, tzinfo=tz_et
         )
-        if now_et < cutoff_et:
-            cur_val = reg_price
-        else:
-            if cur_date in daily_map:
-                cur_val = resolve_settled_close(cur_date, daily_map[cur_date])
-                if cur_date in settle_15m_map and cur_val == settle_15m_map[cur_date][0]:
-                    as_of_iso = datetime.datetime.fromtimestamp(settle_15m_map[cur_date][1], JST).isoformat()
-                else:
-                    as_of_iso = cutoff_et.astimezone(JST).isoformat()
-            elif cur_date in settle_15m_map:
-                cur_val = settle_15m_map[cur_date][0]
-                as_of_iso = datetime.datetime.fromtimestamp(settle_15m_map[cur_date][1], JST).isoformat()
+        if d_et in daily_map:
+            val = resolve_settled_close(d_et, daily_map[d_et])
+            if d_et in settle_15m_map and abs(val - settle_15m_map[d_et][0]) <= 1e-6:
+                ts_iso = datetime.datetime.fromtimestamp(settle_15m_map[d_et][1], JST).isoformat()
             else:
+                ts_iso = d_cutoff_et.astimezone(JST).isoformat()
+            return val, ts_iso
+        if d_et in settle_15m_map:
+            return settle_15m_map[d_et][0], datetime.datetime.fromtimestamp(settle_15m_map[d_et][1], JST).isoformat()
+        return None, None
+
+    # 1. 起点 (base): 株式と同じ米国取引日（align_base_date）または D0 より前の最終米国営業日の清算値
+    expected_base_date = align_base_date if align_base_date else last_us_trading_day_before(d0_str)
+    base_settled_val, base_settled_asof = get_settled_price_for_date(expected_base_date)
+    before_d0 = [(d, c) for d, c in sorted_daily if d < d0_str]
+    if base_settled_val is not None:
+        base_date = expected_base_date
+        base_val = base_settled_val
+    elif before_d0:
+        base_date, base_raw = before_d0[-1]
+        base_val = resolve_settled_close(base_date, base_raw)
+    else:
+        base_date, base_raw = (sorted_daily[-1] if sorted_daily else (d0_str, reg_price))
+        base_val = resolve_settled_close(base_date, base_raw)
+
+    # 2. 現在値 (cur): D1 の基準価額に反映される最後の米国市場セッション (target_us_date) を特定し、
+    #    そのセッションの清算時刻経過後は清算値で固定（日曜夜〜月曜朝や平日18:00 ET以降の新Globexセッションで上書きしない）
+    target_us_date = last_us_trading_day_before(d1_str)
+    now_et = now_jst.astimezone(tz_et)
+    reg_dt_et = datetime.datetime.fromtimestamp(reg_time, tz_et)
+
+    if target_us_date <= base_date:
+        cur_date = base_date
+        cur_val = base_val
+        r_idx = 0.0
+        if base_settled_asof:
+            as_of_iso = base_settled_asof
+    else:
+        target_cutoff_et = datetime.datetime.strptime(target_us_date, "%Y-%m-%d").replace(
+            hour=settle_hour_et, minute=settle_min_et, second=0, tzinfo=tz_et
+        )
+        if now_et >= target_cutoff_et:
+            # D1 に反映される最終米国セッションは既に終了しているため、target_us_date の清算値で完全固定
+            cur_date = target_us_date
+            settled_val, settled_asof = get_settled_price_for_date(target_us_date)
+            if settled_val is not None and settled_asof is not None:
+                cur_val = settled_val
+                as_of_iso = settled_asof
+            else:
+                settled_cands = sorted(
+                    d for d in (set(daily_map.keys()) | set(settle_15m_map.keys()))
+                    if base_date < d <= target_us_date
+                )
+                if settled_cands:
+                    cur_date = settled_cands[-1]
+                    fb_val, fb_asof = get_settled_price_for_date(cur_date)
+                    cur_val = fb_val if fb_val is not None else reg_price
+                    if fb_asof:
+                        as_of_iso = fb_asof
+                else:
+                    cur_val = reg_price
+        else:
+            # 最終米国セッション (target_us_date) の清算時刻前
+            settled_dates = sorted(
+                d for d in (set(daily_map.keys()) | set(settle_15m_map.keys()))
+                if base_date < d <= target_us_date
+                and now_et >= datetime.datetime.strptime(d, "%Y-%m-%d").replace(
+                    hour=settle_hour_et, minute=settle_min_et, second=0, tzinfo=tz_et
+                )
+            )
+            reg_date_str = reg_dt_et.strftime("%Y-%m-%d")
+            reg_hm_et = reg_dt_et.hour * 60 + reg_dt_et.minute
+            can_use_live = (
+                reg_dt_et.hour < 18
+                and is_us_trading_day(reg_dt_et.date())
+                and base_date < reg_date_str <= target_us_date
+            )
+            # 既に base_date より後の確定済み米国セッションがある日本祝日日中などは、次の米国立会開始 (09:30 ET) まで確定値を維持
+            if settled_dates and reg_date_str > settled_dates[-1] and reg_hm_et < (9 * 60 + 30):
+                can_use_live = False
+
+            if can_use_live and (not settled_dates or reg_date_str > settled_dates[-1]):
+                cur_date = reg_date_str
                 cur_val = reg_price
+            elif settled_dates:
+                cur_date = settled_dates[-1]
+                s_val, s_asof = get_settled_price_for_date(cur_date)
+                cur_val = s_val if s_val is not None else reg_price
+                if s_asof:
+                    as_of_iso = s_asof
+            else:
+                cur_date = target_us_date
+                cur_val = reg_price
+
         r_idx = (cur_val - base_val) / base_val if base_val else 0.0
 
     return {

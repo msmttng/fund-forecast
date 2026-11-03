@@ -31,6 +31,125 @@ USER_AGENT = (
 YAHOO_FX_BID_TO_MID_SPREAD = 0.05
 
 
+def _easter_sunday(year: int) -> datetime.date:
+    a = year % 19
+    b = year // 100
+    c = year % 100
+    d = b // 4
+    e = b % 4
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i = c // 4
+    k = c % 4
+    l_val = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l_val) // 451
+    month = (h + l_val - 7 * m + 114) // 31
+    day = ((h + l_val - 7 * m + 114) % 31) + 1
+    return datetime.date(year, month, day)
+
+
+def _nth_weekday_of_month(year: int, month: int, weekday: int, n: int) -> datetime.date:
+    first = datetime.date(year, month, 1)
+    offset = (weekday - first.weekday()) % 7
+    return first + datetime.timedelta(days=offset + 7 * (n - 1))
+
+
+def _last_weekday_of_month(year: int, month: int, weekday: int) -> datetime.date:
+    if month == 12:
+        last_day = datetime.date(year, 12, 31)
+    else:
+        last_day = datetime.date(year, month + 1, 1) - datetime.timedelta(days=1)
+    offset = (last_day.weekday() - weekday) % 7
+    return last_day - datetime.timedelta(days=offset)
+
+
+def _observed_us_holiday(d: datetime.date) -> datetime.date:
+    if d.weekday() == 5:
+        return d - datetime.timedelta(days=1)
+    if d.weekday() == 6:
+        return d + datetime.timedelta(days=1)
+    return d
+
+
+def get_us_market_holidays(year: int) -> Dict[datetime.date, str]:
+    holidays: Dict[datetime.date, str] = {}
+    nyd = _observed_us_holiday(datetime.date(year, 1, 1))
+    if nyd.year == year:
+        holidays[nyd] = "米国元日休場"
+    next_nyd = _observed_us_holiday(datetime.date(year + 1, 1, 1))
+    if next_nyd.year == year:
+        holidays[next_nyd] = "米国元日振替休場"
+    holidays[_nth_weekday_of_month(year, 1, 0, 3)] = "キング牧師記念日(米休場)"
+    holidays[_nth_weekday_of_month(year, 2, 0, 3)] = "大統領の日(米休場)"
+    holidays[_easter_sunday(year) - datetime.timedelta(days=2)] = "聖金曜日(米休場)"
+    holidays[_last_weekday_of_month(year, 5, 0)] = "メモリアルデー(米休場)"
+    holidays[_observed_us_holiday(datetime.date(year, 6, 19))] = "ジューンティーンス(米休場)"
+    holidays[_observed_us_holiday(datetime.date(year, 7, 4))] = "米独立記念日(米休場)"
+    holidays[_nth_weekday_of_month(year, 9, 0, 1)] = "レイバー・デー(米休場)"
+    holidays[_nth_weekday_of_month(year, 11, 3, 4)] = "感謝祭(米休場)"
+    holidays[_observed_us_holiday(datetime.date(year, 12, 25))] = "クリスマス(米休場)"
+    return holidays
+
+
+def is_us_trading_day(d: datetime.date) -> bool:
+    if d.weekday() >= 5:
+        return False
+    return d not in get_us_market_holidays(d.year)
+
+
+def last_us_trading_day_before(d_str: str) -> str:
+    cur = datetime.datetime.strptime(d_str, "%Y-%m-%d").date() - datetime.timedelta(days=1)
+    while not is_us_trading_day(cur):
+        cur -= datetime.timedelta(days=1)
+    return cur.strftime("%Y-%m-%d")
+
+
+class _USDstTz(datetime.tzinfo):
+    """米国夏時間（3月第2日曜 02:00〜11月第1日曜 02:00）対応の tzinfo（Windows tzdata 不在時のフォールバック用）。"""
+
+    def __init__(self, std_hours: int, std_name: str, dst_name: str) -> None:
+        self._std_hours = std_hours
+        self._std_offset = datetime.timedelta(hours=std_hours)
+        self._dst_offset = datetime.timedelta(hours=std_hours + 1)
+        self._std_name = std_name
+        self._dst_name = dst_name
+
+    def _is_dst_local(self, dt: Optional[datetime.datetime]) -> bool:
+        if dt is None:
+            return False
+        y = dt.year
+        mar_sun2 = _nth_weekday_of_month(y, 3, 6, 2)
+        nov_sun1 = _nth_weekday_of_month(y, 11, 6, 1)
+        start_local = datetime.datetime(y, 3, mar_sun2.day, 2, 0)
+        end_local = datetime.datetime(y, 11, nov_sun1.day, 2, 0)
+        naive = dt.replace(tzinfo=None)
+        return start_local <= naive < end_local
+
+    def utcoffset(self, dt: Optional[datetime.datetime]) -> datetime.timedelta:
+        return self._dst_offset if self._is_dst_local(dt) else self._std_offset
+
+    def dst(self, dt: Optional[datetime.datetime]) -> datetime.timedelta:
+        return datetime.timedelta(hours=1) if self._is_dst_local(dt) else datetime.timedelta(0)
+
+    def tzname(self, dt: Optional[datetime.datetime]) -> str:
+        return self._dst_name if self._is_dst_local(dt) else self._std_name
+
+    def fromutc(self, dt: datetime.datetime) -> datetime.datetime:
+        utc_naive = dt.replace(tzinfo=None)
+        y = utc_naive.year
+        mar_sun2 = _nth_weekday_of_month(y, 3, 6, 2)
+        nov_sun1 = _nth_weekday_of_month(y, 11, 6, 1)
+        start_utc = datetime.datetime(y, 3, mar_sun2.day, 2 - self._std_hours, 0)
+        end_utc = datetime.datetime(y, 11, nov_sun1.day, 1 - self._std_hours, 0)
+        offset = self._dst_offset if (start_utc <= utc_naive < end_utc) else self._std_offset
+        return (utc_naive + offset).replace(tzinfo=self)
+
+
+_US_EASTERN_TZ = _USDstTz(-5, "EST", "EDT")
+_US_CENTRAL_TZ = _USDstTz(-6, "CST", "CDT")
+
+
 def resolve_tz(tz_name: Optional[str], gmtoffset: Optional[int] = None) -> datetime.tzinfo:
     if tz_name in ("Asia/Tokyo", "JST"):
         return JST
@@ -39,11 +158,13 @@ def resolve_tz(tz_name: Optional[str], gmtoffset: Optional[int] = None) -> datet
             return zoneinfo.ZoneInfo(tz_name)
         except Exception:
             pass
+    if tz_name == "America/New_York":
+        return _US_EASTERN_TZ
+    if tz_name == "America/Chicago":
+        return _US_CENTRAL_TZ
     if gmtoffset is not None:
         return datetime.timezone(datetime.timedelta(seconds=int(gmtoffset)))
     fallback_hours = {
-        "America/New_York": -4,
-        "America/Chicago": -5,
         "Europe/London": 0,
     }
     if tz_name in fallback_hours:
@@ -141,14 +262,23 @@ def load_or_fetch_nav_history(fund: Dict[str, Any]) -> Dict[str, int]:
     return hist
 
 
-def load_or_fetch_yahoo(symbol: str, range_str: str, interval: str, events: bool = False) -> Dict[str, Any]:
-    """Yahoo Finance チャートを取得（キャッシュ利用）する。"""
+def load_or_fetch_yahoo(
+    symbol: str,
+    range_str: str,
+    interval: str,
+    events: bool = False,
+    min_last_ts: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Yahoo Finance チャートを取得（キャッシュ利用、min_last_ts より古い場合は再取得）する。"""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     safe_sym = re.sub(r"[^A-Za-z0-9._-]", "_", symbol)
     ev_tag = "_div" if events else ""
     cpath = CACHE_DIR / f"yahoo_{safe_sym}_{range_str}_{interval}{ev_tag}.json"
     if cpath.exists():
-        return json.loads(cpath.read_text(encoding="utf-8"))
+        cached = json.loads(cpath.read_text(encoding="utf-8"))
+        ts_list = cached.get("timestamp") or []
+        if min_last_ts is None or (ts_list and int(ts_list[-1]) >= min_last_ts):
+            return cached
 
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range={range_str}&interval={interval}"
     if events:
@@ -333,16 +463,32 @@ def parse_daily_series(chart: Dict[str, Any]) -> Tuple[List[Tuple[str, float]], 
     meta = chart["meta"]
     tz_name = meta.get("exchangeTimezoneName", "America/New_York")
     gmtoffset = meta.get("gmtoffset")
+    tz = resolve_tz(tz_name, gmtoffset)
+    inst_type = str(meta.get("instrumentType") or "")
+    sym = str(meta.get("symbol") or "")
+    is_us_future = (inst_type == "FUTURE" or sym in ("NQ=F", "GC=F") or sym.endswith(".CMX")) and tz_name in (
+        "America/New_York",
+        "America/Chicago",
+    )
     ts_list = chart.get("timestamp", [])
     cl_list = chart["indicators"]["quote"][0]["close"]
-    bars: List[Tuple[str, float]] = []
-    for t, c in zip(ts_list, cl_list):
-        if c is not None:
-            bars.append((get_bar_local_date(int(t), tz_name, gmtoffset), float(c)))
-    # 同一日付が重複した場合は後ろを優先
     dedup: Dict[str, float] = {}
-    for d, c in bars:
-        dedup[d] = c
+    for t, c in zip(ts_list, cl_list):
+        if c is None:
+            continue
+        t_int = int(t)
+        dt_loc = datetime.datetime.fromtimestamp(t_int, tz)
+        d_str = dt_loc.strftime("%Y-%m-%d")
+        if is_us_future:
+            # 米国先物の確定日足バーは 00:00 ET かつ米国市場営業日のみ（進行中Globexバーの上書き・日曜バー混入を防止）
+            if dt_loc.hour != 0 or dt_loc.minute != 0:
+                continue
+            if not is_us_trading_day(dt_loc.date()):
+                continue
+            if d_str not in dedup:
+                dedup[d_str] = float(c)
+        else:
+            dedup[d_str] = float(c)
     sorted_bars = sorted(dedup.items())
 
     divs_map: Dict[str, float] = {}
@@ -355,7 +501,7 @@ def parse_daily_series(chart: Dict[str, Any]) -> Tuple[List[Tuple[str, float]], 
 
 
 def parse_hourly_bars(chart: Dict[str, Any]) -> List[Tuple[int, float, float]]:
-    """1時間足の (timestamp, open, close) リストを返す。"""
+    """1時間足・15分足の (timestamp, open, close) リストを返す。"""
     ts_list = chart.get("timestamp", [])
     q = chart["indicators"]["quote"][0]
     op_list = q.get("open", [])
@@ -379,11 +525,129 @@ def find_hourly_price_at(h_bars: List[Tuple[int, float, float]], target_dt_jst: 
         return None
     best = candidates[-1]
     if abs(target_ts - best[0]) > 3600 * 12:
+        # 英国冬時間(GMT)の月曜朝など 08:00 JST 足が存在せず 09:00 JST 足 open が週明け最初のバーとなる場合
+        if use_open:
+            next_cands = [b for b in h_bars if target_ts < b[0] <= target_ts + 3600]
+            if next_cands:
+                return next_cands[0][1]
         return None
     # 1時間足で 08:30 JST を再現する場合：08:00 JST 開始足 (best[0] == 08:00) があれば open（08:00時点）または close（09:00時点だが8:30未来値混入を避けるため open）を使う
     if use_open:
         return best[1]
     return best[2]
+
+
+def find_intraday_price_at_830(
+    m15_bars: List[Tuple[int, float, float]],
+    h_bars: List[Tuple[int, float, float]],
+    d1_str: str,
+) -> Optional[float]:
+    """指定営業日 d1_str の朝 08:30 JST 時点（Yahoo 10分ディレイ考慮で 08:00 15分足 close または 08:00 1時間足 open）の価格を返す。"""
+    d1_7am_ts = int(datetime.datetime.strptime(d1_str, "%Y-%m-%d").replace(hour=7, minute=0, tzinfo=JST).timestamp())
+    d1_800_ts = int(datetime.datetime.strptime(d1_str, "%Y-%m-%d").replace(hour=8, minute=0, tzinfo=JST).timestamp())
+    if m15_bars:
+        cands = [b for b in m15_bars if d1_7am_ts <= b[0] <= d1_800_ts]
+        if cands:
+            return cands[-1][2]
+    d1_8am = datetime.datetime.strptime(d1_str, "%Y-%m-%d").replace(hour=8, minute=0, tzinfo=JST)
+    return find_hourly_price_at(h_bars, d1_8am, use_open=True)
+
+
+def simulate_us_futures_at_830(
+    d0_str: str,
+    d1_str: str,
+    settle_hour_et: int,
+    settle_min_et: int,
+    daily_bars: List[Tuple[str, float]],
+    m15_bars: List[Tuple[int, float, float]],
+    h_bars: List[Tuple[int, float, float]],
+    lock_settled: bool,
+    align_base_date: Optional[str] = None,
+) -> Tuple[float, str, float, str, float]:
+    """D1 朝 08:30 JST 時点での get_us_futures_change の挙動を再現し (r_idx, base_date, base_val, cur_date, cur_val) を返す。
+    lock_settled=False: 週明け（日曜夜Globex）・米国祝日・朝8:30の新セッション現在値が混入していた改修前の挙動
+    lock_settled=True : D1 の基準価額に反映される最終米国セッション (target_us_date) の清算値で固定する改修後の挙動
+    """
+    tz_et = resolve_tz("America/New_York")
+    daily_map = dict(daily_bars)
+
+    settle_bar_start_dt = (
+        datetime.datetime(2000, 1, 1, settle_hour_et, settle_min_et) - datetime.timedelta(minutes=15)
+    )
+    settle_hhmm = settle_bar_start_dt.strftime("%H:%M")
+    settle_15m_map: Dict[str, float] = {}
+    globex_1645_map: Dict[str, float] = {}
+
+    for t, _, c in m15_bars:
+        dt_et = datetime.datetime.fromtimestamp(int(t), tz_et)
+        if not is_us_trading_day(dt_et.date()):
+            continue
+        d_et = dt_et.strftime("%Y-%m-%d")
+        hm_et = dt_et.strftime("%H:%M")
+        if hm_et == settle_hhmm:
+            settle_15m_map[d_et] = float(c)
+        elif hm_et == "16:45":
+            globex_1645_map[d_et] = float(c)
+
+    def resolve_settled_close(d_et: str, d_close: float) -> float:
+        g1645 = globex_1645_map.get(d_et)
+        s15 = settle_15m_map.get(d_et)
+        if g1645 is not None and s15 is not None:
+            if abs(d_close - g1645) <= 1e-2 and abs(d_close - s15) > 1e-2:
+                return s15
+        return d_close
+
+    def get_settled_price(d_et: str) -> Optional[float]:
+        if d_et in daily_map:
+            return resolve_settled_close(d_et, daily_map[d_et])
+        if d_et in settle_15m_map:
+            return settle_15m_map[d_et]
+        return None
+
+    expected_base = align_base_date if align_base_date else last_us_trading_day_before(d0_str)
+    b_settled = get_settled_price(expected_base)
+    before_d0 = [(d, c) for d, c in daily_bars if d < d0_str]
+    if b_settled is not None:
+        base_date = expected_base
+        base_val = b_settled
+    elif before_d0:
+        base_date, b_raw = before_d0[-1]
+        base_val = resolve_settled_close(base_date, b_raw)
+    else:
+        return 0.0, d0_str, 0.0, d0_str, 0.0
+
+    target_us_date = last_us_trading_day_before(d1_str)
+
+    if lock_settled:
+        if target_us_date <= base_date or base_val <= 0:
+            return 0.0, base_date, base_val, base_date, base_val
+        c_settled = get_settled_price(target_us_date)
+        if c_settled is not None:
+            cur_date = target_us_date
+            cur_val = c_settled
+        else:
+            before_d1 = [(d, c) for d, c in daily_bars if base_date < d <= target_us_date]
+            if before_d1:
+                cur_date, c_raw = before_d1[-1]
+                cur_val = resolve_settled_close(cur_date, c_raw)
+            else:
+                return 0.0, base_date, base_val, base_date, base_val
+        return (cur_val - base_val) / base_val, base_date, base_val, cur_date, cur_val
+
+    # lock_settled=False（改修前）:
+    # D1 朝 08:30 JST (= 前日 18:30/19:30 ET) 時点では Yahoo 1d チャート末尾に新 Globex セッションのライブバーが
+    # 現地日付 (D1 - 1日 < D1) で付与され、daily_map[D1 - 1日] を新セッション現在値で生成・上書きしていた
+    live_830 = find_intraday_price_at_830(m15_bars, h_bars, d1_str)
+    d1_830_jst = datetime.datetime.strptime(d1_str, "%Y-%m-%d").replace(hour=8, minute=30, tzinfo=JST)
+    live_et_date = d1_830_jst.astimezone(tz_et).strftime("%Y-%m-%d")
+    if live_830 is not None and live_et_date > base_date and base_val > 0:
+        return (live_830 - base_val) / base_val, base_date, base_val, live_et_date, live_830
+
+    if target_us_date <= base_date or base_val <= 0:
+        return 0.0, base_date, base_val, base_date, base_val
+    c_settled = get_settled_price(target_us_date)
+    cur_val = c_settled if c_settled is not None else base_val
+    return (cur_val - base_val) / base_val, base_date, base_val, target_us_date, cur_val
 
 
 def find_intraday_price_at_1450(
@@ -475,12 +739,14 @@ def simulate_fund_day(
     auam_formula: str = "additive",
     gold_plus_formula: str = "additive",
     domestic_record_time: str = "auto",
+    futures_lock: Optional[bool] = None,
 ) -> Optional[int]:
     """指定日の記録時刻（海外 8:30 JST / 国内 14:50 JST）時点で得られたデータから予想基準価額を計算する。"""
     d0_9am = datetime.datetime.strptime(d0_str, "%Y-%m-%d").replace(hour=9, minute=0, tzinfo=JST)
     d0_15pm = datetime.datetime.strptime(d0_str, "%Y-%m-%d").replace(hour=15, minute=0, tzinfo=JST)
     d1_8am = datetime.datetime.strptime(d1_str, "%Y-%m-%d").replace(hour=8, minute=0, tzinfo=JST)
     m15_map = m15_series or {}
+    lock_fut = futures_lock if futures_lock is not None else (mode == "after")
 
     use_1450_domestic = (
         domestic_record_time == "14:50"
@@ -558,21 +824,22 @@ def simulate_fund_day(
 
     elif model == "leveraged_hedged":
         bars, divs = daily_series[sym]
-        r_idx, b_date, b_val, c_date, c_val = get_series_change_between(bars, divs, d0_str, d1_str, adjust_div=False)
-        if mode == "before" and sym == "NQ=F" and b_val > 0 and c_date > b_date:
-            # 改善前：朝 8:30 JST 時点では翌営業日 Globex の regularMarketPrice を参照していた
-            nq_830 = find_hourly_price_at(hourly_series.get("NQ=F", []), d1_8am, use_open=True)
-            if nq_830 is not None:
-                r_idx = (nq_830 - b_val) / b_val
+        if sym == "NQ=F":
+            r_idx, _, _, _, _ = simulate_us_futures_at_830(
+                d0_str, d1_str, 16, 0, bars, m15_map.get("NQ=F", []), hourly_series.get("NQ=F", []), lock_settled=lock_fut
+            )
+        else:
+            r_idx, _, _, _, _ = get_series_change_between(bars, divs, d0_str, d1_str, adjust_div=False)
         r_total = lev * r_idx
 
     elif model in ("additive", "leveraged_unhedged"):
         bars, divs = daily_series[sym]
-        r_idx, b_date, b_val, c_date, c_val = get_series_change_between(bars, divs, d0_str, d1_str, adjust_div=False)
-        if mode == "before" and sym == "NQ=F" and b_val > 0 and c_date > b_date:
-            nq_830 = find_hourly_price_at(hourly_series.get("NQ=F", []), d1_8am, use_open=True)
-            if nq_830 is not None:
-                r_idx = (nq_830 - b_val) / b_val
+        if sym == "NQ=F":
+            r_idx, _, _, _, _ = simulate_us_futures_at_830(
+                d0_str, d1_str, 16, 0, bars, m15_map.get("NQ=F", []), hourly_series.get("NQ=F", []), lock_settled=lock_fut
+            )
+        else:
+            r_idx, _, _, _, _ = get_series_change_between(bars, divs, d0_str, d1_str, adjust_div=False)
         if mode == "before" or auam_formula == "additive":
             r_total = lev * r_idx + r_fx
         else:
@@ -637,14 +904,13 @@ def simulate_fund_day(
 
     elif model in ("gold_plus", "topix_gold_plus"):
         gold_sym = fund.get("goldSymbol", "GC=F")
-        g_bars, g_divs = daily_series[gold_sym]
-        r_gold, gb_date, gb_val, gc_date, _ = get_series_change_between(g_bars, g_divs, d0_str, d1_str, adjust_div=False)
-
-        if mode == "before" and gb_val > 0 and gc_date > gb_date:
-            # 改善前：朝 8:30 JST の Globex 価格を参照していた
-            gc_830 = find_hourly_price_at(hourly_series.get("GC=F", []), d1_8am, use_open=True)
-            if gc_830 is not None:
-                r_gold = (gc_830 - gb_val) / gb_val
+        g_bars, _ = daily_series[gold_sym]
+        ref_us_bars, _ = daily_series["^GSPC"]
+        _, ref_us_b_date, _, _, _ = get_series_change_between(ref_us_bars, {}, d0_str, d1_str, adjust_div=False)
+        r_gold, _, _, _, _ = simulate_us_futures_at_830(
+            d0_str, d1_str, 13, 30, g_bars, m15_map.get(gold_sym, []), hourly_series.get(gold_sym, []),
+            lock_settled=lock_fut, align_base_date=ref_us_b_date,
+        )
 
         if model == "topix_gold_plus" or sym in ("TOPIX", "^TOPX"):
             if use_1450_domestic:
@@ -746,7 +1012,7 @@ def main() -> None:
     all_d0_dates = sorted({d0 for d0, _ in seed_day_pairs} | {d1 for _, d1 in seed_day_pairs})
 
     # 2. 市場データの取得
-    yahoo_symbols = {"JPY=X", "NIY=F", "^N225", "1306.T", "1540.T", "^GSPC", "^NDX", "NQ=F", "ACWI", "TOK", "SCHD", "VTI", "IGLN.L", "GC=F"}
+    yahoo_symbols = {"JPY=X", "NIY=F", "^N225", "1306.T", "1540.T", "^GSPC", "^NDX", "NQ=F", "ACWI", "TOK", "SCHD", "VTI", "IGLN.L", "GC=F", "GCZ26.CMX"}
     solactive_isins = set()
     for _, _, f in all_funds:
         sym_val = str(f.get("symbol") or "")
@@ -766,13 +1032,14 @@ def main() -> None:
         daily_series[sym] = parse_daily_series(ch)
 
     hourly_series: Dict[str, List[Tuple[int, float, float]]] = {}
-    for sym in ["JPY=X", "NIY=F", "NQ=F", "GC=F", "^N225", "1306.T", "1540.T"]:
-        ch_h = load_or_fetch_yahoo(sym, range_str="6mo", interval="1h", events=False)
+    min_intraday_ts = int(datetime.datetime.strptime(day_pairs[-1][1], "%Y-%m-%d").replace(hour=8, minute=30, tzinfo=JST).timestamp())
+    for sym in ["JPY=X", "NIY=F", "NQ=F", "GC=F", "GCZ26.CMX", "^N225", "1306.T", "1540.T"]:
+        ch_h = load_or_fetch_yahoo(sym, range_str="6mo", interval="1h", events=False, min_last_ts=min_intraday_ts)
         hourly_series[sym] = parse_hourly_bars(ch_h)
 
     m15_series: Dict[str, List[Tuple[int, float, float]]] = {}
-    for sym in ["^N225", "1306.T", "1540.T"]:
-        ch_15 = load_or_fetch_yahoo(sym, range_str="60d", interval="15m", events=False)
+    for sym in ["^N225", "1306.T", "1540.T", "NQ=F", "GC=F", "GCZ26.CMX"]:
+        ch_15 = load_or_fetch_yahoo(sym, range_str="60d", interval="15m", events=False, min_last_ts=min_intraday_ts)
         m15_series[sym] = parse_hourly_bars(ch_15)
 
     ttm_map = load_or_fetch_murc_ttm(all_d0_dates)
@@ -959,6 +1226,239 @@ def main() -> None:
     latest_d0 = day_pairs[-1][0]
     latest_beta = calc_rolling_beta(topix_map, n225_map, latest_d0, lookback=60)
     print(f"\n直近 60 営業日の TOPIX 対 日経平均 回帰係数 β ({latest_d0} 時点): {latest_beta:.4f}")
+
+    # 5. 週明け・祝日明け・米国休場明けの朝 8:30 記録における米国先物補正（改修前 vs 改修後）比較
+    us_futures_fund_ids = [
+        "auam-triple-ndx",
+        "auam-lev-ndx",
+        "ifree-lev-ndx",
+        "tracers-sp500-gold",
+        "tracers-ndx-gold",
+        "tracers-acwi-gold",
+    ]
+    fund_by_id: Dict[str, Tuple[str, Dict[str, Any]]] = {}
+    for gid, _, f in all_funds:
+        if f["id"] in us_futures_fund_ids:
+            fund_by_id[f["id"]] = (gid, f)
+
+    weekend_holiday_pairs: List[Tuple[str, str, str]] = []
+    for d0, d1 in day_pairs:
+        dt0 = datetime.date.fromisoformat(d0)
+        dt1 = datetime.date.fromisoformat(d1)
+        gap_days = (dt1 - dt0).days
+        if dt1.weekday() == 0 and gap_days == 3:
+            day_type = "月曜"
+        elif gap_days > 1:
+            day_type = f"連休・祝日明け({gap_days}日)"
+        elif not is_us_trading_day(dt0):
+            day_type = "米休場明け"
+        else:
+            continue
+        weekend_holiday_pairs.append((d0, d1, day_type))
+
+    print(
+        f"\n=== 米国先物利用ファンド 週明け・祝日明け・米休場明け（{len(weekend_holiday_pairs)}営業日）朝 8:30 記録 MAE比較（先物補正・改修前 vs 改修後） ==="
+    )
+    print(
+        "| ファンド | 対象日数 | 週明け等 改修前 MAE | 週明け等 改修後 MAE | 改善幅 (後-前) | 週明け等 改修前 Bias | 週明け等 改修後 Bias | 全60日 改修前 MAE | 全60日 改修後 MAE |"
+    )
+    print("|---|---:|---:|---:|---:|---:|---:|---:|---:|")
+
+    wh_all_bef_abs: List[float] = []
+    wh_all_aft_abs: List[float] = []
+    wh_all_bef_sgn: List[float] = []
+    wh_all_aft_sgn: List[float] = []
+    full_all_bef_abs: List[float] = []
+    full_all_aft_abs: List[float] = []
+
+    for fid in us_futures_fund_ids:
+        if fid not in fund_by_id:
+            continue
+        gid, f = fund_by_id[fid]
+        h = nav_histories[fid]
+        wh_bef_abs: List[float] = []
+        wh_aft_abs: List[float] = []
+        wh_bef_sgn: List[float] = []
+        wh_aft_sgn: List[float] = []
+        f60_bef_abs: List[float] = []
+        f60_aft_abs: List[float] = []
+        wh_d1_set = {d1 for _, d1, _ in weekend_holiday_pairs}
+
+        for d0, d1 in day_pairs:
+            if d0 not in h or d1 not in h:
+                continue
+            nav0, act = h[d0], h[d1]
+            fc_unlk = simulate_fund_day(
+                f, gid, d0, d1, nav0, "after",
+                daily_series, hourly_series, ttm_map, topix_map, n225_map, msci_acwi_map, msci_kokusai_map,
+                solactive_maps=solactive_maps, m15_series=m15_series,
+                auam_formula=chosen_auam, futures_lock=False,
+            )
+            fc_lock = simulate_fund_day(
+                f, gid, d0, d1, nav0, "after",
+                daily_series, hourly_series, ttm_map, topix_map, n225_map, msci_acwi_map, msci_kokusai_map,
+                solactive_maps=solactive_maps, m15_series=m15_series,
+                auam_formula=chosen_auam, futures_lock=True,
+            )
+            if fc_unlk is None or fc_lock is None:
+                continue
+            e_unlk = (fc_unlk - act) / nav0 * 100.0
+            e_lock = (fc_lock - act) / nav0 * 100.0
+            f60_bef_abs.append(abs(e_unlk))
+            f60_aft_abs.append(abs(e_lock))
+            full_all_bef_abs.append(abs(e_unlk))
+            full_all_aft_abs.append(abs(e_lock))
+            if d1 in wh_d1_set:
+                wh_bef_abs.append(abs(e_unlk))
+                wh_aft_abs.append(abs(e_lock))
+                wh_bef_sgn.append(e_unlk)
+                wh_aft_sgn.append(e_lock)
+                wh_all_bef_abs.append(abs(e_unlk))
+                wh_all_aft_abs.append(abs(e_lock))
+                wh_all_bef_sgn.append(e_unlk)
+                wh_all_aft_sgn.append(e_lock)
+
+        if wh_bef_abs:
+            m_b = sum(wh_bef_abs) / len(wh_bef_abs)
+            m_a = sum(wh_aft_abs) / len(wh_aft_abs)
+            b_b = sum(wh_bef_sgn) / len(wh_bef_sgn)
+            b_a = sum(wh_aft_sgn) / len(wh_aft_sgn)
+            m60_b = sum(f60_bef_abs) / len(f60_bef_abs)
+            m60_a = sum(f60_aft_abs) / len(f60_aft_abs)
+            print(
+                f"| {f['name']} | {len(wh_bef_abs)} | {m_b:.4f}pt | {m_a:.4f}pt | "
+                f"{m_a - m_b:+.4f}pt | {b_b:+.4f}pt | {b_a:+.4f}pt | {m60_b:.4f}pt | {m60_a:.4f}pt |"
+            )
+
+    if wh_all_bef_abs:
+        mb_all = sum(wh_all_bef_abs) / len(wh_all_bef_abs)
+        ma_all = sum(wh_all_aft_abs) / len(wh_all_aft_abs)
+        bb_all = sum(wh_all_bef_sgn) / len(wh_all_bef_sgn)
+        ba_all = sum(wh_all_aft_sgn) / len(wh_all_aft_sgn)
+        m60b_all = sum(full_all_bef_abs) / len(full_all_bef_abs)
+        m60a_all = sum(full_all_aft_abs) / len(full_all_aft_abs)
+        print(
+            f"| **先物利用 6本平均** | **{len(wh_all_bef_abs)}** | **{mb_all:.4f}pt** | **{ma_all:.4f}pt** | "
+            f"**{ma_all - mb_all:+.4f}pt** | **{bb_all:+.4f}pt** | **{ba_all:+.4f}pt** | "
+            f"**{m60b_all:.4f}pt** | **{m60a_all:.4f}pt** |"
+        )
+
+    print(
+        f"\n=== 週明け・祝日明け・米休場明け（{len(weekend_holiday_pairs)}営業日）日付別 誤差（pt）詳細比較（改修前 -> 改修後） ==="
+    )
+    print(
+        "| 対象日 (D0->D1) | 区分 | NQ=F 変化率 (前->後) | auAMトリプル (前->後) | auAMレバ (前->後) | iFreeレバ (前->後) | Tracers S&P500金 (前->後) | Tracersオルカン金 (前->後) |"
+    )
+    print("|---|---|---:|---:|---:|---:|---:|---:|")
+    nq_d_bars, _ = daily_series["NQ=F"]
+    for d0, d1, day_type in weekend_holiday_pairs:
+        r_nq_bef, _, _, _, _ = simulate_us_futures_at_830(
+            d0, d1, 16, 0, nq_d_bars, m15_series.get("NQ=F", []), hourly_series.get("NQ=F", []), lock_settled=False
+        )
+        r_nq_aft, _, _, _, _ = simulate_us_futures_at_830(
+            d0, d1, 16, 0, nq_d_bars, m15_series.get("NQ=F", []), hourly_series.get("NQ=F", []), lock_settled=True
+        )
+        cells: List[str] = []
+        for fid in ["auam-triple-ndx", "auam-lev-ndx", "ifree-lev-ndx", "tracers-sp500-gold", "tracers-acwi-gold"]:
+            gid, f = fund_by_id[fid]
+            h = nav_histories[fid]
+            if d0 not in h or d1 not in h:
+                cells.append("―")
+                continue
+            nav0, act = h[d0], h[d1]
+            fc_b = simulate_fund_day(
+                f, gid, d0, d1, nav0, "after",
+                daily_series, hourly_series, ttm_map, topix_map, n225_map, msci_acwi_map, msci_kokusai_map,
+                solactive_maps=solactive_maps, m15_series=m15_series,
+                auam_formula=chosen_auam, futures_lock=False,
+            )
+            fc_a = simulate_fund_day(
+                f, gid, d0, d1, nav0, "after",
+                daily_series, hourly_series, ttm_map, topix_map, n225_map, msci_acwi_map, msci_kokusai_map,
+                solactive_maps=solactive_maps, m15_series=m15_series,
+                auam_formula=chosen_auam, futures_lock=True,
+            )
+            if fc_b is None or fc_a is None:
+                cells.append("―")
+                continue
+            eb = (fc_b - act) / nav0 * 100.0
+            ea = (fc_a - act) / nav0 * 100.0
+            cells.append(f"{eb:+.2f}pt -> **{ea:+.2f}pt**")
+        print(
+            f"| {d0[5:]}->{d1} | {day_type} | {r_nq_bef*100:+.2f}% -> {r_nq_aft*100:+.2f}% | "
+            + " | ".join(cells)
+            + " |"
+        )
+
+    # 6. 2026-11-02 08:34:41 JST 時点の再現検証テーブル
+    if FORECAST_LOG_PATH.exists():
+        try:
+            flog_data = json.loads(FORECAST_LOG_PATH.read_text(encoding="utf-8"))
+            log_1102 = (flog_data.get("entries") or {}).get("2026-11-02") or {}
+            if log_1102:
+                # 11/2 08:34:41 JST 記録時の実効為替変化率を eMAXIS Slim S&P500 記録値から逆算（157.54 -> 157.69, +0.0944%）
+                sp_rec = log_1102.get("emaxis-slim-sp500", {})
+                sp_bars, _ = daily_series["^GSPC"]
+                r_sp_1102, _, _, _, _ = get_series_change_between(sp_bars, {}, "2026-10-30", "2026-11-02", adjust_div=False)
+                if sp_rec.get("baseNav") and sp_rec.get("forecastNav"):
+                    r_tot_sp = (float(sp_rec["forecastNav"]) / float(sp_rec["baseNav"])) - 1.0
+                    r_fx_1102 = (1.0 + r_tot_sp) / (1.0 + r_sp_1102) - 1.0
+                else:
+                    r_fx_1102 = (157.69 - 157.54) / 157.54
+
+                r_nq_1102, nq_b_d, nq_b_v, nq_c_d, nq_c_v = simulate_us_futures_at_830(
+                    "2026-10-30", "2026-11-02", 16, 0,
+                    daily_series["NQ=F"][0], m15_series.get("NQ=F", []), hourly_series.get("NQ=F", []),
+                    lock_settled=True,
+                )
+                r_gc_1102, gc_b_d, gc_b_v, gc_c_d, gc_c_v = simulate_us_futures_at_830(
+                    "2026-10-30", "2026-11-02", 13, 30,
+                    daily_series["GCZ26.CMX"][0], m15_series.get("GCZ26.CMX", []), hourly_series.get("GCZ26.CMX", []),
+                    lock_settled=True, align_base_date=nq_b_d,
+                )
+                print("\n=== 2026-11-02 08:34:41 JST 再現検証（11/2 朝記録 改修前 vs 改修後 vs 実際の基準価額） ===")
+                print(
+                    f"  NQ=F     : base={nq_b_v:.2f} ({nq_b_d}) -> 改修前 cur=28645.50 (2026-11-01 18:24 EST Globex, -3.10%) / 改修後 cur={nq_c_v:.2f} ({nq_c_d} 16:00 EDT 清算値, {r_nq_1102*100:+.2f}%)"
+                )
+                print(
+                    f"  GCZ26.CMX: base={gc_b_v:.2f} ({gc_b_d}) -> 改修前 cur=3904.40 (2026-11-01 18:24 EST Globex, -3.15%) / 改修後 cur={gc_c_v:.2f} ({gc_c_d} 13:30 EDT 清算値, {r_gc_1102*100:+.2f}%)"
+                )
+                print(
+                    "| ファンド | 前日基準価額 | 改修前予想 (11/2 8:34) | 改修後予想 (再現) | 実際の基準価額 | 改修前誤差 | 改修後誤差 | 改善幅 |"
+                )
+                print("|---|---:|---:|---:|---:|---:|---:|---:|")
+                r_gold_diff = r_gc_1102 - ((3904.4 - gc_b_v) / gc_b_v)
+                for fid in us_futures_fund_ids:
+                    if fid not in log_1102 or fid not in fund_by_id:
+                        continue
+                    rec = log_1102[fid]
+                    _, f = fund_by_id[fid]
+                    b_nav = int(rec["baseNav"])
+                    bef_nav = int(rec["forecastNav"])
+                    bef_chg = float(rec["forecastChange"])
+                    act_nav = int(rec["actualNav"])
+                    act_chg = float(rec["actualChange"])
+                    bef_err_pt = (bef_nav - act_nav) / b_nav * 100.0
+                    lev_f = float(f.get("leverage", 1))
+                    if f["model"] == "leveraged_hedged":
+                        r_aft = lev_f * r_nq_1102
+                    elif f["model"] in ("additive", "leveraged_unhedged"):
+                        r_aft = lev_f * r_nq_1102 + r_fx_1102
+                    else:
+                        r_bef_raw = (bef_nav / b_nav) - 1.0
+                        r_aft = r_bef_raw + r_gold_diff
+                    aft_nav = int(round(b_nav * (1.0 + r_aft)))
+                    aft_chg = (aft_nav - b_nav) / b_nav * 100.0
+                    aft_err_pt = (aft_nav - act_nav) / b_nav * 100.0
+                    print(
+                        f"| {f['name']} | {b_nav:,}円 | {bef_nav:,}円 ({bef_chg:+.2f}%) | "
+                        f"**{aft_nav:,}円 ({aft_chg:+.2f}%)** | {act_nav:,}円 ({act_chg:+.2f}%) | "
+                        f"{bef_nav - act_nav:+,}円 ({bef_err_pt:+.2f}pt) | "
+                        f"**{aft_nav - act_nav:+,}円 ({aft_err_pt:+.2f}pt)** | "
+                        f"{abs(aft_err_pt) - abs(bef_err_pt):+.2f}pt |"
+                    )
+        except Exception as e:
+            print(f"[WARN] 11/2 再現検証テーブル出力スキップ: {e}")
 
     if args.seed_log != "none":
         seed_records: Dict[str, Dict[str, Dict[str, Any]]] = {}
