@@ -1425,10 +1425,12 @@
         return Number(m[1]) * 60 + Number(m[2]);
       }
 
-      // 4-2: 申込日・注文時刻・証券会社別締め時刻から実質申込日と約定予定日を計算
-      function computeOrderScheduleForInput(orderDateStr, orderTimeStr, broker) {
-        var brokersMap = (gasState.settings && gasState.settings.brokers) || {};
-        var cutoffStr = brokersMap[broker] || "15:30";
+      // 4-2: 申込日・注文時刻・証券会社別締め時刻から実質申込日と約定予定日（基準価額日）を計算
+      function computeOrderScheduleForInput(orderDateStr, orderTimeStr, broker, optSettings) {
+        var settingsObj = optSettings || (gasState && gasState.settings) || {};
+        var usedBroker = broker || settingsObj.defaultBroker || "SBI";
+        var brokersMap = settingsObj.brokers || {};
+        var cutoffStr = brokersMap[usedBroker] || "15:30";
         var cutoffMin = parseHHMM(cutoffStr, 15 * 60 + 30);
         var orderMin = parseHHMM(orderTimeStr, 15 * 60);
         var afterCutoff = orderMin > cutoffMin;
@@ -1439,32 +1441,60 @@
           dt = parseDateYMD(nowParts.dateStr);
         }
 
+        var todayOrderDay = isFundOrderDay(dt);
+        var holidaysHit = [];
         var appDt;
-        if (isFundOrderDay(dt) && !afterCutoff) {
+        if (todayOrderDay && !afterCutoff) {
           appDt = dt;
         } else {
+          if (!todayOrderDay) {
+            var dtYmd = toDateYMD(dt);
+            if (JP_HOLIDAYS[dtYmd]) {
+              holidaysHit.push((dt.getMonth() + 1) + "/" + dt.getDate() + " は" + JP_HOLIDAYS[dtYmd]);
+            } else if (isJpBusinessDay(dt) && !isUsTradingDay(dt)) {
+              holidaysHit.push((dt.getMonth() + 1) + "/" + dt.getDate() + " は米国市場休場");
+            }
+          }
           var cur = afterCutoff
             ? new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + 1)
             : new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
           while (!isFundOrderDay(cur)) {
+            var cYmd = toDateYMD(cur);
+            if (cur.getTime() !== dt.getTime()) {
+              if (JP_HOLIDAYS[cYmd]) {
+                holidaysHit.push((cur.getMonth() + 1) + "/" + cur.getDate() + " は" + JP_HOLIDAYS[cYmd]);
+              } else if (isJpBusinessDay(cur) && !isUsTradingDay(cur)) {
+                holidaysHit.push((cur.getMonth() + 1) + "/" + cur.getDate() + " は米国市場休場");
+              }
+            }
             cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + 1);
           }
           appDt = cur;
         }
 
         var execDt = nextJpBusinessDay(appDt);
+        var appYmd = toDateYMD(appDt);
+        var execYmd = toDateYMD(execDt);
         return {
-          applicationDate: toDateYMD(appDt),
-          applicationDateLabel: formatDateLabel(toDateYMD(appDt)),
-          executionDate: toDateYMD(execDt),
-          executionDateLabel: formatDateLabel(toDateYMD(execDt)),
+          applicationDate: appYmd,
+          applicationDateLabel: formatDateLabel(appYmd),
+          applicationDateLabelFull: formatDateLabelFull(appYmd),
+          applicationDateMd: formatMdSimple(appYmd),
+          executionDate: execYmd,
+          executionDateLabel: formatDateLabel(execYmd),
+          executionDateLabelFull: formatDateLabelFull(execYmd),
+          executionDateMd: formatMdSimple(execYmd),
           cutoffTime: cutoffStr,
+          cutoffMin: cutoffMin,
+          orderMin: orderMin,
           isAfterCutoff: afterCutoff,
-          isHolidayOrder: !isFundOrderDay(dt)
+          isHolidayOrder: !todayOrderDay,
+          isSameDayApplication: todayOrderDay && !afterCutoff,
+          holidaysHit: holidaysHit
         };
       }
 
-      // 4-2 & 4-3: 今月の積立の状態・締め切り・次の営業日を計算
+      // 4-2 & 4-3: 今月の積立の状態・締め切り・申込日・約定基準価額日を計算
       function computeTsumitateScheduleState(orders, settings, optNowParts) {
         var nowParts = optNowParts || getNowJstParts();
         var monthlyYen = Number(settings && settings.monthlyYen !== undefined ? settings.monthlyYen : 20000);
@@ -1472,9 +1502,6 @@
         if (isNaN(monthlyDay) || monthlyDay < 1 || monthlyDay > 28) monthlyDay = 10;
         var tsumitateStart = (settings && settings.tsumitateStart) ? String(settings.tsumitateStart).trim() : "2026-11";
         var defaultBroker = (settings && settings.defaultBroker) || "SBI";
-        var brokersMap = (settings && settings.brokers) || {};
-        var cutoffStr = brokersMap[defaultBroker] || "15:30";
-        var cutoffMin = parseHHMM(cutoffStr, 15 * 60 + 30);
 
         var sorted = (orders || []).slice().sort(function (a, b) {
           var oa = (a.orderDate || "") + " " + (a.orderTime || "");
@@ -1503,6 +1530,8 @@
             status: "注文済み",
             monthlyYen: monthlyYen,
             monthlyDay: monthlyDay,
+            applicationDate: thisMonthOrder.orderDate || "",
+            executionDate: thisMonthOrder.execDate || "",
             mainText: "今月の積立は注文済み（" + ordMd + " " + ordTime + "、" + formatInt(ordYenVal) + "円）",
             subText: "約定予定日／約定日: " + formatDateLabelFull(thisMonthOrder.execDate) +
               (String(thisMonthOrder.status || "").toLowerCase() === "settled" ? "（約定済み）" : "（約定待ち）"),
@@ -1515,26 +1544,19 @@
           var targetYm = nowParts.yearMonth < tsumitateStart ? tsumitateStart : nowParts.yearMonth;
           var schedDateStr = targetYm + "-" + ("0" + monthlyDay).slice(-2);
           var schedLabelFull = formatDateLabelFull(schedDateStr);
-          var schedDt = parseDateYMD(schedDateStr);
-          var subBefore = "毎月" + monthlyDay + "日（" + cutoffStr + " 締切）";
-          if (schedDt && !isFundOrderDay(schedDt)) {
-            var nextCur = new Date(schedDt.getFullYear(), schedDt.getMonth(), schedDt.getDate());
-            var hHit = [];
-            while (!isFundOrderDay(nextCur)) {
-              var hYmd = toDateYMD(nextCur);
-              if (JP_HOLIDAYS[hYmd]) {
-                hHit.push((nextCur.getMonth() + 1) + "/" + nextCur.getDate() + " は" + JP_HOLIDAYS[hYmd]);
-              }
-              nextCur = new Date(nextCur.getFullYear(), nextCur.getMonth(), nextCur.getDate() + 1);
-            }
-            var nextStr = toDateYMD(nextCur);
-            subBefore = "※" + schedLabelFull + "は休日のため次の営業日 " + formatDateLabelFull(nextStr) +
-              (hHit.length > 0 ? "（" + hHit.join("、") + "）" : "") + " の約定扱い";
+          var schedPre = computeOrderScheduleForInput(schedDateStr, "10:00", defaultBroker, settings);
+          var subBefore = "毎月" + monthlyDay + "日（" + schedPre.cutoffTime + " 締切）";
+          if (schedPre.isHolidayOrder) {
+            subBefore = "※" + schedLabelFull + "は休日のため申込は " + schedPre.applicationDateLabelFull +
+              "、約定・基準価額は " + schedPre.executionDateLabelFull + "の分" +
+              (schedPre.holidaysHit.length > 0 ? "（" + schedPre.holidaysHit.join("、") + "）" : "");
           }
           return {
             status: "開始前",
             monthlyYen: monthlyYen,
             monthlyDay: monthlyDay,
+            applicationDate: schedPre.applicationDate,
+            executionDate: schedPre.executionDate,
             mainText: "次の積立：" + schedLabelFull + " " + formatInt(monthlyYen) + "円",
             subText: subBefore,
             urgent: false,
@@ -1543,42 +1565,26 @@
         }
 
         // 積立日以降で未注文のとき
-        var todayDt = parseDateYMD(nowParts.dateStr);
-        var todayIsOrderDay = todayDt ? isFundOrderDay(todayDt) : true;
-        var beforeCutoff = todayIsOrderDay && (nowParts.minutes < cutoffMin);
+        var schedNow = computeOrderScheduleForInput(nowParts.dateStr, nowParts.timeStr, defaultBroker, settings);
         var subUnordered = "";
 
-        if (beforeCutoff) {
-          var diffMin = cutoffMin - nowParts.minutes;
+        if (schedNow.isSameDayApplication) {
+          var diffMin = Math.max(0, schedNow.cutoffMin - schedNow.orderMin);
           var remHours = Math.floor(diffMin / 60);
           var remMins = diffMin % 60;
-          subUnordered = cutoffStr + " の締め切りまで あと " + (remHours > 0 ? (remHours + "時間") : "") + remMins + "分";
+          subUnordered = schedNow.cutoffTime + " の締め切りまで あと " +
+            (remHours > 0 ? (remHours + "時間") : "") + remMins + "分。" +
+            "今日 " + schedNow.cutoffTime + " までの注文は 申込 " + schedNow.applicationDateLabelFull +
+            "、約定・基準価額は " + schedNow.executionDateLabelFull + "の分（" +
+            schedNow.applicationDateMd + " の夜の米国市場で決まります）";
         } else {
-          var searchCur = todayDt
-            ? new Date(todayDt.getFullYear(), todayDt.getMonth(), todayDt.getDate() + 1)
-            : new Date();
-          var holidaysHit = [];
-          if (todayDt && !todayIsOrderDay) {
-            var todayYmd = toDateYMD(todayDt);
-            if (JP_HOLIDAYS[todayYmd]) {
-              holidaysHit.push((todayDt.getMonth() + 1) + "/" + todayDt.getDate() + " は" + JP_HOLIDAYS[todayYmd]);
-            }
-          }
-          while (!isFundOrderDay(searchCur)) {
-            var cYmd = toDateYMD(searchCur);
-            if (JP_HOLIDAYS[cYmd]) {
-              holidaysHit.push((searchCur.getMonth() + 1) + "/" + searchCur.getDate() + " は" + JP_HOLIDAYS[cYmd]);
-            }
-            searchCur = new Date(searchCur.getFullYear(), searchCur.getMonth(), searchCur.getDate() + 1);
-          }
-          var nextBizYmd = toDateYMD(searchCur);
-          var nextBizLabelFull = formatDateLabelFull(nextBizYmd);
-          var nextBizMd = formatMdSimple(nextBizYmd);
-          if (!todayIsOrderDay || holidaysHit.length > 0) {
-            var reasonSuffix = holidaysHit.length > 0 ? ("。" + holidaysHit.join("、")) : "";
-            subUnordered = "今日の締め切りは過ぎました。今注文すると次の営業日（" + nextBizLabelFull + reasonSuffix + "）の約定、基準価額は " + nextBizMd + " の分です";
+          if (schedNow.isHolidayOrder || schedNow.holidaysHit.length > 0) {
+            var reasonSuffix = schedNow.holidaysHit.length > 0 ? ("（" + schedNow.holidaysHit.join("、") + "）") : "";
+            subUnordered = "今日の締め切りは過ぎました。今注文すると申込は " + schedNow.applicationDateLabelFull +
+              "、約定・基準価額は " + schedNow.executionDateLabelFull + "の分です" + reasonSuffix;
           } else {
-            subUnordered = "今日の締め切りは過ぎました。今注文すると約定は " + nextBizLabelFull + "、基準価額は " + nextBizMd + " の分です";
+            subUnordered = "今日の締め切りは過ぎました。今注文すると申込は " + schedNow.applicationDateLabelFull +
+              "、約定・基準価額は " + schedNow.executionDateLabelFull + "の分です";
           }
         }
 
@@ -1586,6 +1592,8 @@
           status: "未注文",
           monthlyYen: monthlyYen,
           monthlyDay: monthlyDay,
+          applicationDate: schedNow.applicationDate,
+          executionDate: schedNow.executionDate,
           mainText: "今月の積立 " + formatInt(monthlyYen) + "円・未注文",
           subText: subUnordered,
           urgent: true,
