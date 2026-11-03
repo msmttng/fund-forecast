@@ -696,13 +696,38 @@ def settle_pending_orders_if_needed(
     return gas_data
 
 
+def _infer_order_purpose(o: Dict[str, Any]) -> str:
+    """注文の区分（初期 / 積立 / 追加 / 売却）を判定する。"""
+    p = str(o.get("purpose") or "").strip()
+    if p in ("初期", "積立", "追加", "売却"):
+        return p
+    oid = str(o.get("id") or "").strip()
+    snap = str(o.get("snapshot") or "")
+    if oid == "o_20261030_150000_init" or "isInitialBalance" in snap:
+        return "初期"
+    if oid == "o_20261103_085613_9824":
+        return "追加"
+    if str(o.get("side") or "BUY").upper() == "SELL":
+        return "売却"
+    return "追加"
+
+
 def compute_balance_from_orders(
     orders: List[Dict[str, Any]],
     settings: Dict[str, Any],
     provisional_nav: int,
+    now_jst: Optional[datetime.datetime] = None,
 ) -> Dict[str, Any]:
-    """注文記録から保有口数・平均取得単価（移動平均法）・現金・約定待ち反映後残高・売却概算税を計算する（4-2・4-3）。"""
-    budget_yen = int(round(float(settings.get("budgetYen", 0))))
+    """注文記録から保有口数・平均取得単価（移動平均法）・元本内訳・積立状態・現金・約定待ち反映後残高・売却概算税を計算する（4-1〜4-3）。"""
+    if now_jst is None:
+        now_jst = datetime.datetime.now(JST)
+    budget_yen = int(round(float(settings.get("budgetYen", 140000))))
+    plan_mode = "rebalance" if str(settings.get("planMode") or "").strip() == "rebalance" else "tsumitate"
+    monthly_yen = int(round(float(settings.get("monthlyYen", 50000))))
+    monthly_day = int(round(float(settings.get("monthlyDay", 10))))
+    if monthly_day < 1 or monthly_day > 28:
+        monthly_day = 10
+    tsumitate_start = str(settings.get("tsumitateStart") or "2026-11").strip()[:7]
 
     def _sort_key(o: Dict[str, Any]) -> Tuple[str, str, str, str]:
         return (
@@ -722,6 +747,12 @@ def compute_balance_from_orders(
     settled_sell_tax_yen_total = 0
     settled_sell_net_yen_total = 0
 
+    initial_principal_yen = 0
+    tsumitate_principal_yen = 0
+    extra_principal_yen = 0
+    pending_tsumitate_yen = 0
+    pending_extra_yen = 0
+
     pending_buy_yen = 0
     pending_buy_est_units = 0
     pending_sell_units = 0
@@ -729,34 +760,44 @@ def compute_balance_from_orders(
     pending_orders_list: List[Dict[str, Any]] = []
     order_tax_map: Dict[str, Dict[str, int]] = {}
 
+    now_ym = now_jst.strftime("%Y-%m")
+    now_day = now_jst.day
+    this_month_tsumitate_order: Optional[Dict[str, Any]] = None
+
     for o in sorted_orders:
         status = str(o.get("status") or "pending").lower()
         if status == "cancelled":
             continue
         side = str(o.get("side") or "BUY").upper()
         spec = str(o.get("spec") or "YEN").upper()
+        purpose = _infer_order_purpose(o)
+        ord_ym = str(o.get("orderDate") or "")[:7]
+        if purpose == "積立" and ord_ym == now_ym and ord_ym >= tsumitate_start:
+            this_month_tsumitate_order = o
 
         if status == "settled":
+            # 約定口数・約定金額は行に入っている execUnits / execYen をそのまま使う（基準価額から逆算して上書きしない）
             e_nav = float(o.get("execNav") or 0)
-            e_units = int(round(float(o.get("execUnits") or 0)))
-            e_yen = int(round(float(o.get("execYen") or 0)))
+            e_units = int(round(float(o.get("execUnits") or o.get("units") or 0)))
+            e_yen = int(round(float(o.get("execYen") or o.get("amountYen") or 0)))
 
             if side == "BUY":
                 if e_units <= 0 and e_nav > 0 and o.get("amountYen"):
                     e_units = math.floor(float(o["amountYen"]) * 10000.0 / e_nav)
-                if e_yen <= 0 and o.get("amountYen"):
-                    e_yen = int(round(float(o["amountYen"])))
                 if e_units > 0 and e_yen > 0:
                     cost_basis_yen_total += e_yen
                     settled_units += e_units
                     avg_cost_nav = int(round((cost_basis_yen_total * 10000.0) / settled_units)) if settled_units > 0 else 0
                     settled_buy_yen_total += e_yen
+                    if purpose == "初期":
+                        initial_principal_yen += e_yen
+                    elif purpose == "積立":
+                        tsumitate_principal_yen += e_yen
+                    else:
+                        extra_principal_yen += e_yen
             elif side == "SELL":
-                if e_units <= 0:
-                    if spec == "UNITS" and o.get("units"):
-                        e_units = int(round(float(o["units"])))
-                    elif spec == "YEN" and o.get("amountYen") and e_nav > 0:
-                        e_units = math.ceil(float(o["amountYen"]) * 10000.0 / e_nav)
+                if e_units <= 0 and spec == "YEN" and o.get("amountYen") and e_nav > 0:
+                    e_units = math.ceil(float(o["amountYen"]) * 10000.0 / e_nav)
                 sell_u = min(settled_units, max(0, e_units))
                 if e_yen <= 0 and e_nav > 0 and sell_u > 0:
                     e_yen = math.floor(sell_u * e_nav / 10000.0)
@@ -791,6 +832,10 @@ def compute_balance_from_orders(
                     amt = math.floor(est_u * provisional_nav / 10000.0) if provisional_nav > 0 else 0
                 pending_buy_yen += amt
                 pending_buy_est_units += est_u
+                if purpose == "積立":
+                    pending_tsumitate_yen += amt
+                else:
+                    pending_extra_yen += amt
             elif side == "SELL":
                 if spec == "UNITS" and o.get("units"):
                     u_s = int(round(float(o["units"])))
@@ -808,11 +853,43 @@ def compute_balance_from_orders(
     effective_holding_units = max(0, settled_units - pending_sell_units) + pending_buy_est_units
     effective_cash_yen = max(0, cash_yen)
 
+    evaluation_yen = math.floor((settled_units * provisional_nav) / 10000.0) if provisional_nav > 0 else 0
+    unrealized_pnl_yen = (evaluation_yen - cost_basis_yen_total) if provisional_nav > 0 else 0
+    unrealized_pnl_pct = (
+        round((unrealized_pnl_yen / cost_basis_yen_total) * 100.0, 2)
+        if (provisional_nav > 0 and cost_basis_yen_total > 0)
+        else 0.0
+    )
+
+    if this_month_tsumitate_order is not None:
+        tsumitate_status = "注文済み"
+    elif now_ym >= tsumitate_start and now_day >= monthly_day:
+        tsumitate_status = "未注文"
+    else:
+        tsumitate_status = "開始前"
+
+    est_monthly_units = math.floor((monthly_yen * 10000.0) / provisional_nav) if provisional_nav > 0 else 0
+
     return {
+        "planMode": plan_mode,
+        "monthlyYen": monthly_yen,
+        "monthlyDay": monthly_day,
+        "tsumitateStart": tsumitate_start,
+        "tsumitateStatus": tsumitate_status,
+        "estimatedMonthlyUnits": est_monthly_units,
+        "thisMonthTsumitateOrder": this_month_tsumitate_order,
         "budgetYen": budget_yen,
         "holdingUnits": settled_units,
         "costBasisYen": cost_basis_yen_total,
         "avgCostNav": avg_cost_nav,
+        "evaluationYen": evaluation_yen,
+        "unrealizedPnlYen": unrealized_pnl_yen,
+        "unrealizedPnlPct": unrealized_pnl_pct,
+        "initialPrincipalYen": initial_principal_yen,
+        "tsumitatePrincipalYen": tsumitate_principal_yen,
+        "extraPrincipalYen": extra_principal_yen,
+        "pendingTsumitateYen": pending_tsumitate_yen,
+        "pendingExtraYen": pending_extra_yen,
         "settledCashYen": settled_cash_yen,
         "cashYen": cash_yen,
         "effectiveHoldingUnits": effective_holding_units,
@@ -1754,15 +1831,76 @@ def build_discord_payload(
                 parts_p.append(f"約定待ち売却 {p_sell_u:,}口")
             pending_note = f"\n※反映済みの約定待ち注文: {' / '.join(parts_p)}"
 
-    kind_titles = {
-        "morning_landing": f"📊 [10:15 着地＆リバランス速報] 指数 {score}/100点（ランク{rank}）",
-        "cutoff_final_judge": f"🔔 [15:05 最終リバランスジャッジ] {sig['actionBadge']}（{score}/100点）",
-        "intraday_opportunity": f"🚨 [リバランス好機急浮上] 昼間の変動で売買サイン点灯（{score}/100点）",
-        "manual_test": f"✅ [テスト通知] トリプルNASDAQ リバランスジャッジ（{score}/100点）",
-    }
-    title = kind_titles.get(kind, f"トリプルNASDAQ リバランス通知（{score}/100点）")
+    plan_mode = str(bal_sum.get("planMode") or "tsumitate") if bal_sum else "rebalance"
+    is_tsumitate_mode = bool(has_personal and plan_mode == "tsumitate")
 
-    if has_personal:
+    if is_tsumitate_mode:
+        kind_titles = {
+            "morning_landing": f"📊 [10:15 着地＆積立速報] 指数 {score}/100点（ランク{rank}）",
+            "cutoff_final_judge": f"🔔 [15:05 積立＆相場ジャッジ] {sig['actionBadge']}（{score}/100点）",
+            "intraday_opportunity": f"🚨 [相場変動アラート] 昼間の変動で買い場指数 {score}/100点",
+            "manual_test": f"✅ [テスト通知] トリプルNASDAQ 積立モード（{score}/100点）",
+        }
+    else:
+        kind_titles = {
+            "morning_landing": f"📊 [10:15 着地＆リバランス速報] 指数 {score}/100点（ランク{rank}）",
+            "cutoff_final_judge": f"🔔 [15:05 最終リバランスジャッジ] {sig['actionBadge']}（{score}/100点）",
+            "intraday_opportunity": f"🚨 [リバランス好機急浮上] 昼間の変動で売買サイン点灯（{score}/100点）",
+            "manual_test": f"✅ [テスト通知] トリプルNASDAQ リバランスジャッジ（{score}/100点）",
+        }
+    title = kind_titles.get(kind, f"トリプルNASDAQ 通知（{score}/100点）")
+
+    if is_tsumitate_mode:
+        monthly_yen = int(bal_sum.get("monthlyYen") or 50000)
+        monthly_day = int(bal_sum.get("monthlyDay") or 10)
+        ts_status = str(bal_sum.get("tsumitateStatus") or "未注文")
+        ts_info = bal_sum.get("thisMonthTsumitateOrder")
+        est_ts_units = int(bal_sum.get("estimatedMonthlyUnits") or (math.floor(monthly_yen * 10000.0 / prov_nav) if prov_nav > 0 else 0))
+        if ts_status == "注文済み" and isinstance(ts_info, dict):
+            od_str = str(ts_info.get("orderDate") or "")
+            ot_str = str(ts_info.get("orderTime") or "")
+            ts_amt = int(ts_info.get("amountYen") or monthly_yen)
+            ts_line = f"今月の積立は注文済み（{od_str} {ot_str}、{ts_amt:,}円）"
+        elif ts_status == "開始前":
+            ts_line = f"次の積立：毎月{monthly_day}日 {monthly_yen:,}円（暫定目安で 約+{est_ts_units:,}口）"
+        else:
+            ts_line = f"今月の積立 {monthly_yen:,}円・未注文（本日の暫定目安 `{prov_nav:,}円` で 約`+{est_ts_units:,}口`）"
+
+        pnl_yen = int(bal_sum.get("unrealizedPnlYen") or 0)
+        pnl_pct = float(bal_sum.get("unrealizedPnlPct") or 0.0)
+        mkt_yen = int(bal_sum.get("evaluationYen") or 0)
+        prin_total = int(bal_sum.get("costBasisYen") or 0)
+        prin_init = int(bal_sum.get("initialPrincipalYen") or 0)
+        prin_tsum = int(bal_sum.get("tsumitatePrincipalYen") or 0)
+        prin_extra = int(bal_sum.get("extraPrincipalYen") or 0)
+
+        if kind == "cutoff_final_judge":
+            content_line = (
+                f"📅 **【積立モード・15:05確認】** {ts_line} ｜ "
+                f"購入指示指数 **{score}/100点（{sig['actionBadge']}）**"
+            )
+        elif kind == "intraday_opportunity":
+            content_line = (
+                f"🚨 **【昼間の相場変動】** 先物 {lead['totalLeadPct']:+.2f}% で購入指示指数 **{score}/100点** ｜ {ts_line}"
+            )
+        elif kind == "morning_landing":
+            content_line = (
+                f"📊 **【10:15 着地速報】** {f_info['launchpadDateLabel']}見込 **{lp_nav:,}円（{lp_chg:+.2f}%）** ｜ "
+                f"評価額 **{mkt_yen:,}円**（損益 `{pnl_yen:+,}円 / {pnl_pct:+.2f}%`）"
+            )
+        else:
+            content_line = (
+                f"✅ **【Discord連携テスト（積立モード）】** {ts_line} ｜ 購入指示指数 **{score}/100点**"
+            )
+
+        portfolio_field_val = (
+            f"📅 **今月の積立**: {ts_line}\n"
+            f"💰 **元本合計**: `{prin_total:,}円`（初期 `{prin_init:,}円` / 積立累計 `{prin_tsum:,}円` / 追加 `{prin_extra:,}円`）\n"
+            f"📈 **評価額**: `{mkt_yen:,}円`（損益 `{pnl_yen:+,}円` / `{pnl_pct:+.2f}%`）\n"
+            f"📦 **確定保有**: `{int(bal_sum.get('holdingUnits', 0)):,}口`（平均取得単価 `{int(bal_sum.get('avgCostNav', 0)):,}円`）"
+            f"{pending_note}"
+        )
+    elif has_personal:
         if kind == "cutoff_final_judge":
             if r_act == "BUY":
                 content_line = (
@@ -1827,7 +1965,7 @@ def build_discord_payload(
 
     fields = [
         {
-            "name": "ポートフォリオ & リバランス指示",
+            "name": "積立状況 & 保有残高" if is_tsumitate_mode else "ポートフォリオ & リバランス指示",
             "value": portfolio_field_val,
             "inline": False,
         },
@@ -1938,10 +2076,15 @@ def evaluate_and_notify_discord(
         # 3. 営業日 13:00〜14:55 のリバランス好機急浮上アラート（買い増し急浮上 または 利確売り急浮上、1日1回）
         elif (13 * 60) <= hm <= (14 * 60 + 55) and state.get("lastOpportunityAlertDate") != today_str:
             reb_act = (personal_reb or {}).get("activePlan", {}).get("action", "HOLD")
+            bal_mode = str(((personal_reb or {}).get("balanceSummary") or {}).get("planMode") or "rebalance")
             morning_score = state.get("morningScore") if state.get("lastMorningDate") == today_str else None
             jumped_from_morning = (morning_score is not None) and (score - int(morning_score) >= 10) and (score >= 65)
-            afternoon_bargain = (reb_act == "BUY") and (score >= 68) and (lead_pct <= -1.5)
-            afternoon_profit_take = (reb_act == "SELL") and (score <= 30) and (lead_pct >= 2.0)
+            if bal_mode == "tsumitate":
+                afternoon_bargain = (score >= 68) and (lead_pct <= -1.5)
+                afternoon_profit_take = False
+            else:
+                afternoon_bargain = (reb_act == "BUY") and (score >= 68) and (lead_pct <= -1.5)
+                afternoon_profit_take = (reb_act == "SELL") and (score <= 30) and (lead_pct >= 2.0)
             if jumped_from_morning or afternoon_bargain or afternoon_profit_take:
                 kind_to_send = "intraday_opportunity"
 

@@ -1,6 +1,6 @@
 {
   "updatedAt": "2026-11-03T14:12:37+09:00",
-  "generatedAt": "2026-11-03T14:12:37+09:00",
+  "generatedAt": "2026-11-03T20:13:54+09:00",
   "updateIntervalSec": 1800,
   "nextUpdateAt": "2026-11-03T14:42:37+09:00",
   "ordersApiUrl": "https://script.google.com/macros/s/AKfycbwaZu4G_PhrOQItGpvqBTwjVer2KeV-1884-c5YUGpaZJV5eOkcBcYL77g9VxoyY6u32g/exec",
@@ -17,8 +17,8 @@
     "launchpadNav": 8033,
     "launchpadDiff": -345,
     "launchpadChangePct": -4.12,
-    "provisionalExecNav": 8031,
-    "provisionalVsD0Pct": -4.14,
+    "provisionalExecNav": 8124,
+    "provisionalVsD0Pct": -3.03,
     "accuracy": {
       "days": 12,
       "maePt": 0.2,
@@ -97,24 +97,24 @@
   },
   "intradayLead": {
     "nqfSettled": 28127.5,
-    "nqfLive": 28125.5,
-    "nqfLeadPct": -0.01,
-    "nqfTripleImpactPct": -0.02,
-    "nqfAsOf": "2026-11-03T13:59:58+09:00",
+    "nqfLive": 28234.0,
+    "nqfLeadPct": 0.38,
+    "nqfTripleImpactPct": 1.14,
+    "nqfAsOf": "2026-11-03T20:03:56+09:00",
     "fxBaseForNext": 157.93,
     "fxLiveMid": 157.93,
     "fxLeadPct": 0.0,
     "fxLockedAtTtm": false,
-    "fxAsOf": "2026-11-03T14:12:42+09:00",
-    "totalLeadRaw": -0.0002133143720558173,
-    "totalLeadPct": -0.02
+    "fxAsOf": "2026-11-03T20:13:59+09:00",
+    "totalLeadRaw": 0.011358990311972269,
+    "totalLeadPct": 1.14
   },
   "schedule": {
     "applicationDate": "2026-11-04",
     "applicationDateLabel": "11/4(水)",
     "cutoffAt": "2026-11-04T15:30:00+09:00",
     "cutoffTimeStr": "15:30",
-    "minutesToCutoff": 1517,
+    "minutesToCutoff": 1156,
     "executionDate": "2026-11-05",
     "executionDateLabel": "11/5(木)",
     "nightsAfterCutoff": 1,
@@ -137,7 +137,7 @@
     "applicationDateLabel": "11/4(水)",
     "cutoffAt": "2026-11-04T15:00:00+09:00",
     "cutoffTimeStr": "15:00",
-    "minutesToCutoff": 1487,
+    "minutesToCutoff": 1126,
     "executionDate": "2026-11-05",
     "executionDateLabel": "11/5(木)",
     "nightsAfterCutoff": 1,
@@ -156,24 +156,24 @@
     "isOrderDayToday": false
   },
   "signal": {
-    "score": 85,
+    "score": 82,
     "rank": "S",
-    "rankLabel": "極上バーゲン押し目（強い買い）",
+    "rankLabel": "大口押し目好機（強い買い）",
     "tone": "watch_buy",
     "actionBadge": "11/4(水) 15:05まで待機",
     "orderReadyNow": false,
     "orderOkLevel": true,
     "intradayBounceTrap": false,
-    "recommendedPct": 45,
-    "baseRecommendedPct": 45,
+    "recommendedPct": 35,
+    "baseRecommendedPct": 35,
     "capReasons": [],
-    "headline": "【買い増しリバランス圏（目標比率 69.0%）】発注は 11/4(水) 15:05 の最終通知後がベスト",
-    "detailAdvice": "下落により押し目スコアが 85点（ランクS）へ上昇し、動的目標比率は 69.0%（平常 50.0%）です。今すぐ入れても 11/4(水) 15:15 に入れても同じ 11/5(木) 約定になるため、11/4(水) 15:05 の最終通知を見てから発注してください。",
+    "headline": "【買い増しリバランス圏（目標比率 67.5%）】発注は 11/4(水) 15:05 の最終通知後がベスト",
+    "detailAdvice": "下落により押し目スコアが 82点（ランクS）へ上昇し、動的目標比率は 67.5%（平常 50.0%）です。今すぐ入れても 11/4(水) 15:15 に入れても同じ 11/5(木) 約定になるため、11/4(水) 15:05 の最終通知を見てから発注してください。",
     "reasons": [
       "発射台（11/4(水)見込）: 8,378円 → 8,033円（-4.12% / 3日累積 -17.89%）",
-      "昼間の時間外リード: NQ=F -0.01% (×3=-0.02%) ＋ 為替 +0.00% ＝ 合計 -0.02%",
-      "NASDAQ100 テクニカル: 60日高値比 -10.37%（3倍換算 約-29.5%） / RSI(14) 32.0 / 25日線乖離 -6.55%",
-      "ボラティリティ & 日程: VIX 21.15（前日比 +1.73） / 11/4(水)申込 → 11/5(木)約定（米国市場 1晩分）"
+      "昼間の時間外リード: NQ=F +0.38% (×3=+1.14%) ＋ 為替 +0.00% ＝ 合計 +1.14%",
+      "NASDAQ100 テクニカル: 60日高値比 -10.02%（3倍換算 約-28.6%） / RSI(14) 33.6 / 25日線乖離 -5.90%",
+      "ボラティリティ & 日程: VIX 21.27（前日比 +0.12） / 11/4(水)申込 → 11/5(木)約定（米国市場 1晩分）"
     ],
     "axes": [
       {
@@ -187,26 +187,26 @@
       {
         "id": "drawdown_depth",
         "label": "② NASDAQ100 高値からの調整深さ",
-        "score": 22.2,
+        "score": 22.0,
         "maxScore": 25,
         "minScore": 0,
-        "summary": "60日高値(31,224)比 -10.37%"
+        "summary": "60日高値(31,224)比 -10.02%"
       },
       {
         "id": "technical_oversold",
         "label": "③ テクニカル売られすぎ度（RSI・25日線）",
-        "score": 18.4,
+        "score": 17.7,
         "maxScore": 20,
         "minScore": 0,
-        "summary": "RSI(14)=32.0 / 25日線乖離 -6.55%"
+        "summary": "RSI(14)=33.6 / 25日線乖離 -5.90%"
       },
       {
         "id": "intraday_lead",
         "label": "④ 昼間の時間外リード（高値掴み回避）",
-        "score": 8.0,
+        "score": 5.7,
         "maxScore": 15,
         "minScore": -20,
-        "summary": "時間外3倍+為替リード -0.02%"
+        "summary": "時間外3倍+為替リード +1.14%"
       },
       {
         "id": "vix_and_schedule",
@@ -214,21 +214,21 @@
         "score": 7.6,
         "maxScore": 10,
         "minScore": -15,
-        "summary": "VIX 21.1 / 約定まで米国 1晩"
+        "summary": "VIX 21.3 / 約定まで米国 1晩"
       }
     ]
   },
   "technicals": {
-    "impliedNdx": 27987.02,
+    "impliedNdx": 28096.18,
     "ndxHigh60d": 31224.47,
-    "drawdownNdxPct": -10.37,
-    "drawdownTripleEquivPct": -29.5,
-    "rsi14": 32.0,
-    "sma25": 29948.36,
-    "sma25DevPct": -6.55,
+    "drawdownNdxPct": -10.02,
+    "drawdownTripleEquivPct": -28.6,
+    "rsi14": 33.6,
+    "sma25": 29858.63,
+    "sma25DevPct": -5.9,
     "cum3dChangePct": -17.89,
-    "vix": 21.15,
-    "vixChange": 1.73
+    "vix": 21.27,
+    "vixChange": 0.12
   },
   "rebalance": {
     "config": {
@@ -238,7 +238,7 @@
       "minTradeYen": 3000
     },
     "activeMode": "dynamic",
-    "dynamicTargetWeightPct": 69.0,
+    "dynamicTargetWeightPct": 67.5,
     "fixedTargetWeightPct": 50.0
   },
   "scenarios": [
@@ -246,36 +246,36 @@
       "label": "さらに急落 (NQ -4% → 3倍 -12%)",
       "nqMovePct": -4.0,
       "tripleMovePct": -12.0,
-      "estimatedNav": 7067,
-      "vsFridayOrD0Pct": -15.65
+      "estimatedNav": 7149,
+      "vsFridayOrD0Pct": -14.67
     },
     {
       "label": "続落 (NQ -2% → 3倍 -6%)",
       "nqMovePct": -2.0,
       "tripleMovePct": -6.0,
-      "estimatedNav": 7549,
-      "vsFridayOrD0Pct": -9.89
+      "estimatedNav": 7637,
+      "vsFridayOrD0Pct": -8.84
     },
     {
       "label": "ここから横ばい (NQ ±0%)",
       "nqMovePct": 0.0,
       "tripleMovePct": 0.0,
-      "estimatedNav": 8031,
-      "vsFridayOrD0Pct": -4.14
+      "estimatedNav": 8124,
+      "vsFridayOrD0Pct": -3.03
     },
     {
       "label": "半分程度反発 (NQ +2% → 3倍 +6%)",
       "nqMovePct": 2.0,
       "tripleMovePct": 6.0,
-      "estimatedNav": 8513,
-      "vsFridayOrD0Pct": 1.61
+      "estimatedNav": 8611,
+      "vsFridayOrD0Pct": 2.78
     },
     {
       "label": "急反発 (NQ +4% → 3倍 +12%)",
       "nqMovePct": 4.0,
       "tripleMovePct": 12.0,
-      "estimatedNav": 8995,
-      "vsFridayOrD0Pct": 7.36
+      "estimatedNav": 9099,
+      "vsFridayOrD0Pct": 8.61
     }
   ],
   "charts": {

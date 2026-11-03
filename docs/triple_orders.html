@@ -613,6 +613,95 @@
       color: var(--judge-mild);
       border: 1px solid var(--judge-mild);
     }
+    .badge-purpose-init {
+      background: var(--judge-wait-bg);
+      color: var(--text-sub);
+      border: 1px solid var(--line-strong);
+    }
+    .badge-purpose-tsumitate {
+      background: var(--accent-bg);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+    .badge-purpose-extra {
+      background: var(--judge-buy-bg);
+      color: var(--judge-buy);
+      border: 1px solid var(--judge-buy);
+    }
+    .badge-purpose-sell {
+      background: var(--judge-mild-bg);
+      color: var(--judge-mild);
+      border: 1px solid var(--judge-mild);
+    }
+
+    /* 今月の積立カード */
+    .tsumitate-card {
+      border-left: 4px solid var(--accent);
+    }
+    .tsumitate-card.status-unplaced {
+      border-left-color: var(--judge-mild);
+    }
+    .tsumitate-card.status-placed {
+      border-left-color: var(--up);
+    }
+    .tsumitate-body {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .tsumitate-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 240px;
+      flex: 1;
+    }
+    .tsumitate-main-text {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+    }
+    .tsumitate-sub-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+      line-height: 1.45;
+    }
+    .tsumitate-sub-text.urgent {
+      color: var(--judge-mild);
+    }
+    .tsumitate-est-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .settings-edit-panel {
+      margin-top: 10px;
+      padding: 12px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .settings-edit-panel.active {
+      display: flex;
+    }
+    .settings-edit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 580px) {
+      .settings-edit-grid {
+        grid-template-columns: 1fr;
+      }
+    }
 
     .order-body {
       display: grid;
@@ -805,6 +894,24 @@
       </div>
     </section>
 
+    <!-- 0. 今月の積立カード（4-2） -->
+    <section class="card tsumitate-card" id="tsumitateCardSection" aria-label="今月の積立">
+      <div class="card-title">
+        <span>今月の積立</span>
+        <span class="card-subtitle num" id="tsumitateCardSubtitle">毎月10日・50,000円</span>
+      </div>
+      <div class="tsumitate-body">
+        <div class="tsumitate-info">
+          <div class="tsumitate-main-text num" id="tsumitateMainText">次の積立：11/10（火） 50,000円</div>
+          <div class="tsumitate-sub-text num" id="tsumitateSubText">毎月10日（15:30 締切）</div>
+          <div class="tsumitate-est-text num" id="tsumitateEstUnitsText"></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-buy" id="btnPrefillTsumitate">今月の積立を記録</button>
+        </div>
+      </div>
+    </section>
+
     <!-- 1. 現在の残高サマリー -->
     <section class="card" id="balanceSection" aria-label="現在の残高サマリー">
       <div class="card-title">
@@ -837,31 +944,70 @@
           <div class="bal-sub num" id="balPnlLatest">予想価額比: --- 円 (--%)</div>
         </div>
 
-        <div class="bal-item">
+        <!-- 積立モード用：元本の内訳（初期・積立累計・追加） -->
+        <div class="bal-item" id="balPrincipalItem" style="grid-column: span 2;">
+          <div class="bal-lbl">元本の内訳（初期・積立累計・追加）</div>
+          <div class="bal-val num" id="balPrincipalTotal">--- 円</div>
+          <div class="bal-sub num" id="balPrincipalBreakdown">初期: --- 円 ／ 積立累計: --- 円 ／ 追加: --- 円</div>
+        </div>
+
+        <!-- 50:50 リバランスモード用：現金・運用枠・投信比率 -->
+        <div class="bal-item" id="balCashItem" style="display: none;">
           <div class="bal-lbl">現金（待機キャッシュ・約定待ち買付控除後）</div>
           <div class="bal-val num" id="balCashYen">--- 円</div>
           <div class="bal-sub num" id="balCashSub">運用枠: --- 円（運用枠は設定で変更できます）</div>
         </div>
 
-        <div class="bal-item">
+        <div class="bal-item" id="balWeightItem" style="display: none;">
           <div class="bal-lbl">投信比率（予想ベース実質 ／ 最新確定ベース）</div>
           <div class="bal-val num" id="balWeightProv">--- %</div>
           <div class="bal-sub num" id="balWeightSub">最新確定: --- % ｜ 動的目標: --- %</div>
         </div>
       </div>
 
-      <!-- 運用枠（settings.budgetYen）の設定変更バー -->
+      <!-- 運用モード・積立額・積立日・運用枠の設定変更バー（4-2） -->
       <div style="margin-top: 10px; padding: 8px 10px; background: var(--bg-subtle); border: 1px solid var(--line); border-radius: 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px;">
         <span style="color: var(--text-sub);" id="budgetSettingNoteText">
-          ⚙ <strong>運用枠は設定で変更できます</strong>（現在: <span class="num" id="currentBudgetSpan">140,000</span> 円 ／ スプレッドシート <code>settings</code> の <code>budgetYen</code> と連動）
+          ⚙ <strong>運用設定</strong>：<span id="currentPlanModeLabel">毎月積立モード</span>（毎月<span class="num" id="currentMonthlyDaySpan">10</span>日・<span class="num" id="currentMonthlyYenSpan">50,000</span>円）
+          <span id="currentBudgetSummaryWrap" style="display: none;"> ／ 運用枠: <span class="num" id="currentBudgetSpan">140,000</span> 円</span>
         </span>
         <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-          <button type="button" class="btn btn-sm" id="btnToggleBudgetEdit">運用枠を変更</button>
-          <div id="budgetEditInline" style="display: none; align-items: center; gap: 6px; flex-wrap: wrap;">
-            <input type="number" id="inputBudgetYen" class="input-ctrl num" style="width: 130px; padding: 4px 8px; font-size: 12.5px;" min="10000" step="10000" placeholder="140000">
-            <button type="button" class="btn btn-sm btn-primary" id="btnSaveBudgetYen">保存</button>
-            <button type="button" class="btn btn-sm" id="btnCancelBudgetEdit">閉じる</button>
+          <button type="button" class="btn btn-sm" id="btnToggleBudgetEdit">設定を変更</button>
+        </div>
+      </div>
+
+      <div class="settings-edit-panel" id="budgetEditInline">
+        <div class="settings-edit-grid">
+          <div class="field-group">
+            <label class="field-label" for="inputPlanMode">運用モード</label>
+            <select id="inputPlanMode" class="input-ctrl">
+              <option value="tsumitate">毎月積立（売り提案なし）</option>
+              <option value="rebalance">50:50 リバランス（今までの判定）</option>
+            </select>
+            <div class="field-hint">毎月積立モードでは売り提案を出さず、積立と下がったときの参考情報のみ表示します</div>
           </div>
+
+          <div class="field-group">
+            <label class="field-label" for="inputMonthlyYen">毎月の積立額（円）</label>
+            <input type="number" id="inputMonthlyYen" class="input-ctrl num" min="1000" step="1000" placeholder="50000">
+            <div class="field-hint">初期値 50,000円（余裕があれば増やせます）</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="inputMonthlyDay">毎月の積立日（1〜28日）</label>
+            <input type="number" id="inputMonthlyDay" class="input-ctrl num" min="1" max="28" step="1" placeholder="10">
+            <div class="field-hint">初期値 10日（1〜28の間で指定）</div>
+          </div>
+
+          <div class="field-group" id="budgetYenFieldGroup">
+            <label class="field-label" for="inputBudgetYen">運用枠（円・50:50 リバランスモードのときだけ使用）</label>
+            <input type="number" id="inputBudgetYen" class="input-ctrl num" min="10000" step="10000" placeholder="140000">
+            <div class="field-hint">毎月積立モードでは使用しません</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-sm btn-primary" id="btnSaveBudgetYen">設定を保存</button>
+          <button type="button" class="btn btn-sm" id="btnCancelBudgetEdit">閉じる</button>
         </div>
       </div>
 
@@ -904,6 +1050,16 @@
         </div>
 
         <div class="field-group">
+          <span class="field-label">区分（purpose）</span>
+          <div class="seg-group" role="group" aria-label="注文の区分">
+            <button type="button" class="seg-btn" id="btnPurposeTsumitate" data-purpose="積立">積立</button>
+            <button type="button" class="seg-btn active-spec" id="btnPurposeExtra" data-purpose="追加">追加</button>
+            <button type="button" class="seg-btn" id="btnPurposeSell" data-purpose="売却">売却</button>
+          </div>
+          <div class="field-hint" id="purposeHintText">未注文時は「積立」、注文済み時は「追加」が初期選択されます</div>
+        </div>
+
+        <div class="field-group">
           <span class="field-label">売買区分</span>
           <div class="seg-group" role="group" aria-label="売買区分">
             <button type="button" class="seg-btn active-buy" id="btnSideBuy" data-side="BUY">買付 (BUY)</button>
@@ -923,7 +1079,7 @@
 
         <div class="field-group" id="amountFieldWrap">
           <label class="field-label" for="inputAmountYen">注文金額（円）</label>
-          <input type="number" id="inputAmountYen" class="input-ctrl num" min="100" step="1000" placeholder="例: 10000">
+          <input type="number" id="inputAmountYen" class="input-ctrl num" min="100" step="1000" placeholder="例: 50000">
           <div class="field-hint" id="amountEstSub">予想基準価額での見込み口数を自動試算</div>
         </div>
 
@@ -935,7 +1091,7 @@
 
         <div class="field-group" style="grid-column: 1 / -1;">
           <label class="field-label" for="inputNote">メモ（任意）</label>
-          <input type="text" id="inputNote" class="input-ctrl" placeholder="例: 15:05通知を見て発注">
+          <input type="text" id="inputNote" class="input-ctrl" placeholder="例: 11月分の積立注文">
         </div>
       </div>
 
@@ -1035,12 +1191,16 @@
       var gasState = {
         orders: [],
         settings: {
-          budgetYen: 0,
+          budgetYen: 140000,
           baseTargetPct: 50,
           mode: "dynamic",
           rebalanceBandPt: 4.0,
           minTradeYen: 3000,
           defaultBroker: "SBI",
+          planMode: "tsumitate",
+          monthlyYen: 50000,
+          monthlyDay: 10,
+          tsumitateStart: "2026-11",
           brokers: { "SBI": "15:30", "楽天": "15:30", "マネックス": "15:30", "松井": "15:30" }
         },
         loaded: false,
@@ -1049,6 +1209,8 @@
 
       var formSide = "BUY";
       var formSpec = "YEN";
+      var formPurpose = "追加";
+      var userTouchedFormPurpose = false;
       var pendingSnapshotFromUrl = null;
 
       function safeGetStorage(k) {
@@ -1084,6 +1246,23 @@
       }
 
       function getNowJstParts() {
+        var customStr = window.__TEST_NOW_JST ? String(window.__TEST_NOW_JST).trim() : "";
+        if (customStr) {
+          var mCustom = customStr.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{1,2}):(\d{2}))?/);
+          if (mCustom) {
+            var cYmd = mCustom[1] + "-" + mCustom[2] + "-" + mCustom[3];
+            var cHh = mCustom[4] !== undefined ? ("0" + mCustom[4]).slice(-2) : "10";
+            var cMi = mCustom[5] !== undefined ? ("0" + mCustom[5]).slice(-2) : "00";
+            var cTime = cHh + ":" + cMi;
+            return {
+              dateStr: cYmd,
+              timeStr: cTime,
+              yearMonth: cYmd.slice(0, 7),
+              day: Number(mCustom[3]),
+              minutes: Number(cHh) * 60 + Number(cMi)
+            };
+          }
+        }
         var now = new Date();
         var jstMs = now.getTime() + (now.getTimezoneOffset() + 540) * 60000;
         var jst = new Date(jstMs);
@@ -1092,9 +1271,13 @@
         var dd = ("0" + jst.getDate()).slice(-2);
         var hh = ("0" + jst.getHours()).slice(-2);
         var mi = ("0" + jst.getMinutes()).slice(-2);
+        var dateStr = yyyy + "-" + mm + "-" + dd;
         return {
-          dateStr: yyyy + "-" + mm + "-" + dd,
-          timeStr: hh + ":" + mi
+          dateStr: dateStr,
+          timeStr: hh + ":" + mi,
+          yearMonth: dateStr.slice(0, 7),
+          day: Number(dd),
+          minutes: Number(hh) * 60 + Number(mi)
         };
       }
 
@@ -1115,6 +1298,38 @@
         var dt = parseDateYMD(dStr);
         if (!dt) return dStr || "---";
         return (dt.getMonth() + 1) + "/" + dt.getDate() + "(" + WEEKDAYS_JP[dt.getDay()] + ")";
+      }
+
+      function formatDateLabelFull(dStr) {
+        var dt = parseDateYMD(dStr);
+        if (!dt) return dStr || "---";
+        return (dt.getMonth() + 1) + "/" + dt.getDate() + "（" + WEEKDAYS_JP[dt.getDay()] + "）";
+      }
+
+      function formatMdSimple(dStr) {
+        var dt = parseDateYMD(dStr);
+        if (!dt) return dStr || "---";
+        return (dt.getMonth() + 1) + "/" + dt.getDate();
+      }
+
+      function inferOrderPurpose(o) {
+        if (!o) return "追加";
+        var p = String(o.purpose || "").trim();
+        if (p === "初期" || p === "積立" || p === "追加" || p === "売却") {
+          return p;
+        }
+        var idStr = String(o.id || "").trim();
+        var snapStr = String(o.snapshot || "");
+        if (idStr === "o_20261030_150000_init" || snapStr.indexOf("isInitialBalance") >= 0) {
+          return "初期";
+        }
+        if (idStr === "o_20261103_085613_9824") {
+          return "追加";
+        }
+        if (String(o.side || "BUY").toUpperCase() === "SELL") {
+          return "売却";
+        }
+        return "追加";
       }
 
       function isJpBusinessDay(dt) {
@@ -1249,9 +1464,138 @@
         };
       }
 
-      // 4-2 & 4-3: 注文記録から残高・平均取得単価（移動平均法）・約定待ち・概算税を計算
+      // 4-2 & 4-3: 今月の積立の状態・締め切り・次の営業日を計算
+      function computeTsumitateScheduleState(orders, settings, optNowParts) {
+        var nowParts = optNowParts || getNowJstParts();
+        var monthlyYen = Number(settings && settings.monthlyYen !== undefined ? settings.monthlyYen : 50000);
+        var monthlyDay = Number(settings && settings.monthlyDay !== undefined ? settings.monthlyDay : 10);
+        if (isNaN(monthlyDay) || monthlyDay < 1 || monthlyDay > 28) monthlyDay = 10;
+        var tsumitateStart = (settings && settings.tsumitateStart) ? String(settings.tsumitateStart).trim() : "2026-11";
+        var defaultBroker = (settings && settings.defaultBroker) || "SBI";
+        var brokersMap = (settings && settings.brokers) || {};
+        var cutoffStr = brokersMap[defaultBroker] || "15:30";
+        var cutoffMin = parseHHMM(cutoffStr, 15 * 60 + 30);
+
+        var sorted = (orders || []).slice().sort(function (a, b) {
+          var oa = (a.orderDate || "") + " " + (a.orderTime || "");
+          var ob = (b.orderDate || "") + " " + (b.orderTime || "");
+          if (oa !== ob) return oa < ob ? -1 : 1;
+          return String(a.id) < String(b.id) ? -1 : 1;
+        });
+
+        var thisMonthOrder = null;
+        for (var i = 0; i < sorted.length; i++) {
+          var o = sorted[i];
+          var st = String(o.status || "pending").toLowerCase();
+          if (st === "cancelled") continue;
+          var purp = inferOrderPurpose(o);
+          var ordYm = String(o.orderDate || "").slice(0, 7);
+          if (purp === "積立" && ordYm === nowParts.yearMonth && ordYm >= tsumitateStart) {
+            thisMonthOrder = o;
+          }
+        }
+
+        if (thisMonthOrder) {
+          var ordMd = formatMdSimple(thisMonthOrder.orderDate);
+          var ordTime = thisMonthOrder.orderTime || "--:--";
+          var ordYenVal = thisMonthOrder.amountYen || thisMonthOrder.execYen || monthlyYen;
+          return {
+            status: "注文済み",
+            monthlyYen: monthlyYen,
+            monthlyDay: monthlyDay,
+            mainText: "今月の積立は注文済み（" + ordMd + " " + ordTime + "、" + formatInt(ordYenVal) + "円）",
+            subText: "約定予定日／約定日: " + formatDateLabelFull(thisMonthOrder.execDate) +
+              (String(thisMonthOrder.status || "").toLowerCase() === "settled" ? "（約定済み）" : "（約定待ち）"),
+            urgent: false,
+            thisMonthOrder: thisMonthOrder
+          };
+        }
+
+        if (nowParts.yearMonth < tsumitateStart || nowParts.day < monthlyDay) {
+          var targetYm = nowParts.yearMonth < tsumitateStart ? tsumitateStart : nowParts.yearMonth;
+          var schedDateStr = targetYm + "-" + ("0" + monthlyDay).slice(-2);
+          var schedLabelFull = formatDateLabelFull(schedDateStr);
+          var schedDt = parseDateYMD(schedDateStr);
+          var subBefore = "毎月" + monthlyDay + "日（" + cutoffStr + " 締切）";
+          if (schedDt && !isFundOrderDay(schedDt)) {
+            var nextCur = new Date(schedDt.getFullYear(), schedDt.getMonth(), schedDt.getDate());
+            var hHit = [];
+            while (!isFundOrderDay(nextCur)) {
+              var hYmd = toDateYMD(nextCur);
+              if (JP_HOLIDAYS[hYmd]) {
+                hHit.push((nextCur.getMonth() + 1) + "/" + nextCur.getDate() + " は" + JP_HOLIDAYS[hYmd]);
+              }
+              nextCur = new Date(nextCur.getFullYear(), nextCur.getMonth(), nextCur.getDate() + 1);
+            }
+            var nextStr = toDateYMD(nextCur);
+            subBefore = "※" + schedLabelFull + "は休日のため次の営業日 " + formatDateLabelFull(nextStr) +
+              (hHit.length > 0 ? "（" + hHit.join("、") + "）" : "") + " の約定扱い";
+          }
+          return {
+            status: "開始前",
+            monthlyYen: monthlyYen,
+            monthlyDay: monthlyDay,
+            mainText: "次の積立：" + schedLabelFull + " " + formatInt(monthlyYen) + "円",
+            subText: subBefore,
+            urgent: false,
+            thisMonthOrder: null
+          };
+        }
+
+        // 積立日以降で未注文のとき
+        var todayDt = parseDateYMD(nowParts.dateStr);
+        var todayIsOrderDay = todayDt ? isFundOrderDay(todayDt) : true;
+        var beforeCutoff = todayIsOrderDay && (nowParts.minutes < cutoffMin);
+        var subUnordered = "";
+
+        if (beforeCutoff) {
+          var diffMin = cutoffMin - nowParts.minutes;
+          var remHours = Math.floor(diffMin / 60);
+          var remMins = diffMin % 60;
+          subUnordered = cutoffStr + " の締め切りまで あと " + (remHours > 0 ? (remHours + "時間") : "") + remMins + "分";
+        } else {
+          var searchCur = todayDt
+            ? new Date(todayDt.getFullYear(), todayDt.getMonth(), todayDt.getDate() + 1)
+            : new Date();
+          var holidaysHit = [];
+          if (todayDt && !todayIsOrderDay) {
+            var todayYmd = toDateYMD(todayDt);
+            if (JP_HOLIDAYS[todayYmd]) {
+              holidaysHit.push((todayDt.getMonth() + 1) + "/" + todayDt.getDate() + " は" + JP_HOLIDAYS[todayYmd]);
+            }
+          }
+          while (!isFundOrderDay(searchCur)) {
+            var cYmd = toDateYMD(searchCur);
+            if (JP_HOLIDAYS[cYmd]) {
+              holidaysHit.push((searchCur.getMonth() + 1) + "/" + searchCur.getDate() + " は" + JP_HOLIDAYS[cYmd]);
+            }
+            searchCur = new Date(searchCur.getFullYear(), searchCur.getMonth(), searchCur.getDate() + 1);
+          }
+          var nextBizYmd = toDateYMD(searchCur);
+          var nextBizLabelFull = formatDateLabelFull(nextBizYmd);
+          var nextBizMd = formatMdSimple(nextBizYmd);
+          if (!todayIsOrderDay || holidaysHit.length > 0) {
+            var reasonSuffix = holidaysHit.length > 0 ? ("。" + holidaysHit.join("、")) : "";
+            subUnordered = "今日の締め切りは過ぎました。今注文すると次の営業日（" + nextBizLabelFull + reasonSuffix + "）の約定、基準価額は " + nextBizMd + " の分です";
+          } else {
+            subUnordered = "今日の締め切りは過ぎました。今注文すると約定は " + nextBizLabelFull + "、基準価額は " + nextBizMd + " の分です";
+          }
+        }
+
+        return {
+          status: "未注文",
+          monthlyYen: monthlyYen,
+          monthlyDay: monthlyDay,
+          mainText: "今月の積立 " + formatInt(monthlyYen) + "円・未注文",
+          subText: subUnordered,
+          urgent: true,
+          thisMonthOrder: null
+        };
+      }
+
+      // 4-2 & 4-3: 注文記録から残高・平均取得単価（移動平均法）・元本内訳・約定待ち・概算税を計算
       function computeBalanceFromOrders(orders, settings, provNav) {
-        var budgetYen = Number((settings && settings.budgetYen) || 0);
+        var budgetYen = Number((settings && settings.budgetYen) || 140000);
         var sorted = (orders || []).slice().sort(function (a, b) {
           var da = a.execDate || a.orderDate || "";
           var db = b.execDate || b.orderDate || "";
@@ -1273,6 +1617,12 @@
         var settledSellTaxYenTotal = 0;
         var settledSellNetYenTotal = 0;
 
+        var initialPrincipalYen = 0;
+        var tsumitatePrincipalYen = 0;
+        var extraPrincipalYen = 0;
+        var pendingTsumitateYen = 0;
+        var pendingExtraYen = 0;
+
         var pendingBuyYen = 0;
         var pendingBuyEstUnits = 0;
         var pendingSellUnits = 0;
@@ -1286,28 +1636,33 @@
           if (st === "cancelled") continue;
           var side = String(o.side || "BUY").toUpperCase();
           var spec = String(o.spec || "YEN").toUpperCase();
+          var purpose = inferOrderPurpose(o);
 
           if (st === "settled") {
+            // 約定口数・約定金額は行に入っている execUnits / execYen をそのまま使う（基準価額から逆算して上書きしない）
             var eNav = Number(o.execNav || 0);
-            var eUnits = Number(o.execUnits || 0);
-            var eYen = Number(o.execYen || 0);
+            var eUnits = Number(o.execUnits || o.units || 0);
+            var eYen = Number(o.execYen || o.amountYen || 0);
             if (side === "BUY") {
               if (eUnits <= 0 && eNav > 0 && o.amountYen) {
                 eUnits = Math.floor((Number(o.amountYen) * 10000) / eNav);
-              }
-              if (eYen <= 0 && o.amountYen) {
-                eYen = Math.round(Number(o.amountYen));
               }
               if (eUnits > 0 && eYen > 0) {
                 costBasisYenTotal += eYen;
                 settledUnits += eUnits;
                 avgCostNav = settledUnits > 0 ? Math.round((costBasisYenTotal * 10000) / settledUnits) : 0;
                 settledBuyYenTotal += eYen;
+                if (purpose === "初期") {
+                  initialPrincipalYen += eYen;
+                } else if (purpose === "積立") {
+                  tsumitatePrincipalYen += eYen;
+                } else {
+                  extraPrincipalYen += eYen;
+                }
               }
             } else if (side === "SELL") {
-              if (eUnits <= 0) {
-                if (spec === "UNITS" && o.units) eUnits = Math.round(Number(o.units));
-                else if (spec === "YEN" && o.amountYen && eNav > 0) eUnits = Math.ceil((Number(o.amountYen) * 10000) / eNav);
+              if (eUnits <= 0 && spec === "YEN" && o.amountYen && eNav > 0) {
+                eUnits = Math.ceil((Number(o.amountYen) * 10000) / eNav);
               }
               var sellU = Math.min(settledUnits, Math.max(0, eUnits));
               if (eYen <= 0 && eNav > 0 && sellU > 0) {
@@ -1348,6 +1703,11 @@
               }
               pendingBuyYen += amt;
               pendingBuyEstUnits += estU;
+              if (purpose === "積立") {
+                pendingTsumitateYen += amt;
+              } else {
+                pendingExtraYen += amt;
+              }
             } else if (side === "SELL") {
               var uSell = 0;
               if (spec === "UNITS" && o.units) {
@@ -1379,6 +1739,11 @@
           settledSellGrossYenTotal: settledSellGrossYenTotal,
           settledSellTaxYenTotal: settledSellTaxYenTotal,
           settledSellNetYenTotal: settledSellNetYenTotal,
+          initialPrincipalYen: initialPrincipalYen,
+          tsumitatePrincipalYen: tsumitatePrincipalYen,
+          extraPrincipalYen: extraPrincipalYen,
+          pendingTsumitateYen: pendingTsumitateYen,
+          pendingExtraYen: pendingExtraYen,
           pendingBuyYen: pendingBuyYen,
           pendingBuyEstUnits: pendingBuyEstUnits,
           pendingSellUnits: pendingSellUnits,
@@ -1440,12 +1805,54 @@
         dot.className = "fresh-dot " + (isStale ? "stale" : "ok");
       }
 
+      function renderTsumitateCard() {
+        var f = (tripleData && tripleData.fund) || {};
+        var provNav = Number(f.provisionalExecNav || f.launchpadNav || f.nav || 0);
+        var tState = computeTsumitateScheduleState(gasState.orders, gasState.settings);
+        var cardEl = document.getElementById("tsumitateCardSection");
+        var planMode = (gasState.settings && gasState.settings.planMode === "rebalance") ? "rebalance" : "tsumitate";
+        cardEl.style.display = planMode === "rebalance" ? "none" : "block";
+        cardEl.className = "card tsumitate-card" +
+          (tState.status === "未注文" ? " status-unplaced" : (tState.status === "注文済み" ? " status-placed" : ""));
+
+        document.getElementById("tsumitateCardSubtitle").textContent =
+          "毎月" + tState.monthlyDay + "日・" + formatInt(tState.monthlyYen) + "円";
+        document.getElementById("tsumitateMainText").textContent = tState.mainText;
+
+        var subEl = document.getElementById("tsumitateSubText");
+        subEl.textContent = tState.subText;
+        subEl.className = "tsumitate-sub-text num" + (tState.urgent ? " urgent" : "");
+
+        var estEl = document.getElementById("tsumitateEstUnitsText");
+        if (provNav > 0 && tState.monthlyYen > 0) {
+          var estMonthlyUnits = Math.floor((tState.monthlyYen * 10000) / provNav);
+          estEl.textContent = "今日の仮の約定基準価額（約 " + formatInt(provNav) + "円）で " +
+            formatInt(tState.monthlyYen) + "円買ったときの見込み口数: 約 +" + formatInt(estMonthlyUnits) + " 口";
+        } else {
+          estEl.textContent = "";
+        }
+        return tState;
+      }
+
       function renderBalance() {
         var f = (tripleData && tripleData.fund) || {};
         var reb = (tripleData && tripleData.rebalance) || {};
         var latestNav = Number(f.nav || 0);
         var provNav = Number(f.provisionalExecNav || f.launchpadNav || latestNav || 0);
         var dynTargetPct = Number(reb.dynamicTargetWeightPct || (gasState.settings && gasState.settings.baseTargetPct) || 50);
+        var planMode = (gasState.settings && gasState.settings.planMode === "rebalance") ? "rebalance" : "tsumitate";
+        var monthlyYen = Number((gasState.settings && gasState.settings.monthlyYen) || 50000);
+        var monthlyDay = Number((gasState.settings && gasState.settings.monthlyDay) || 10);
+
+        document.getElementById("currentPlanModeLabel").textContent =
+          planMode === "rebalance" ? "50:50 リバランスモード" : "毎月積立モード";
+        document.getElementById("currentMonthlyDaySpan").textContent = String(monthlyDay);
+        document.getElementById("currentMonthlyYenSpan").textContent = formatInt(monthlyYen);
+        document.getElementById("currentBudgetSummaryWrap").style.display = planMode === "rebalance" ? "inline" : "none";
+
+        document.getElementById("balPrincipalItem").style.display = planMode === "tsumitate" ? "block" : "none";
+        document.getElementById("balCashItem").style.display = planMode === "rebalance" ? "block" : "none";
+        document.getElementById("balWeightItem").style.display = planMode === "rebalance" ? "block" : "none";
 
         if (latestNav > 0) {
           document.getElementById("navRefSubtitle").textContent =
@@ -1461,8 +1868,10 @@
           document.getElementById("balCostBasisSub").textContent = "取得金額: --- 円";
           document.getElementById("balPnlProv").textContent = "--- 円 (--%)";
           document.getElementById("balPnlLatest").textContent = "予想価額比: --- 円 (--%)";
+          document.getElementById("balPrincipalTotal").textContent = "元本合計: --- 円";
+          document.getElementById("balPrincipalBreakdown").textContent = "初期: --- 円 ／ 積立累計: --- 円 ／ 追加: --- 円";
           document.getElementById("balCashYen").textContent = "--- 円";
-          document.getElementById("balCashSub").textContent = "合言葉を入力して記録を読み込んでください（運用枠は設定で変更できます）";
+          document.getElementById("balCashSub").textContent = "合言葉を入力して記録を読み込んでください";
           document.getElementById("balWeightProv").textContent = "--- %";
           document.getElementById("balWeightSub").textContent = "動的目標: " + dynTargetPct.toFixed(1) + "%";
           return null;
@@ -1519,24 +1928,40 @@
         pnlLatEl.className = "bal-sub num " + (pnlProv > 0 ? "chg-up" : (pnlProv < 0 ? "chg-down" : "chg-flat"));
         pnlLatEl.textContent = "予想価額比: " + formatSignedInt(pnlProv) + " 円 (" + formatSignedPct(pnlProvPct) + ")";
 
-        document.getElementById("balCashYen").textContent = formatInt(bal.cashYen) + " 円";
+        // 元本の内訳（初期・積立累計・追加）
+        var pendingPrincipalNotice = "";
         if (bal.pendingBuyYen > 0) {
-          document.getElementById("balCashSub").textContent =
-            "確定待機残 " + formatInt(bal.settledCashYen) + "円 − 約定待ち買付 " + formatInt(bal.pendingBuyYen) + "円（運用枠 " + formatInt(bal.budgetYen) + "円 ※運用枠は設定で変更できます）";
-        } else {
-          document.getElementById("balCashSub").textContent =
-            "運用枠: " + formatInt(bal.budgetYen) + " 円（運用枠は設定で変更できます）" +
-            (bal.settledSellTaxYenTotal > 0 ? ("・累計概算税控除 " + formatInt(bal.settledSellTaxYenTotal) + "円") : "");
+          var pendParts = [];
+          if (bal.pendingTsumitateYen > 0) pendParts.push("積立待ち +" + formatInt(bal.pendingTsumitateYen) + "円");
+          if (bal.pendingExtraYen > 0) pendParts.push("追加待ち +" + formatInt(bal.pendingExtraYen) + "円");
+          pendingPrincipalNotice = "（約定待ち: " + pendParts.join(" / ") + "）";
         }
+        document.getElementById("balPrincipalTotal").textContent =
+          "確定元本合計: " + formatInt(curCostBasis) + " 円";
+        document.getElementById("balPrincipalBreakdown").textContent =
+          "初期: " + formatInt(bal.initialPrincipalYen) + " 円 ／ 積立累計: " + formatInt(bal.tsumitatePrincipalYen) +
+          " 円 ／ 追加: " + formatInt(bal.extraPrincipalYen) + " 円" + pendingPrincipalNotice;
 
-        var totEffProv = evalEffProv + Math.max(0, bal.cashYen);
-        var wEffProv = totEffProv > 0 ? ((evalEffProv / totEffProv) * 100) : 0;
-        var totLatest = evalLatest + Math.max(0, bal.settledCashYen);
-        var wLatest = totLatest > 0 ? ((evalLatest / totLatest) * 100) : 0;
+        if (planMode === "rebalance") {
+          document.getElementById("balCashYen").textContent = formatInt(bal.cashYen) + " 円";
+          if (bal.pendingBuyYen > 0) {
+            document.getElementById("balCashSub").textContent =
+              "確定待機残 " + formatInt(bal.settledCashYen) + "円 − 約定待ち買付 " + formatInt(bal.pendingBuyYen) + "円（運用枠 " + formatInt(bal.budgetYen) + "円）";
+          } else {
+            document.getElementById("balCashSub").textContent =
+              "運用枠: " + formatInt(bal.budgetYen) + " 円" +
+              (bal.settledSellTaxYenTotal > 0 ? ("・累計概算税控除 " + formatInt(bal.settledSellTaxYenTotal) + "円") : "");
+          }
 
-        document.getElementById("balWeightProv").textContent = wEffProv.toFixed(1) + " %";
-        document.getElementById("balWeightSub").textContent =
-          "最新確定: " + wLatest.toFixed(1) + "% ｜ 動的目標: " + dynTargetPct.toFixed(1) + "%";
+          var totEffProv = evalEffProv + Math.max(0, bal.cashYen);
+          var wEffProv = totEffProv > 0 ? ((evalEffProv / totEffProv) * 100) : 0;
+          var totLatest = evalLatest + Math.max(0, bal.settledCashYen);
+          var wLatest = totLatest > 0 ? ((evalLatest / totLatest) * 100) : 0;
+
+          document.getElementById("balWeightProv").textContent = wEffProv.toFixed(1) + " %";
+          document.getElementById("balWeightSub").textContent =
+            "最新確定: " + wLatest.toFixed(1) + "% ｜ 動的目標: " + dynTargetPct.toFixed(1) + "%";
+        }
 
         return bal;
       }
@@ -1657,9 +2082,12 @@
           var st = String(o.status || "pending").toLowerCase();
           var side = String(o.side || "BUY").toUpperCase();
           var spec = String(o.spec || "YEN").toUpperCase();
+          var purpose = inferOrderPurpose(o);
 
           var card = document.createElement("div");
           card.className = "order-item status-" + st;
+          card.setAttribute("data-order-id", o.id);
+          card.setAttribute("data-purpose", purpose);
 
           var head = document.createElement("div");
           head.className = "order-head";
@@ -1684,6 +2112,15 @@
             stBadge.textContent = "取消済み";
           }
           badges.appendChild(stBadge);
+
+          var purposeBadge = document.createElement("span");
+          var pClass = "badge-purpose-extra";
+          if (purpose === "初期") pClass = "badge-purpose-init";
+          else if (purpose === "積立") pClass = "badge-purpose-tsumitate";
+          else if (purpose === "売却") pClass = "badge-purpose-sell";
+          purposeBadge.className = "badge " + pClass + " order-purpose-badge";
+          purposeBadge.textContent = purpose;
+          badges.appendChild(purposeBadge);
 
           var sideBadge = document.createElement("span");
           sideBadge.className = "badge " + (side === "BUY" ? "badge-buy" : "badge-sell");
@@ -1846,7 +2283,34 @@
         });
       }
 
+      function getDefaultBuyPurpose() {
+        var tState = computeTsumitateScheduleState(gasState.orders, gasState.settings);
+        return tState.status === "未注文" ? "積立" : "追加";
+      }
+
+      function setPurpose(purpose, fromUser) {
+        if (fromUser) {
+          userTouchedFormPurpose = true;
+        }
+        if (purpose === "初期") {
+          formPurpose = "初期";
+        } else if (purpose === "売却") {
+          formPurpose = "売却";
+        } else if (purpose === "積立") {
+          formPurpose = "積立";
+        } else {
+          formPurpose = "追加";
+        }
+        document.getElementById("btnPurposeTsumitate").className = "seg-btn" + (formPurpose === "積立" ? " active-spec" : "");
+        document.getElementById("btnPurposeExtra").className = "seg-btn" + (formPurpose === "追加" ? " active-spec" : "");
+        document.getElementById("btnPurposeSell").className = "seg-btn" + (formPurpose === "売却" ? " active-sell" : "");
+      }
+
       function renderAll() {
+        var tState = renderTsumitateCard();
+        if (!document.getElementById("editOrderId").value && !userTouchedFormPurpose && formSide === "BUY") {
+          setPurpose(tState.status === "未注文" ? "積立" : "追加", false);
+        }
         var bal = renderBalance();
         updateFormPreview();
         renderOrdersList(bal);
@@ -1856,6 +2320,11 @@
         formSide = side === "SELL" ? "SELL" : "BUY";
         document.getElementById("btnSideBuy").className = "seg-btn" + (formSide === "BUY" ? " active-buy" : "");
         document.getElementById("btnSideSell").className = "seg-btn" + (formSide === "SELL" ? " active-sell" : "");
+        if (formSide === "SELL") {
+          setPurpose("売却", false);
+        } else if (formPurpose === "売却") {
+          setPurpose(getDefaultBuyPurpose(), false);
+        }
         updateFormPreview();
       }
 
@@ -1872,6 +2341,7 @@
 
       function resetFormToDefault() {
         var nowParts = getNowJstParts();
+        userTouchedFormPurpose = false;
         document.getElementById("editOrderId").value = "";
         document.getElementById("formSectionTitle").textContent = "注文を記録する";
         document.getElementById("btnCancelEditMode").style.display = "none";
@@ -1884,6 +2354,26 @@
         document.getElementById("confirmPanel").classList.remove("active");
         setSide("BUY");
         setSpec("YEN");
+        setPurpose(getDefaultBuyPurpose(), false);
+      }
+
+      function prefillTsumitateOrder() {
+        var nowParts = getNowJstParts();
+        var monthlyYen = Number((gasState.settings && gasState.settings.monthlyYen) || 50000);
+        document.getElementById("editOrderId").value = "";
+        document.getElementById("formSectionTitle").textContent = "注文を記録する（今月の積立）";
+        document.getElementById("btnCancelEditMode").style.display = "none";
+        document.getElementById("inputOrderDate").value = nowParts.dateStr;
+        document.getElementById("inputOrderTime").value = nowParts.timeStr;
+        document.getElementById("inputBroker").value = (gasState.settings && gasState.settings.defaultBroker) || "SBI";
+        setSide("BUY");
+        setSpec("YEN");
+        setPurpose("積立", true);
+        document.getElementById("inputAmountYen").value = String(monthlyYen);
+        document.getElementById("inputUnits").value = "";
+        document.getElementById("confirmPanel").classList.remove("active");
+        updateFormPreview();
+        document.getElementById("orderFormSection").scrollIntoView({ behavior: "smooth" });
       }
 
       function startEditOrder(o) {
@@ -1895,6 +2385,7 @@
         document.getElementById("inputBroker").value = o.broker || "SBI";
         setSide(o.side || "BUY");
         setSpec(o.spec || "YEN");
+        setPurpose(inferOrderPurpose(o), true);
         document.getElementById("inputAmountYen").value = o.amountYen !== null && o.amountYen !== undefined ? String(o.amountYen) : "";
         document.getElementById("inputUnits").value = o.units !== null && o.units !== undefined ? String(o.units) : "";
         document.getElementById("inputNote").value = o.note || "";
@@ -1934,6 +2425,7 @@
           ["操作", editId ? ("既存注文の更新 (" + editId + ")") : "新規注文の追加"],
           ["申込日・時刻", formatDateLabel(dStr) + " " + tStr],
           ["証券会社", broker + "証券（締切 " + sched.cutoffTime + "）"],
+          ["区分", formPurpose],
           ["売買・指定", (formSide === "BUY" ? "買付 (BUY)" : "売却 (SELL)") + " ／ " + (formSpec === "YEN" ? "金額指定" : "口数指定")],
           ["注文数量", formSpec === "YEN" ? (formatInt(amt) + " 円") : (formatInt(uVal) + " 口")],
           ["約定予定日", sched.executionDateLabel + " (" + sched.executionDate + ")"],
@@ -1984,7 +2476,8 @@
           units: formSpec === "UNITS" ? uVal : null,
           broker: broker,
           execDate: sched.executionDate,
-          note: note
+          note: note,
+          purpose: formPurpose
         };
         if (editId) {
           payload.id = editId;
@@ -2157,6 +2650,7 @@
           var params = new URLSearchParams(window.location.search);
           var side = params.get("side");
           var spec = params.get("spec");
+          var purposeParam = params.get("purpose");
           var amt = params.get("amountYen");
           var units = params.get("units");
           var note = params.get("note");
@@ -2167,6 +2661,9 @@
           }
           if (spec === "YEN" || spec === "UNITS") {
             setSpec(spec);
+          }
+          if (purposeParam === "積立" || purposeParam === "追加" || purposeParam === "売却") {
+            setPurpose(purposeParam, true);
           }
           if (amt && !isNaN(Number(amt)) && Number(amt) > 0) {
             document.getElementById("inputAmountYen").value = String(Math.round(Number(amt)));
@@ -2512,16 +3009,21 @@
       document.getElementById("btnReloadOrders").addEventListener("click", fetchOrdersFromGas);
       document.getElementById("btnRetryFetch").addEventListener("click", fetchOrdersFromGas);
 
+      document.getElementById("btnPrefillTsumitate").addEventListener("click", prefillTsumitateOrder);
+
       document.getElementById("btnToggleBudgetEdit").addEventListener("click", function () {
         var wrap = document.getElementById("budgetEditInline");
-        var inp = document.getElementById("inputBudgetYen");
-        inp.value = String((gasState.settings && gasState.settings.budgetYen) || 140000);
-        wrap.style.display = "flex";
+        var s = gasState.settings || {};
+        document.getElementById("inputPlanMode").value = s.planMode === "rebalance" ? "rebalance" : "tsumitate";
+        document.getElementById("inputMonthlyYen").value = String(s.monthlyYen || 50000);
+        document.getElementById("inputMonthlyDay").value = String(s.monthlyDay || 10);
+        document.getElementById("inputBudgetYen").value = String(s.budgetYen || 140000);
+        wrap.classList.add("active");
         document.getElementById("btnToggleBudgetEdit").style.display = "none";
       });
 
       document.getElementById("btnCancelBudgetEdit").addEventListener("click", function () {
-        document.getElementById("budgetEditInline").style.display = "none";
+        document.getElementById("budgetEditInline").classList.remove("active");
         document.getElementById("btnToggleBudgetEdit").style.display = "inline-flex";
       });
 
@@ -2531,7 +3033,18 @@
           showBanner("error", "上部の入力欄に合言葉を入力して保存してください");
           return;
         }
+        var planModeVal = document.getElementById("inputPlanMode").value === "rebalance" ? "rebalance" : "tsumitate";
+        var monthlyYenVal = parseInt(document.getElementById("inputMonthlyYen").value || "0", 10);
+        var monthlyDayVal = parseInt(document.getElementById("inputMonthlyDay").value || "0", 10);
         var bVal = parseInt(document.getElementById("inputBudgetYen").value || "0", 10);
+        if (isNaN(monthlyYenVal) || monthlyYenVal <= 0) {
+          showBanner("warn", "毎月の積立額（円）を正の数値で入力してください");
+          return;
+        }
+        if (isNaN(monthlyDayVal) || monthlyDayVal < 1 || monthlyDayVal > 28) {
+          showBanner("warn", "毎月の積立日は 1〜28 の間で入力してください");
+          return;
+        }
         if (isNaN(bVal) || bVal <= 0) {
           showBanner("warn", "運用枠（円）を正の数値で入力してください");
           return;
@@ -2545,7 +3058,12 @@
           body: JSON.stringify({
             key: key,
             action: "update",
-            settings: { budgetYen: bVal }
+            settings: {
+              planMode: planModeVal,
+              monthlyYen: monthlyYenVal,
+              monthlyDay: monthlyDayVal,
+              budgetYen: bVal
+            }
           })
         })
           .then(function (r) {
@@ -2554,21 +3072,47 @@
           })
           .then(function (res) {
             btnSaveB.disabled = false;
-            btnSaveB.textContent = "保存";
+            btnSaveB.textContent = "設定を保存";
             if (!res || !res.ok) {
-              showBanner("error", "運用枠の更新に失敗しました");
+              showBanner("error", "設定の更新に失敗しました");
               return;
             }
-            document.getElementById("budgetEditInline").style.display = "none";
+            document.getElementById("budgetEditInline").classList.remove("active");
             document.getElementById("btnToggleBudgetEdit").style.display = "inline-flex";
             applyGasResponse(res);
-            showBanner("ok", "運用枠を " + formatInt(bVal) + " 円に更新しました");
+            showBanner(
+              "ok",
+              "運用設定を保存しました（" + (planModeVal === "rebalance" ? "50:50 リバランス" : "毎月積立") +
+              " ／ 毎月" + monthlyDayVal + "日・" + formatInt(monthlyYenVal) + "円）"
+            );
           })
           .catch(function () {
             btnSaveB.disabled = false;
-            btnSaveB.textContent = "保存";
+            btnSaveB.textContent = "設定を保存";
             showBanner("error", "記録を読み込めませんでした（再読み込み）");
           });
+      });
+
+      document.getElementById("btnPurposeTsumitate").addEventListener("click", function () {
+        setPurpose("積立", true);
+        if (formSide !== "BUY") {
+          setSide("BUY");
+          setSpec("YEN");
+        }
+      });
+      document.getElementById("btnPurposeExtra").addEventListener("click", function () {
+        setPurpose("追加", true);
+        if (formSide !== "BUY") {
+          setSide("BUY");
+          setSpec("YEN");
+        }
+      });
+      document.getElementById("btnPurposeSell").addEventListener("click", function () {
+        setPurpose("売却", true);
+        if (formSide !== "SELL") {
+          setSide("SELL");
+          setSpec("UNITS");
+        }
       });
 
       document.getElementById("btnSideBuy").addEventListener("click", function () {
@@ -2599,6 +3143,22 @@
       document.getElementById("btnSubmitOrder").addEventListener("click", submitOrderFromConfirm);
       document.getElementById("btnResetForm").addEventListener("click", resetFormToDefault);
       document.getElementById("btnCancelEditMode").addEventListener("click", resetFormToDefault);
+
+      // テスト用および 1分ごとの締め切りカウントダウン更新
+      window.setTestNowJst = function (customDateTimeStr) {
+        window.__TEST_NOW_JST = customDateTimeStr || null;
+        if (!document.getElementById("editOrderId").value) {
+          var np = getNowJstParts();
+          document.getElementById("inputOrderDate").value = np.dateStr;
+          document.getElementById("inputOrderTime").value = np.timeStr;
+          userTouchedFormPurpose = false;
+        }
+        renderAll();
+      };
+
+      setInterval(function () {
+        renderTsumitateCard();
+      }, 60000);
 
       fetchTripleMarketData();
       if (savedKey) {

@@ -1238,9 +1238,9 @@
           <div class="sched-sub" id="schedNightsSub">米国市場 --晩分</div>
         </div>
         <div class="sched-item">
-          <div class="sched-lbl">今回のリバランス指示</div>
+          <div class="sched-lbl" id="schedModeTitleLbl">今月の積立・見込み口数</div>
           <div class="sched-val num" id="schedAllocVal">計算中...</div>
-          <div class="sched-sub" id="schedAllocSub">動的ターゲット比率リバランス運用</div>
+          <div class="sched-sub" id="schedAllocSub">毎月積立モード</div>
         </div>
       </div>
     </section>
@@ -1275,10 +1275,10 @@
       </div>
     </section>
 
-    <!-- 3. Portfolio & Rebalance Panel (Calculated from Order Records) -->
-    <section class="card" id="rebalanceSection" aria-label="ポートフォリオ＆リバランス運用パネル">
+    <!-- 3. Portfolio & Rebalance / Tsumitate Panel (Calculated from Order Records) -->
+    <section class="card" id="rebalanceSection" aria-label="ポートフォリオ＆積立・リバランス運用パネル">
       <div class="card-title">
-        <span>ポートフォリオ ＆ リバランス運用ジャッジ（注文記録連動）</span>
+        <span id="rebalanceSectionTitle">積立ステータス ＆ 保有残高（注文記録連動）</span>
         <span class="card-subtitle" id="ordersSyncStatusText">注文記録（Googleスプレッドシート）から自動計算</span>
       </div>
 
@@ -1306,19 +1306,19 @@
       <!-- Calculated Balance Display from Order Records -->
       <div class="record-bal-grid" id="recordBalanceGrid">
         <div class="record-bal-card">
-          <div class="record-bal-lbl">保有口数（記録から自動計算）</div>
+          <div class="record-bal-lbl" id="recCard1Lbl">保有口数 ・ 平均取得単価</div>
           <div class="record-bal-val num" id="recHoldingUnits">--- 口</div>
           <div class="record-bal-sub num" id="recPendingUnitsNote">合言葉を入力すると注文記録から計算します</div>
         </div>
         <div class="record-bal-card">
-          <div class="record-bal-lbl">平均取得単価・取得金額 ／ 含み損益</div>
-          <div class="record-bal-val num" id="recAvgCost">取得単価: --- 円</div>
-          <div class="record-bal-sub num" id="recUnrealizedPnl">含み損益: --- 円 (--%)</div>
+          <div class="record-bal-lbl" id="recCard2Lbl">評価額 ・ 評価損益（円 / %）</div>
+          <div class="record-bal-val num" id="recAvgCost">評価額: --- 円</div>
+          <div class="record-bal-sub num" id="recUnrealizedPnl">損益: --- 円 (--%)</div>
         </div>
         <div class="record-bal-card">
-          <div class="record-bal-lbl">待機キャッシュ（約定待ち買付控除後）</div>
+          <div class="record-bal-lbl" id="recCard3Lbl">元本合計（初期・積立累計・追加の内訳）</div>
           <div class="record-bal-val num" id="recCashYen">--- 円</div>
-          <div class="record-bal-sub num" id="recCashSub">約定待ち注文も反映して提案を計算（運用枠は設定で変更できます）</div>
+          <div class="record-bal-sub num" id="recCashSub">内訳：初期 ---円 ／ 積立累計 ---円 ／ 追加 ---円</div>
         </div>
       </div>
 
@@ -1343,29 +1343,29 @@
         </div>
       </div>
 
-      <!-- 3-Box Rebalance Verdict -->
+      <!-- 3-Box Verdict (Tsumitate Mode / Rebalance Mode) -->
       <div class="calc-result-grid" id="calcResultGrid">
         <div class="calc-box primary" id="rebActionBox">
-          <div class="calc-box-lbl" id="rebActionLbl">今回の推奨リバランス注文</div>
+          <div class="calc-box-lbl" id="rebActionLbl">今月の積立</div>
           <div class="calc-box-val num" id="calcOrderYen">---</div>
           <div class="calc-box-sub num" id="calcOrderSub">判定中...</div>
-          <button type="button" class="record-order-btn" id="btnRecordRecommendedOrder">📝 この内容で注文を記録</button>
+          <button type="button" class="record-order-btn" id="btnRecordRecommendedOrder">📝 今月の積立を記録</button>
         </div>
-        <div class="calc-box">
-          <div class="calc-box-lbl">推奨売買後の想定バランス</div>
+        <div class="calc-box" id="rebAfterBox">
+          <div class="calc-box-lbl" id="rebAfterLbl">今日の暫定約定基準価額で買ったときの見込み口数</div>
           <div class="calc-box-val num" id="calcRemainYen">---</div>
           <div class="calc-box-sub num" id="calcAfterSub">---</div>
         </div>
-        <div class="calc-box">
-          <div class="calc-box-lbl">次回の利確売り／買い増し目安</div>
+        <div class="calc-box" id="rebTrigBox">
+          <div class="calc-box-lbl" id="rebTrigLbl">【参考】1回の下げ局面で 3回までの臨時買い増し判定</div>
           <div class="calc-box-val num" id="calcEstUnits">---</div>
-          <div class="calc-box-sub num" id="calcTriggersSub">反発時は「口数指定」で利確しキャッシュ補充</div>
+          <div class="calc-box-sub num" id="calcTriggersSub">今は下げ局面の何回目か・ピークからの下げ幅のみ表示（金額の自動指示なし）</div>
         </div>
       </div>
 
       <!-- Strategy Mode, Base Ratio, Cutoff -->
-      <div class="rebalance-toolbar">
-        <div>
+      <div class="rebalance-toolbar" id="rebalanceToolbar">
+        <div id="rebOnlyModeGroup">
           <span class="field-label">リバランス方式（許容バンド ±4%）</span>
           <div class="cutoff-toggle" role="group" aria-label="リバランス方式の選択">
             <button type="button" class="cutoff-btn active" id="btnModeDynamic" data-mode="dynamic">動的（推奨: 押し目厚め・反発利確）</button>
@@ -1373,7 +1373,7 @@
           </div>
         </div>
 
-        <div>
+        <div id="rebOnlyBaseTargetGroup">
           <label class="field-label" for="baseTargetSelect">平常時の基準比率</label>
           <select id="baseTargetSelect" class="budget-input num" style="padding: 6px 8px; font-size: 12.5px; width: auto;">
             <option value="30">投信 30% : キャッシュ 70%</option>
@@ -1433,8 +1433,8 @@
               <th>約定までの米国市場シナリオ</th>
               <th class="r">想定約定価額</th>
               <th class="r">前回確定比</th>
-              <th class="r">今回注文の約定結果</th>
-              <th class="r">約定後の合計資産（投信比率）</th>
+              <th class="r" id="scThCol4">積立買付時の見込み口数</th>
+              <th class="r" id="scThCol5">保有口数の想定評価額（損益）</th>
             </tr>
           </thead>
           <tbody id="scenarioTbody"></tbody>
@@ -1543,6 +1543,26 @@
       var LS_CUTOFF_ITEM = "triple_ndx_cutoff_mode_v1";
       var LS_TRIPLE_CACHE_ITEM = "triple_ndx_data_cache_v1";
       var TAX_RATE = 0.20315;
+      var WEEKDAYS_JP = ["日", "月", "火", "水", "木", "金", "土"];
+
+      // 日本の祝日リスト（2025〜2027年・内閣府公表準拠）
+      var JP_HOLIDAYS = {
+        "2025-01-01": "元日", "2025-01-13": "成人の日", "2025-02-11": "建国記念の日", "2025-02-23": "天皇誕生日",
+        "2025-02-24": "振替休日", "2025-03-20": "春分の日", "2025-04-29": "昭和の日", "2025-05-03": "憲法記念日",
+        "2025-05-04": "みどりの日", "2025-05-05": "こどもの日", "2025-05-06": "振替休日", "2025-07-21": "海の日",
+        "2025-08-11": "山の日", "2025-09-15": "敬老の日", "2025-09-23": "秋分の日", "2025-10-13": "スポーツの日",
+        "2025-11-03": "文化の日", "2025-11-23": "勤労感謝の日", "2025-11-24": "振替休日",
+        "2026-01-01": "元日", "2026-01-12": "成人の日", "2026-02-11": "建国記念の日", "2026-02-23": "天皇誕生日",
+        "2026-03-20": "春分の日", "2026-04-29": "昭和の日", "2026-05-03": "憲法記念日", "2026-05-04": "みどりの日",
+        "2026-05-05": "こどもの日", "2026-05-06": "振替休日", "2026-07-20": "海の日", "2026-08-11": "山の日",
+        "2026-09-21": "敬老の日", "2026-09-22": "国民の休日", "2026-09-23": "秋分の日", "2026-10-12": "スポーツの日",
+        "2026-11-03": "文化の日", "2026-11-23": "勤労感謝の日",
+        "2027-01-01": "元日", "2027-01-11": "成人の日", "2027-02-11": "建国記念の日", "2027-02-23": "天皇誕生日",
+        "2027-03-21": "春分の日", "2027-03-22": "振替休日", "2027-04-29": "昭和の日", "2027-05-03": "憲法記念日",
+        "2027-05-04": "みどりの日", "2027-05-05": "こどもの日", "2027-07-19": "海の日", "2027-08-11": "山の日",
+        "2027-09-20": "敬老の日", "2027-09-23": "秋分の日", "2027-10-11": "スポーツの日", "2027-11-03": "文化の日",
+        "2027-11-23": "勤労感謝の日"
+      };
 
       var tripleData = null;
       var strategyState = loadStrategyState();
@@ -1557,7 +1577,13 @@
           baseTargetPct: 50,
           mode: "dynamic",
           rebalanceBandPt: 4.0,
-          minTradeYen: 3000
+          minTradeYen: 3000,
+          defaultBroker: "SBI",
+          planMode: "tsumitate",
+          monthlyYen: 50000,
+          monthlyDay: 10,
+          tsumitateStart: "2026-11",
+          brokers: { "SBI": "15:30", "楽天": "15:30", "マネックス": "15:30", "松井": "15:30" }
         },
         loaded: false,
         stale: false
@@ -1640,6 +1666,356 @@
         var hh = ("0" + d.getHours()).slice(-2);
         var mm = ("0" + d.getMinutes()).slice(-2);
         return mo + "/" + da + " " + hh + ":" + mm;
+      }
+
+      function getNowJstParts() {
+        var customStr = window.__TEST_NOW_JST ? String(window.__TEST_NOW_JST).trim() : "";
+        if (customStr) {
+          var mCustom = customStr.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{1,2}):(\d{2}))?/);
+          if (mCustom) {
+            var cYmd = mCustom[1] + "-" + mCustom[2] + "-" + mCustom[3];
+            var cHh = mCustom[4] !== undefined ? ("0" + mCustom[4]).slice(-2) : "10";
+            var cMi = mCustom[5] !== undefined ? ("0" + mCustom[5]).slice(-2) : "00";
+            var cTime = cHh + ":" + cMi;
+            return {
+              dateStr: cYmd,
+              timeStr: cTime,
+              yearMonth: cYmd.slice(0, 7),
+              day: Number(mCustom[3]),
+              minutes: Number(cHh) * 60 + Number(cMi)
+            };
+          }
+        }
+        var now = new Date();
+        var jstMs = now.getTime() + (now.getTimezoneOffset() + 540) * 60000;
+        var jst = new Date(jstMs);
+        var yyyy = jst.getFullYear();
+        var mm = ("0" + (jst.getMonth() + 1)).slice(-2);
+        var dd = ("0" + jst.getDate()).slice(-2);
+        var hh = ("0" + jst.getHours()).slice(-2);
+        var mi = ("0" + jst.getMinutes()).slice(-2);
+        var dateStr = yyyy + "-" + mm + "-" + dd;
+        return {
+          dateStr: dateStr,
+          timeStr: hh + ":" + mi,
+          yearMonth: dateStr.slice(0, 7),
+          day: Number(dd),
+          minutes: Number(hh) * 60 + Number(mi)
+        };
+      }
+
+      function parseDateYMD(dStr) {
+        var m = String(dStr || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!m) return null;
+        return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      }
+
+      function toDateYMD(dt) {
+        var y = dt.getFullYear();
+        var m = ("0" + (dt.getMonth() + 1)).slice(-2);
+        var d = ("0" + dt.getDate()).slice(-2);
+        return y + "-" + m + "-" + d;
+      }
+
+      function formatDateLabelFull(dStr) {
+        var dt = parseDateYMD(dStr);
+        if (!dt) return dStr || "---";
+        return (dt.getMonth() + 1) + "/" + dt.getDate() + "（" + WEEKDAYS_JP[dt.getDay()] + "）";
+      }
+
+      function formatMdSimple(dStr) {
+        var dt = parseDateYMD(dStr);
+        if (!dt) return dStr || "---";
+        return (dt.getMonth() + 1) + "/" + dt.getDate();
+      }
+
+      function inferOrderPurpose(o) {
+        if (!o) return "追加";
+        var p = String(o.purpose || "").trim();
+        if (p === "初期" || p === "積立" || p === "追加" || p === "売却") {
+          return p;
+        }
+        var idStr = String(o.id || "").trim();
+        var snapStr = String(o.snapshot || "");
+        if (idStr === "o_20261030_150000_init" || snapStr.indexOf("isInitialBalance") >= 0) {
+          return "初期";
+        }
+        if (idStr === "o_20261103_085613_9824") {
+          return "追加";
+        }
+        if (String(o.side || "BUY").toUpperCase() === "SELL") {
+          return "売却";
+        }
+        return "追加";
+      }
+
+      function isJpBusinessDay(dt) {
+        var w = dt.getDay();
+        if (w === 0 || w === 6) return false;
+        var m = dt.getMonth() + 1;
+        var d = dt.getDate();
+        if ((m === 12 && d === 31) || (m === 1 && d <= 3)) return false;
+        var ymd = toDateYMD(dt);
+        return !JP_HOLIDAYS[ymd];
+      }
+
+      function easterSunday(year) {
+        var a = year % 19;
+        var b = Math.floor(year / 100);
+        var c = year % 100;
+        var d = Math.floor(b / 4);
+        var e = b % 4;
+        var f = Math.floor((b + 8) / 25);
+        var g = Math.floor((b - f + 1) / 3);
+        var h = (19 * a + b - d - g + 15) % 30;
+        var i = Math.floor(c / 4);
+        var k = c % 4;
+        var l = (32 + 2 * e + 2 * i - h - k) % 7;
+        var m = Math.floor((a + 11 * h + 22 * l) / 451);
+        var month = Math.floor((h + l - 7 * m + 114) / 31);
+        var day = ((h + l - 7 * m + 114) % 31) + 1;
+        return new Date(year, month - 1, day);
+      }
+
+      function nthWeekdayOfMonth(year, month1, weekdaySun0, n) {
+        var first = new Date(year, month1 - 1, 1);
+        var offset = (weekdaySun0 - first.getDay() + 7) % 7;
+        return new Date(year, month1 - 1, 1 + offset + 7 * (n - 1));
+      }
+
+      function lastWeekdayOfMonth(year, month1, weekdaySun0) {
+        var lastDay = new Date(year, month1, 0);
+        var offset = (lastDay.getDay() - weekdaySun0 + 7) % 7;
+        return new Date(year, month1 - 1, lastDay.getDate() - offset);
+      }
+
+      function observedUsHoliday(dt) {
+        var w = dt.getDay();
+        if (w === 6) return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() - 1);
+        if (w === 0) return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + 1);
+        return dt;
+      }
+
+      function getUsHolidaysMap(year) {
+        var map = {};
+        var nyd = observedUsHoliday(new Date(year, 0, 1));
+        if (nyd.getFullYear() === year) map[toDateYMD(nyd)] = true;
+        var nextNyd = observedUsHoliday(new Date(year + 1, 0, 1));
+        if (nextNyd.getFullYear() === year) map[toDateYMD(nextNyd)] = true;
+
+        map[toDateYMD(nthWeekdayOfMonth(year, 1, 1, 3))] = true;
+        map[toDateYMD(nthWeekdayOfMonth(year, 2, 1, 3))] = true;
+        var es = easterSunday(year);
+        var gf = new Date(es.getFullYear(), es.getMonth(), es.getDate() - 2);
+        map[toDateYMD(gf)] = true;
+        map[toDateYMD(lastWeekdayOfMonth(year, 5, 1))] = true;
+        map[toDateYMD(observedUsHoliday(new Date(year, 5, 19)))] = true;
+        map[toDateYMD(observedUsHoliday(new Date(year, 6, 4)))] = true;
+        map[toDateYMD(nthWeekdayOfMonth(year, 9, 1, 1))] = true;
+        map[toDateYMD(nthWeekdayOfMonth(year, 11, 4, 4))] = true;
+        map[toDateYMD(observedUsHoliday(new Date(year, 11, 25)))] = true;
+        return map;
+      }
+
+      function isUsTradingDay(dt) {
+        var w = dt.getDay();
+        if (w === 0 || w === 6) return false;
+        var map = getUsHolidaysMap(dt.getFullYear());
+        return !map[toDateYMD(dt)];
+      }
+
+      function isFundOrderDay(dt) {
+        return isJpBusinessDay(dt) && isUsTradingDay(dt);
+      }
+
+      function parseHHMM(s, defMin) {
+        var m = String(s || "").trim().match(/^(\d{1,2}):(\d{2})$/);
+        if (!m) return defMin;
+        return Number(m[1]) * 60 + Number(m[2]);
+      }
+
+      // 4-2 & 4-3: 今月の積立の状態・締め切り・次の営業日を計算
+      function computeTsumitateScheduleState(orders, settings, optNowParts) {
+        var nowParts = optNowParts || getNowJstParts();
+        var monthlyYen = Number(settings && settings.monthlyYen !== undefined ? settings.monthlyYen : 50000);
+        var monthlyDay = Number(settings && settings.monthlyDay !== undefined ? settings.monthlyDay : 10);
+        if (isNaN(monthlyDay) || monthlyDay < 1 || monthlyDay > 28) monthlyDay = 10;
+        var tsumitateStart = (settings && settings.tsumitateStart) ? String(settings.tsumitateStart).trim() : "2026-11";
+        var defaultBroker = (settings && settings.defaultBroker) || "SBI";
+        var brokersMap = (settings && settings.brokers) || {};
+        var cutoffStr = brokersMap[defaultBroker] || "15:30";
+        var cutoffMin = parseHHMM(cutoffStr, 15 * 60 + 30);
+
+        var sorted = (orders || []).slice().sort(function (a, b) {
+          var oa = (a.orderDate || "") + " " + (a.orderTime || "");
+          var ob = (b.orderDate || "") + " " + (b.orderTime || "");
+          if (oa !== ob) return oa < ob ? -1 : 1;
+          return String(a.id) < String(b.id) ? -1 : 1;
+        });
+
+        var thisMonthOrder = null;
+        for (var i = 0; i < sorted.length; i++) {
+          var o = sorted[i];
+          var st = String(o.status || "pending").toLowerCase();
+          if (st === "cancelled") continue;
+          var purp = inferOrderPurpose(o);
+          var ordYm = String(o.orderDate || "").slice(0, 7);
+          if (purp === "積立" && ordYm === nowParts.yearMonth && ordYm >= tsumitateStart) {
+            thisMonthOrder = o;
+          }
+        }
+
+        if (thisMonthOrder) {
+          var ordMd = formatMdSimple(thisMonthOrder.orderDate);
+          var ordTime = thisMonthOrder.orderTime || "--:--";
+          var ordYenVal = thisMonthOrder.amountYen || thisMonthOrder.execYen || monthlyYen;
+          return {
+            status: "注文済み",
+            monthlyYen: monthlyYen,
+            monthlyDay: monthlyDay,
+            mainText: "今月の積立は注文済み（" + ordMd + " " + ordTime + "、" + formatInt(ordYenVal) + "円）",
+            subText: "約定予定日／約定日: " + formatDateLabelFull(thisMonthOrder.execDate) +
+              (String(thisMonthOrder.status || "").toLowerCase() === "settled" ? "（約定済み）" : "（約定待ち）"),
+            urgent: false,
+            thisMonthOrder: thisMonthOrder
+          };
+        }
+
+        if (nowParts.yearMonth < tsumitateStart || nowParts.day < monthlyDay) {
+          var targetYm = nowParts.yearMonth < tsumitateStart ? tsumitateStart : nowParts.yearMonth;
+          var schedDateStr = targetYm + "-" + ("0" + monthlyDay).slice(-2);
+          var schedLabelFull = formatDateLabelFull(schedDateStr);
+          var schedDt = parseDateYMD(schedDateStr);
+          var subBefore = "毎月" + monthlyDay + "日（" + cutoffStr + " 締切）";
+          if (schedDt && !isFundOrderDay(schedDt)) {
+            var nextCur = new Date(schedDt.getFullYear(), schedDt.getMonth(), schedDt.getDate());
+            var hHit = [];
+            while (!isFundOrderDay(nextCur)) {
+              var hYmd = toDateYMD(nextCur);
+              if (JP_HOLIDAYS[hYmd]) {
+                hHit.push((nextCur.getMonth() + 1) + "/" + nextCur.getDate() + " は" + JP_HOLIDAYS[hYmd]);
+              }
+              nextCur = new Date(nextCur.getFullYear(), nextCur.getMonth(), nextCur.getDate() + 1);
+            }
+            var nextStr = toDateYMD(nextCur);
+            subBefore = "※" + schedLabelFull + "は休日のため次の営業日 " + formatDateLabelFull(nextStr) +
+              (hHit.length > 0 ? "（" + hHit.join("、") + "）" : "") + " の約定扱い";
+          }
+          return {
+            status: "開始前",
+            monthlyYen: monthlyYen,
+            monthlyDay: monthlyDay,
+            mainText: "次の積立：" + schedLabelFull + " " + formatInt(monthlyYen) + "円",
+            subText: subBefore,
+            urgent: false,
+            thisMonthOrder: null
+          };
+        }
+
+        var todayDt = parseDateYMD(nowParts.dateStr);
+        var todayIsOrderDay = todayDt ? isFundOrderDay(todayDt) : true;
+        var beforeCutoff = todayIsOrderDay && (nowParts.minutes < cutoffMin);
+        var subUnordered = "";
+
+        if (beforeCutoff) {
+          var diffMin = cutoffMin - nowParts.minutes;
+          var remHours = Math.floor(diffMin / 60);
+          var remMins = diffMin % 60;
+          subUnordered = cutoffStr + " の締め切りまで あと " + (remHours > 0 ? (remHours + "時間") : "") + remMins + "分";
+        } else {
+          var searchCur = todayDt
+            ? new Date(todayDt.getFullYear(), todayDt.getMonth(), todayDt.getDate() + 1)
+            : new Date();
+          var holidaysHit = [];
+          if (todayDt && !todayIsOrderDay) {
+            var todayYmd = toDateYMD(todayDt);
+            if (JP_HOLIDAYS[todayYmd]) {
+              holidaysHit.push((todayDt.getMonth() + 1) + "/" + todayDt.getDate() + " は" + JP_HOLIDAYS[todayYmd]);
+            }
+          }
+          while (!isFundOrderDay(searchCur)) {
+            var cYmd = toDateYMD(searchCur);
+            if (JP_HOLIDAYS[cYmd]) {
+              holidaysHit.push((searchCur.getMonth() + 1) + "/" + searchCur.getDate() + " は" + JP_HOLIDAYS[cYmd]);
+            }
+            searchCur = new Date(searchCur.getFullYear(), searchCur.getMonth(), searchCur.getDate() + 1);
+          }
+          var nextBizYmd = toDateYMD(searchCur);
+          var nextBizLabelFull = formatDateLabelFull(nextBizYmd);
+          var nextBizMd = formatMdSimple(nextBizYmd);
+          if (!todayIsOrderDay || holidaysHit.length > 0) {
+            var reasonSuffix = holidaysHit.length > 0 ? ("。" + holidaysHit.join("、")) : "";
+            subUnordered = "今日の締め切りは過ぎました。今注文すると次の営業日（" + nextBizLabelFull + reasonSuffix + "）の約定、基準価額は " + nextBizMd + " の分です";
+          } else {
+            subUnordered = "今日の締め切りは過ぎました。今注文すると約定は " + nextBizLabelFull + "、基準価額は " + nextBizMd + " の分です";
+          }
+        }
+
+        return {
+          status: "未注文",
+          monthlyYen: monthlyYen,
+          monthlyDay: monthlyDay,
+          mainText: "今月の積立 " + formatInt(monthlyYen) + "円・未注文",
+          subText: subUnordered,
+          urgent: true,
+          thisMonthOrder: null
+        };
+      }
+
+      // 4-3: 「1回の下げ局面で 3回まで」の臨時買い増し判定（参考：下げ局面の何回目か、ピークからの下げ幅のみ）
+      function computeDipBuyReferenceState(orders, tData) {
+        var tech = (tData && tData.technicals) || {};
+        var f = (tData && tData.fund) || {};
+        var ddNdxPct = Number(tech.drawdownNdxPct || 0);
+        var ddTriplePct = Number(tech.drawdownTripleEquivPct || (ddNdxPct * 3));
+
+        // 60日高値の日付を特定（ピーク以降の「追加」買い回数を数える）
+        var peakDate = "2000-01-01";
+        var bars = (tData && tData.charts && tData.charts.ndx60d) || [];
+        var maxClose = -1;
+        for (var bi = 0; bi < bars.length; bi++) {
+          var c = Number(bars[bi].close || 0);
+          if (c >= maxClose) {
+            maxClose = c;
+            if (bars[bi].date) peakDate = String(bars[bi].date);
+          }
+        }
+        var hist = Array.isArray(f.history) ? f.history : [];
+        var maxNav = Number(f.nav || 0);
+        for (var hi = 0; hi < hist.length; hi++) {
+          var hn = Number(hist[hi].nav || 0);
+          if (hn >= maxNav) {
+            maxNav = hn;
+            if (hist[hi].date && String(hist[hi].date) > peakDate) {
+              peakDate = String(hist[hi].date);
+            }
+          }
+        }
+        var provNav = Number(f.provisionalExecNav || f.launchpadNav || f.nav || 0);
+        var ddNavPct = (maxNav > 0 && provNav > 0) ? (((provNav - maxNav) / maxNav) * 100) : ddTriplePct;
+
+        var dipBuyCount = 0;
+        var list = Array.isArray(orders) ? orders : [];
+        for (var i = 0; i < list.length; i++) {
+          var o = list[i];
+          var st = String(o.status || "pending").toLowerCase();
+          if (st === "cancelled") continue;
+          var side = String(o.side || "BUY").toUpperCase();
+          var purp = inferOrderPurpose(o);
+          var oDate = String(o.orderDate || "");
+          if (side === "BUY" && purp === "追加" && oDate >= peakDate) {
+            dipBuyCount += 1;
+          }
+        }
+
+        return {
+          dipBuyCount: dipBuyCount,
+          maxDipBuys: 3,
+          peakDate: peakDate,
+          ddNdxPct: ddNdxPct,
+          ddTriplePct: ddTriplePct,
+          ddNavPct: ddNavPct
+        };
       }
 
       function chgClass(v) {
@@ -1725,7 +2101,7 @@
         document.getElementById("calcResultGrid").classList.toggle("stale-data", isStale);
       }
 
-      // 4-2 & 4-3: 注文記録から保有口数・平均取得単価（移動平均法）・待機キャッシュ・約定待ちを計算
+      // 4-2 & 4-3: 注文記録から保有口数・平均取得単価（移動平均法）・元本内訳・待機キャッシュ・約定待ちを計算
       function computeBalanceFromOrders(orders, settings, provNav) {
         var budgetYen = Number((settings && settings.budgetYen) || 0);
         var sorted = (orders || []).slice().sort(function (a, b) {
@@ -1749,6 +2125,12 @@
         var settledSellTaxYenTotal = 0;
         var settledSellNetYenTotal = 0;
 
+        var initialPrincipalYen = 0;
+        var tsumitatePrincipalYen = 0;
+        var extraPrincipalYen = 0;
+        var pendingTsumitateYen = 0;
+        var pendingExtraYen = 0;
+
         var pendingBuyYen = 0;
         var pendingBuyEstUnits = 0;
         var pendingSellUnits = 0;
@@ -1761,11 +2143,13 @@
           if (st === "cancelled") continue;
           var side = String(o.side || "BUY").toUpperCase();
           var spec = String(o.spec || "YEN").toUpperCase();
+          var purpose = inferOrderPurpose(o);
 
           if (st === "settled") {
+            // 既存の settled 行の execUnits / execYen をそのまま使う（基準価額から逆算して上書きしない）
             var eNav = Number(o.execNav || 0);
-            var eUnits = Number(o.execUnits || 0);
-            var eYen = Number(o.execYen || 0);
+            var eUnits = Number(o.execUnits || o.units || 0);
+            var eYen = Number(o.execYen || o.amountYen || 0);
             if (side === "BUY") {
               if (eUnits <= 0 && eNav > 0 && o.amountYen) {
                 eUnits = Math.floor((Number(o.amountYen) * 10000) / eNav);
@@ -1778,6 +2162,13 @@
                 settledUnits += eUnits;
                 avgCostNav = settledUnits > 0 ? Math.round((costBasisYenTotal * 10000) / settledUnits) : 0;
                 settledBuyYenTotal += eYen;
+                if (purpose === "初期") {
+                  initialPrincipalYen += eYen;
+                } else if (purpose === "積立") {
+                  tsumitatePrincipalYen += eYen;
+                } else {
+                  extraPrincipalYen += eYen;
+                }
               }
             } else if (side === "SELL") {
               if (eUnits <= 0) {
@@ -1817,6 +2208,11 @@
               }
               pendingBuyYen += amt;
               pendingBuyEstUnits += estU;
+              if (purpose === "積立") {
+                pendingTsumitateYen += amt;
+              } else {
+                pendingExtraYen += amt;
+              }
             } else if (side === "SELL") {
               var uSell = 0;
               if (spec === "UNITS" && o.units) {
@@ -1843,6 +2239,11 @@
           sellableUnits: sellableUnits,
           costBasisYen: costBasisYenTotal,
           avgCostNav: avgCostNav,
+          initialPrincipalYen: initialPrincipalYen,
+          tsumitatePrincipalYen: tsumitatePrincipalYen,
+          extraPrincipalYen: extraPrincipalYen,
+          pendingTsumitateYen: pendingTsumitateYen,
+          pendingExtraYen: pendingExtraYen,
           settledCashYen: settledCashYen,
           cashYen: cashYen,
           effectiveHoldingUnits: effectiveHoldingUnits,
@@ -2078,6 +2479,37 @@
         var vixCur = Number(tech.vix || 18);
         var fomcHit = Boolean(sched.fomcDatesHit && sched.fomcDatesHit.length > 0);
 
+        var planMode = (gasState.settings && gasState.settings.planMode === "rebalance") ? "rebalance" : "tsumitate";
+        var isTsumitate = planMode === "tsumitate";
+        var monthlyYen = Number((gasState.settings && gasState.settings.monthlyYen) || 50000);
+        var estMonthlyUnits = provNav > 0 ? Math.floor((monthlyYen * 10000) / provNav) : 0;
+
+        // モード別の表示切り替え（積立モードでは 50:50 比率バーや待機キャッシュ試算・比率設定を非表示にする）
+        document.getElementById("rebalanceSectionTitle").textContent = isTsumitate
+          ? "積立ステータス ＆ 保有残高（注文記録連動）"
+          : "ポートフォリオ ＆ リバランス運用ジャッジ（注文記録連動）";
+        document.getElementById("allocMeterBox").style.display = isTsumitate ? "none" : "block";
+        document.getElementById("simDetailsBox").style.display = isTsumitate ? "none" : "block";
+        document.getElementById("rebOnlyModeGroup").style.display = isTsumitate ? "none" : "block";
+        document.getElementById("rebOnlyBaseTargetGroup").style.display = isTsumitate ? "none" : "block";
+
+        document.getElementById("recCard1Lbl").textContent = isTsumitate
+          ? "保有口数 ・ 平均取得単価"
+          : "保有口数（記録から自動計算）";
+        document.getElementById("recCard2Lbl").textContent = isTsumitate
+          ? "評価額 ・ 評価損益（円 / %）"
+          : "平均取得単価・取得金額 ／ 含み損益";
+        document.getElementById("recCard3Lbl").textContent = isTsumitate
+          ? "元本合計（初期・積立累計・追加の内訳）"
+          : "待機キャッシュ（約定待ち買付控除後）";
+
+        document.getElementById("scThCol4").textContent = isTsumitate
+          ? ("積立 " + formatInt(monthlyYen) + "円 買付時の見込み口数")
+          : "今回注文の約定結果";
+        document.getElementById("scThCol5").textContent = isTsumitate
+          ? "保有口数の想定評価額（損益）"
+          : "約定後の合計資産（投信比率）";
+
         var targetPct = strategyState.mode === "dynamic"
           ? calcDynamicTargetPct(strategyState.baseTargetPct, sig.score)
           : Number(strategyState.baseTargetPct);
@@ -2088,7 +2520,191 @@
           (strategyState.mode === "dynamic" ? "動的目標 " : "固定目標 ") + targetPct.toFixed(1) + "%";
 
         var hasGasRecords = gasState.loaded || (gasState.orders && gasState.orders.length > 0);
-        var hasActiveBalance = simOverride.active || hasGasRecords;
+        var hasActiveBalance = (!isTsumitate && simOverride.active) || hasGasRecords;
+
+        var tsSched = computeTsumitateScheduleState(gasState.orders, gasState.settings);
+        var dipRef = computeDipBuyReferenceState(gasState.orders, tripleData);
+
+        if (isTsumitate) {
+          lastComputedPlan = null;
+          // Hero カードは 50:50 の売買提案で上書きせず、純粋な相場スコアと今月の積立を表示
+          document.getElementById("heroCard").className = "card hero-card tone-" + (sig.tone || "wait");
+          renderGauge(sig.score, sig.tone);
+          document.getElementById("actionBadge").textContent = sig.actionBadge;
+          document.getElementById("verdictHeadline").textContent = sig.headline;
+          document.getElementById("verdictDetail").textContent = sig.detailAdvice;
+
+          document.getElementById("schedModeTitleLbl").textContent = "今月の積立・見込み口数";
+          document.getElementById("schedAllocVal").textContent = tsSched.mainText;
+          document.getElementById("schedAllocSub").textContent =
+            "本日暫定価額（約" + formatInt(provNav) + "円）で " + formatInt(monthlyYen) + "円 買付時：見込み +" + formatInt(estMonthlyUnits) + "口";
+
+          // 3ボックス（1: 今月の積立、2: 本日暫定基準価額で50,000円買ったときの見込み口数、3: 【参考】1回の下げ局面で3回までの臨時買い増し判定）
+          var actBoxTs = document.getElementById("rebActionBox");
+          actBoxTs.className = tsSched.status === "未注文" ? "calc-box action-buy" : "calc-box primary";
+          document.getElementById("rebActionLbl").textContent = "今月の積立";
+          document.getElementById("calcOrderYen").textContent = tsSched.mainText;
+          document.getElementById("calcOrderSub").textContent = tsSched.subText;
+          var recBtnTs = document.getElementById("btnRecordRecommendedOrder");
+          recBtnTs.textContent = "📝 今月の積立を記録";
+
+          document.getElementById("rebAfterLbl").textContent =
+            "今日の暫定約定基準価額で " + formatInt(monthlyYen) + "円 買ったときの見込み口数";
+          document.getElementById("calcRemainYen").textContent =
+            "見込み +" + formatInt(estMonthlyUnits) + " 口";
+
+          document.getElementById("rebTrigLbl").textContent =
+            "【参考】1回の下げ局面で 3回までの臨時買い増し判定";
+          document.getElementById("calcEstUnits").textContent =
+            "下げ局面の " + dipRef.dipBuyCount + " / " + dipRef.maxDipBuys + " 回目 ｜ ピーク比 " + formatSignedPct(dipRef.ddNdxPct);
+          document.getElementById("calcTriggersSub").textContent =
+            "ピークからの下げ幅：NASDAQ100 " + formatSignedPct(dipRef.ddNdxPct) + "（3倍投信換算 " + formatSignedPct(dipRef.ddTriplePct, 1) +
+            " ／ 基準価額ピーク比 " + formatSignedPct(dipRef.ddNavPct, 1) + "）｜ ※参考表示のみ（金額の自動指示は出しません）";
+
+          if (!hasGasRecords) {
+            document.getElementById("recHoldingUnits").textContent = "--- 口";
+            document.getElementById("recPendingUnitsNote").textContent = "合言葉を入力すると注文記録から計算します";
+            document.getElementById("recAvgCost").textContent = "評価額: --- 円";
+            document.getElementById("recUnrealizedPnl").textContent = "損益: --- 円 (--%)";
+            document.getElementById("recCashYen").textContent = "元本合計: --- 円";
+            document.getElementById("recCashSub").textContent = "内訳：初期 ---円 ／ 積立累計 ---円 ／ 追加 ---円";
+            document.getElementById("calcAfterSub").textContent =
+              "本日の暫定約定基準価額 約" + formatInt(provNav) + "円（発射台 " + formatInt(f.launchpadNav) + "円）で " + formatInt(monthlyYen) + "円 買付した場合の概算取得口数";
+
+            var tbodyTsEmpty = document.getElementById("scenarioTbody");
+            tbodyTsEmpty.textContent = "";
+            (tripleData.scenarios || []).forEach(function (sc) {
+              var tr = document.createElement("tr");
+              if (Math.abs(Number(sc.nqMovePct)) < 0.01) tr.className = "current-row";
+              var pSc = Number(sc.estimatedNav || provNav);
+              var uSc = pSc > 0 ? Math.floor((monthlyYen * 10000) / pSc) : 0;
+
+              var tdLbl = document.createElement("td");
+              tdLbl.textContent = sc.label;
+              tr.appendChild(tdLbl);
+
+              var tdNav = document.createElement("td");
+              tdNav.className = "r num";
+              tdNav.textContent = "約 " + formatInt(pSc) + "円";
+              tr.appendChild(tdNav);
+
+              var tdVs = document.createElement("td");
+              tdVs.className = "r num " + chgClass(sc.vsFridayOrD0Pct);
+              tdVs.textContent = formatSignedPct(sc.vsFridayOrD0Pct);
+              tr.appendChild(tdVs);
+
+              var tdTrade = document.createElement("td");
+              tdTrade.className = "r num";
+              tdTrade.textContent = "見込み +" + formatInt(uSc) + "口";
+              tr.appendChild(tdTrade);
+
+              var tdAfter = document.createElement("td");
+              tdAfter.className = "r num";
+              tdAfter.textContent = "記録読込後";
+              tr.appendChild(tdAfter);
+
+              tbodyTsEmpty.appendChild(tr);
+            });
+            return;
+          }
+
+          var balTs = computeBalanceFromOrders(gasState.orders, gasState.settings, provNav);
+          var evalD0Ts = Math.floor((balTs.holdingUnits * d0Nav) / 10000);
+          var evalProvTs = Math.floor((balTs.holdingUnits * provNav) / 10000);
+          var costBasisTs = balTs.costBasisYen > 0 ? balTs.costBasisYen : Math.round((balTs.holdingUnits * balTs.avgCostNav) / 10000);
+          var pnlD0Ts = evalD0Ts - costBasisTs;
+          var pnlD0PctTs = costBasisTs > 0 ? ((pnlD0Ts / costBasisTs) * 100) : 0;
+          var pnlProvTs = evalProvTs - costBasisTs;
+          var pnlProvPctTs = costBasisTs > 0 ? ((pnlProvTs / costBasisTs) * 100) : 0;
+
+          document.getElementById("recHoldingUnits").textContent =
+            formatInt(balTs.holdingUnits) + " 口（平均取得単価 " + formatInt(balTs.avgCostNav) + " 円）";
+          if (balTs.pendingBuyEstUnits > 0 || balTs.pendingSellUnits > 0) {
+            var pNotesTs = [];
+            if (balTs.pendingBuyEstUnits > 0) {
+              pNotesTs.push("約定待ち買付 +" + formatInt(balTs.pendingBuyEstUnits) + "口(見込み)");
+            }
+            if (balTs.pendingSellUnits > 0) {
+              pNotesTs.push("約定待ち売却 -" + formatInt(balTs.pendingSellUnits) + "口");
+            }
+            document.getElementById("recPendingUnitsNote").textContent =
+              pNotesTs.join(" / ") + " → 約定後見込み " + formatInt(balTs.effectiveHoldingUnits) + "口";
+          } else {
+            document.getElementById("recPendingUnitsNote").textContent =
+              "約定待ち注文: なし";
+          }
+
+          document.getElementById("recAvgCost").textContent =
+            "評価額(" + (f.navDateLabel || "11/2") + "): " + formatInt(evalD0Ts) + " 円（暫定目安: " + formatInt(evalProvTs) + " 円）";
+          var pnlElTs = document.getElementById("recUnrealizedPnl");
+          pnlElTs.className = "record-bal-sub num " + (pnlD0Ts > 0 ? "chg-up" : (pnlD0Ts < 0 ? "chg-down" : ""));
+          pnlElTs.textContent =
+            "損益(" + (f.navDateLabel || "11/2") + "確定): " + formatSignedInt(pnlD0Ts) + "円 (" + formatSignedPct(pnlD0PctTs) + ")" +
+            " ／ 暫定比: " + formatSignedInt(pnlProvTs) + "円 (" + formatSignedPct(pnlProvPctTs) + ")";
+
+          var pendingNotePrincipal = "";
+          if (balTs.pendingBuyYen > 0) {
+            var pendParts = [];
+            if (balTs.pendingTsumitateYen > 0) pendParts.push("積立約定待ち +" + formatInt(balTs.pendingTsumitateYen) + "円");
+            if (balTs.pendingExtraYen > 0) pendParts.push("追加約定待ち +" + formatInt(balTs.pendingExtraYen) + "円");
+            pendingNotePrincipal = "（" + pendParts.join("・") + "）";
+          }
+          document.getElementById("recCashYen").textContent =
+            "元本合計: " + formatInt(costBasisTs) + " 円" + (balTs.pendingBuyYen > 0 ? ("（＋約定待ち " + formatInt(balTs.pendingBuyYen) + "円）") : "");
+          document.getElementById("recCashSub").textContent =
+            "内訳：初期 " + formatInt(balTs.initialPrincipalYen) + "円 ／ 積立累計 " + formatInt(balTs.tsumitatePrincipalYen) +
+            "円 ／ 追加 " + formatInt(balTs.extraPrincipalYen) + "円" + pendingNotePrincipal;
+
+          document.getElementById("calcAfterSub").textContent =
+            "本日の暫定約定基準価額 約" + formatInt(provNav) + "円（発射台 " + formatInt(f.launchpadNav) + "円）で " +
+            formatInt(monthlyYen) + "円 買付時の概算口数（現在の確定保有 " + formatInt(balTs.holdingUnits) + "口）";
+
+          var tbodyTs = document.getElementById("scenarioTbody");
+          tbodyTs.textContent = "";
+          (tripleData.scenarios || []).forEach(function (sc) {
+            var tr = document.createElement("tr");
+            if (Math.abs(Number(sc.nqMovePct)) < 0.01) {
+              tr.className = "current-row";
+            }
+            var pSc = Number(sc.estimatedNav || provNav);
+            var uTsum = pSc > 0 ? Math.floor((monthlyYen * 10000) / pSc) : 0;
+            var evalSc = Math.floor((balTs.holdingUnits * pSc) / 10000);
+            var pnlSc = evalSc - costBasisTs;
+            var pnlScPct = costBasisTs > 0 ? ((pnlSc / costBasisTs) * 100) : 0;
+
+            var tdLbl = document.createElement("td");
+            tdLbl.textContent = sc.label;
+            tr.appendChild(tdLbl);
+
+            var tdNav = document.createElement("td");
+            tdNav.className = "r num";
+            tdNav.textContent = "約 " + formatInt(pSc) + "円";
+            tr.appendChild(tdNav);
+
+            var tdVs = document.createElement("td");
+            tdVs.className = "r num " + chgClass(sc.vsFridayOrD0Pct);
+            tdVs.textContent = formatSignedPct(sc.vsFridayOrD0Pct);
+            tr.appendChild(tdVs);
+
+            var tdTrade = document.createElement("td");
+            tdTrade.className = "r num";
+            tdTrade.textContent = "見込み +" + formatInt(uTsum) + "口";
+            tr.appendChild(tdTrade);
+
+            var tdAfter = document.createElement("td");
+            tdAfter.className = "r num";
+            tdAfter.textContent = formatInt(evalSc) + "円（" + formatSignedInt(pnlSc) + "円 / " + formatSignedPct(pnlScPct) + "）";
+            tr.appendChild(tdAfter);
+
+            tbodyTs.appendChild(tr);
+          });
+          return;
+        }
+
+        // === 以下は planMode === "rebalance"（50:50 リバランスモード）のとき ===
+        document.getElementById("schedModeTitleLbl").textContent = "今回のリバランス指示";
+        document.getElementById("rebAfterLbl").textContent = "推奨売買後の想定バランス";
+        document.getElementById("rebTrigLbl").textContent = "次回の利確売り／買い増し目安";
 
         if (!hasActiveBalance) {
           lastComputedPlan = null;
@@ -3106,6 +3722,27 @@
       document.getElementById("btnRecordRecommendedOrder").addEventListener("click", function () {
         var sig = (tripleData && tripleData.signal) || {};
         var f = (tripleData && tripleData.fund) || {};
+        var planMode = (gasState.settings && gasState.settings.planMode === "rebalance") ? "rebalance" : "tsumitate";
+        var monthlyYen = Number((gasState.settings && gasState.settings.monthlyYen) || 50000);
+
+        if (planMode === "tsumitate") {
+          var tsSnap = {
+            score: sig.score !== undefined ? sig.score : null,
+            rank: sig.rank || null,
+            provisionalExecNav: f.provisionalExecNav || f.launchpadNav || f.nav || null,
+            planMode: "tsumitate",
+            proposedYen: monthlyYen
+          };
+          var tsParams = new URLSearchParams();
+          tsParams.set("side", "BUY");
+          tsParams.set("spec", "YEN");
+          tsParams.set("amountYen", String(monthlyYen));
+          tsParams.set("purpose", "積立");
+          tsParams.set("snapshot", JSON.stringify(tsSnap));
+          window.location.href = "./triple_orders.html?" + tsParams.toString();
+          return;
+        }
+
         var targetPct = lastComputedPlan ? lastComputedPlan.targetWeightPct : calcDynamicTargetPct(strategyState.baseTargetPct, sig.score || 50);
         var proposedYen = (lastComputedPlan && (lastComputedPlan.action === "BUY" || lastComputedPlan.action === "SELL"))
           ? lastComputedPlan.tradeYen
@@ -3124,10 +3761,12 @@
           params.set("side", "BUY");
           params.set("spec", "YEN");
           params.set("amountYen", String(lastComputedPlan.tradeYen));
+          params.set("purpose", "追加");
         } else if (lastComputedPlan && lastComputedPlan.action === "SELL") {
           params.set("side", "SELL");
           params.set("spec", "UNITS");
           params.set("units", String(lastComputedPlan.tradeUnits));
+          params.set("purpose", "売却");
         }
         params.set("snapshot", JSON.stringify(snapshotObj));
         window.location.href = "./triple_orders.html?" + params.toString();
@@ -3216,6 +3855,12 @@
         renderAll();
       });
 
+      window.setTestNowJst = function (customDateTimeStr) {
+        window.__TEST_NOW_JST = customDateTimeStr || null;
+        renderPortfolioRebalance();
+        return computeTsumitateScheduleState(gasState.orders, gasState.settings);
+      };
+
       var cachedTripleRaw = safeGetStorage(LS_TRIPLE_CACHE_ITEM);
       if (cachedTripleRaw) {
         try {
@@ -3229,7 +3874,10 @@
         fetchOrdersFromGas();
       }
       setInterval(fetchLatest, 60000);
-      setInterval(updateCountdownAndFreshness, 10000);
+      setInterval(function () {
+        updateCountdownAndFreshness();
+        renderPortfolioRebalance();
+      }, 10000);
     })();
   </script>
 </body>
