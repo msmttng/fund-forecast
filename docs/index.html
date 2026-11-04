@@ -1183,7 +1183,13 @@
           var idxOrigin = (!fut && idx.baseSource)
             ? (idx.baseSource === "settlement" ? "（起点:清算値）" : (idx.baseSource === "15:30" ? "（起点:15:30）" : ""))
             : "";
-          var symText = idx.symbol + idxOrigin + " " + formatPrice(idx.base) + " → " + formatPrice(idx.cur) + "（" + formatSignedPct(idx.change) + "）";
+          var curOrigin = "";
+          if (!fut && idx.curSource) {
+            if (idx.curSource === "settlement") curOrigin = "［精算値確定］";
+            else if (idx.curSource === "ose_1530") curOrigin = "［15:30値代用］";
+            else if (idx.curSource === "day_close") curOrigin = "［日中終値代用］";
+          }
+          var symText = idx.symbol + idxOrigin + " " + formatPrice(idx.base) + " → " + formatPrice(idx.cur) + curOrigin + "（" + formatSignedPct(idx.change) + "）";
           if (idx.dividendAdjusted) {
             symText += "［分配落ち+" + idx.dividendAdjusted + "調整済］";
           }
