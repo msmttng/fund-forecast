@@ -553,6 +553,9 @@ def find_intraday_price_at_830(
     return find_hourly_price_at(h_bars, d1_8am, use_open=True)
 
 
+_SETTLE_15M_MEMO: Dict[Tuple[int, str], Tuple[Dict[str, float], Dict[str, float]]] = {}
+
+
 def simulate_us_futures_at_830(
     d0_str: str,
     d1_str: str,
@@ -575,19 +578,23 @@ def simulate_us_futures_at_830(
         datetime.datetime(2000, 1, 1, settle_hour_et, settle_min_et) - datetime.timedelta(minutes=15)
     )
     settle_hhmm = settle_bar_start_dt.strftime("%H:%M")
-    settle_15m_map: Dict[str, float] = {}
-    globex_1645_map: Dict[str, float] = {}
-
-    for t, _, c in m15_bars:
-        dt_et = datetime.datetime.fromtimestamp(int(t), tz_et)
-        if not is_us_trading_day(dt_et.date()):
-            continue
-        d_et = dt_et.strftime("%Y-%m-%d")
-        hm_et = dt_et.strftime("%H:%M")
-        if hm_et == settle_hhmm:
-            settle_15m_map[d_et] = float(c)
-        elif hm_et == "16:45":
-            globex_1645_map[d_et] = float(c)
+    memo_key = (id(m15_bars), settle_hhmm)
+    if memo_key in _SETTLE_15M_MEMO:
+        settle_15m_map, globex_1645_map = _SETTLE_15M_MEMO[memo_key]
+    else:
+        settle_15m_map = {}
+        globex_1645_map = {}
+        for t, _, c in m15_bars:
+            dt_et = datetime.datetime.fromtimestamp(int(t), tz_et)
+            if not is_us_trading_day(dt_et.date()):
+                continue
+            d_et = dt_et.strftime("%Y-%m-%d")
+            hm_et = dt_et.strftime("%H:%M")
+            if hm_et == settle_hhmm:
+                settle_15m_map[d_et] = float(c)
+            elif hm_et == "16:45":
+                globex_1645_map[d_et] = float(c)
+        _SETTLE_15M_MEMO[memo_key] = (settle_15m_map, globex_1645_map)
 
     def resolve_settled_close(d_et: str, d_close: float) -> float:
         g1645 = globex_1645_map.get(d_et)
@@ -1038,7 +1045,7 @@ def main() -> None:
         hourly_series[sym] = parse_hourly_bars(ch_h)
 
     m15_series: Dict[str, List[Tuple[int, float, float]]] = {}
-    for sym in ["^N225", "1306.T", "1540.T", "NQ=F", "GC=F", "GCZ26.CMX"]:
+    for sym in ["^N225", "NIY=F", "1306.T", "1540.T", "NQ=F", "GC=F", "GCZ26.CMX"]:
         ch_15 = load_or_fetch_yahoo(sym, range_str="60d", interval="15m", events=False, min_last_ts=min_intraday_ts)
         m15_series[sym] = parse_hourly_bars(ch_15)
 
@@ -1459,6 +1466,122 @@ def main() -> None:
                     )
         except Exception as e:
             print(f"[WARN] 11/2 再現検証テーブル出力スキップ: {e}")
+
+    # 7. 4.3倍ブル 2銘柄（rakuten-jp-43bull / sbi-jp-43bull）18:00〜24:00 時点予想の過去60営業日 MAE 比較（改修前: 夜間立会混入 vs 改修後: 日中精算値固定）
+    bull_fund_ids = ["rakuten-jp-43bull", "sbi-jp-43bull"]
+    bull_funds_list = [f for _, _, f in all_funds if f["id"] in bull_fund_ids]
+    ose_st_cache: Dict[str, float] = {}
+    if ANCHOR_CACHE_PATH.exists():
+        try:
+            anc_obj = json.loads(ANCHOR_CACHE_PATH.read_text(encoding="utf-8"))
+            for k_d, v_st in ((anc_obj.get("ose_settlements") or {}).get("nikkei225") or {}).items():
+                if v_st:
+                    ose_st_cache[str(k_d)] = float(v_st)
+        except Exception:
+            pass
+
+    niy_m15_bars = m15_series.get("NIY=F", [])
+    niy_1h_bars = hourly_series.get("NIY=F", [])
+
+    def get_day_settlement_proxy(d_str: str) -> Optional[float]:
+        if d_str in ose_st_cache:
+            return ose_st_cache[d_str]
+        t_1500 = int(datetime.datetime.strptime(d_str, "%Y-%m-%d").replace(hour=15, minute=0, tzinfo=JST).timestamp())
+        t_1530 = int(datetime.datetime.strptime(d_str, "%Y-%m-%d").replace(hour=15, minute=30, tzinfo=JST).timestamp())
+        c15 = [c for t, _, c in niy_m15_bars if t_1500 <= t <= t_1530]
+        if c15:
+            return float(c15[-1])
+        c1h = [c for t, _, c in niy_1h_bars if t_1500 <= t <= t_1530]
+        if c1h:
+            return float(c1h[-1])
+        return n225_map.get(d_str)
+
+    def get_evening_18_24_closes(d_str: str) -> List[float]:
+        t_1800 = int(datetime.datetime.strptime(d_str, "%Y-%m-%d").replace(hour=18, minute=0, tzinfo=JST).timestamp())
+        t_2359 = int(datetime.datetime.strptime(d_str, "%Y-%m-%d").replace(hour=23, minute=59, tzinfo=JST).timestamp())
+        c15 = [float(c) for t, _, c in niy_m15_bars if t_1800 <= t <= t_2359]
+        if c15:
+            return c15
+        return [float(c) for t, _, c in niy_1h_bars if t_1800 <= t <= t_2359]
+
+    print(
+        "\n=== 4.3倍ブル 2銘柄 過去60営業日「18:00〜24:00 時点の予想」誤差（MAE / Bias, 単位: pt）比較（改修前: 夜間立会混入 vs 改修後: 日中精算値固定） ==="
+    )
+    print(
+        "| ファンド | 対象営業日数 | 18-24時サンプル数 | 改修前 MAE (全18-24時) | 改修後 MAE (精算値固定) | 改善幅 (後-前) | 改修前 MAE (22時代表) | 改修前 Bias | 改修後 Bias |"
+    )
+    print("|---|---:|---:|---:|---:|---:|---:|---:|---:|")
+
+    tot_b_abs: List[float] = []
+    tot_a_abs: List[float] = []
+    tot_b22_abs: List[float] = []
+    tot_b_sgn: List[float] = []
+    tot_a_sgn: List[float] = []
+
+    for bf in bull_funds_list:
+        bf_id = bf["id"]
+        bf_lev = float(bf.get("leverage", 4.3))
+        bf_hist = nav_histories.get(bf_id, {})
+        b_abs: List[float] = []
+        a_abs: List[float] = []
+        b22_abs: List[float] = []
+        b_sgn: List[float] = []
+        a_sgn: List[float] = []
+        eval_days = 0
+
+        for d0, d1 in day_pairs:
+            if d0 not in bf_hist or d1 not in bf_hist:
+                continue
+            b_st = get_day_settlement_proxy(d0)
+            c_st = get_day_settlement_proxy(d1)
+            ev_closes = get_evening_18_24_closes(d1)
+            if not b_st or not c_st or not ev_closes:
+                continue
+            eval_days += 1
+            nav0, act = bf_hist[d0], bf_hist[d1]
+            fc_aft = int(round(nav0 * (1.0 + bf_lev * ((c_st - b_st) / b_st))))
+            err_aft = (fc_aft - act) / nav0 * 100.0
+
+            day_b_errs: List[float] = []
+            for ev_c in ev_closes:
+                fc_bef = int(round(nav0 * (1.0 + bf_lev * ((ev_c - b_st) / b_st))))
+                err_bef = (fc_bef - act) / nav0 * 100.0
+                day_b_errs.append(err_bef)
+                b_abs.append(abs(err_bef))
+                a_abs.append(abs(err_aft))
+                b_sgn.append(err_bef)
+                a_sgn.append(err_aft)
+                tot_b_abs.append(abs(err_bef))
+                tot_a_abs.append(abs(err_aft))
+                tot_b_sgn.append(err_bef)
+                tot_a_sgn.append(err_aft)
+
+            rep_22_err = day_b_errs[min(len(day_b_errs) - 1, (len(day_b_errs) * 2) // 3)]
+            b22_abs.append(abs(rep_22_err))
+            tot_b22_abs.append(abs(rep_22_err))
+
+        if b_abs:
+            mb = sum(b_abs) / len(b_abs)
+            ma = sum(a_abs) / len(a_abs)
+            mb22 = sum(b22_abs) / len(b22_abs)
+            sb = sum(b_sgn) / len(b_sgn)
+            sa = sum(a_sgn) / len(a_sgn)
+            print(
+                f"| {bf['name']} (`{bf_id}`) | {eval_days} | {len(b_abs)} | "
+                f"{mb:.4f}pt | **{ma:.4f}pt** | **{ma - mb:+.4f}pt** | {mb22:.4f}pt | {sb:+.4f}pt | {sa:+.4f}pt |"
+            )
+
+    if tot_b_abs:
+        t_mb = sum(tot_b_abs) / len(tot_b_abs)
+        t_ma = sum(tot_a_abs) / len(tot_a_abs)
+        t_mb22 = sum(tot_b22_abs) / len(tot_b22_abs)
+        t_sb = sum(tot_b_sgn) / len(tot_b_sgn)
+        t_sa = sum(tot_a_sgn) / len(tot_a_sgn)
+        print(
+            f"| **4.3倍ブル 2銘柄合計** | **{eval_days}** | **{len(tot_b_abs)}** | "
+            f"**{t_mb:.4f}pt** | **{t_ma:.4f}pt** | **{t_ma - t_mb:+.4f}pt** | "
+            f"**{t_mb22:.4f}pt** | **{t_sb:+.4f}pt** | **{t_sa:+.4f}pt** |"
+        )
 
     if args.seed_log != "none":
         seed_records: Dict[str, Dict[str, Dict[str, Any]]] = {}

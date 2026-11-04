@@ -205,7 +205,7 @@ def next_jp_business_day(d: datetime.date) -> datetime.date:
 def latest_expected_nav_date(now_jst: datetime.datetime) -> datetime.date:
     """現在時刻（JST）時点で期待される最新の基準価額日付を返す。"""
     d = now_jst.date()
-    if now_jst.hour < 18 or not is_jp_business_day(d):
+    if now_jst.hour < 17 or not is_jp_business_day(d):
         cur = d - datetime.timedelta(days=1)
         while not is_jp_business_day(cur):
             cur -= datetime.timedelta(days=1)
@@ -214,8 +214,12 @@ def latest_expected_nav_date(now_jst: datetime.datetime) -> datetime.date:
 
 
 def should_fetch_nav_window(now_jst: datetime.datetime) -> bool:
-    """基準価額CSVを取得する時間帯（JST 18:00〜23:59 または 6:00〜9:00）か判定する。"""
-    return (18 <= now_jst.hour <= 23) or (6 <= now_jst.hour < 9)
+    """基準価額CSVを取得する時間帯（営業日 17:00〜23:59 または 全日 0:00〜9:00）か判定する。"""
+    if 0 <= now_jst.hour < 9:
+        return True
+    if is_jp_business_day(now_jst.date()) and 17 <= now_jst.hour <= 23:
+        return True
+    return False
 
 
 DOMESTIC_SNAPSHOT_MODELS: Set[str] = {
@@ -680,6 +684,7 @@ def fetch_ose_futures(anchor_cache: Dict[str, Any], now_jst: datetime.datetime) 
     """大阪取引所（JPX/QUICK 日通しAPI）から日経225先物・TOPIX先物の中心限月データを取得する。"""
     ose_settle_cache: Dict[str, Dict[str, float]] = anchor_cache.setdefault("ose_settlements", {})
     ose_1530_cache: Dict[str, Dict[str, Any]] = anchor_cache.setdefault("ose_1530", {})
+    ose_day_close_cache: Dict[str, Dict[str, Any]] = anchor_cache.setdefault("ose_day_close", {})
     out: Dict[str, Dict[str, Any]] = {}
 
     today_str = now_jst.strftime("%Y-%m-%d")
@@ -736,12 +741,30 @@ def fetch_ose_futures(anchor_cache: Dict[str, Any], now_jst: datetime.datetime) 
             stt_ymd = resolve_mmdd_to_ymd(str(best_row.get("STT", "")), now_jst.year, now_jst.month)
             dpp_ymd = resolve_mmdd_to_ymd(str(best_row.get("DPP_H", "")), now_jst.year, now_jst.month)
             dppt = str(best_row.get("DPPT", "")).strip()
+            contract_label = str(best_row.get("DELIE") or best_row.get("DELI") or "")
 
             if st_val is not None and stt_ymd:
                 ose_settle_cache.setdefault(key, {})[stt_ymd] = st_val
 
-            # 4-1: 営業日の 15:45〜16:15 に取得した値のうち、データ時刻が 15:30 以前で最も新しいものを 15:30 値として保存
-            if in_1545_1615 and dpp is not None and dpp > 0 and is_jp_business_day(now_jst.date()):
+            m_time = re.match(r"^(\d{1,2}):(\d{2})$", dppt)
+            dppt_norm = f"{int(m_time.group(1)):02d}:{int(m_time.group(2)):02d}" if m_time else ""
+
+            # 日中立会（08:45〜15:45、ZTD == DPP_H）の最新値（15:45大引け値を含む）を保存
+            if dpp is not None and dpp > 0 and dpp_ymd and ztd_ymd == dpp_ymd and dppt_norm and ("08:45" <= dppt_norm <= "15:45"):
+                day_close_map = ose_day_close_cache.setdefault(key, {})
+                prev_dc = day_close_map.get(dpp_ymd)
+                prev_dc_time = str(prev_dc.get("dataTime") or "") if isinstance(prev_dc, dict) else ""
+                if not prev_dc_time or dppt_norm >= prev_dc_time:
+                    day_close_map[dpp_ymd] = {
+                        "price": dpp,
+                        "dataTime": dppt_norm,
+                        "asOf": f"{dpp_ymd}T{dppt_norm}:00+09:00",
+                        "fetchedAt": now_jst.isoformat(timespec="seconds"),
+                        "contract": contract_label,
+                    }
+
+            # 4-1: 営業日の日中（特に 15:45〜16:15）に取得した値のうち、データ時刻が 15:30 以前で最も新しいものを 15:30 値として保存
+            if dpp is not None and dpp > 0 and is_jp_business_day(now_jst.date()):
                 target_day = dpp_ymd if (dpp_ymd == today_str) else today_str
                 key_1530_map = ose_1530_cache.setdefault(key, {})
                 existing_1530 = key_1530_map.get(target_day)
@@ -750,26 +773,24 @@ def fetch_ose_futures(anchor_cache: Dict[str, Any], now_jst: datetime.datetime) 
                     if isinstance(existing_1530, dict)
                     else ""
                 )
-                m_time = re.match(r"^(\d{1,2}):(\d{2})$", dppt)
-                if m_time:
-                    dppt_norm = f"{int(m_time.group(1)):02d}:{int(m_time.group(2)):02d}"
-                    if (dpp_ymd is None or dpp_ymd == today_str) and ("09:00" <= dppt_norm <= "15:30"):
+                if dppt_norm:
+                    if (dpp_ymd is None or dpp_ymd == today_str) and (ztd_ymd is None or ztd_ymd == today_str) and ("09:00" <= dppt_norm <= "15:30"):
                         if not existing_time or dppt_norm >= existing_time:
                             key_1530_map[target_day] = {
                                 "price": dpp,
                                 "dataTime": dppt_norm,
                                 "fetchedAt": now_jst.isoformat(timespec="seconds"),
-                                "contract": str(best_row.get("DELIE") or best_row.get("DELI") or ""),
+                                "contract": contract_label,
                                 "anchorSource": "api_time<=15:30",
                             }
-                else:
+                elif in_1545_1615:
                     # 時刻項目が無い場合は 15:45〜15:50 に取得した値を 15:30 値とみなす
                     if in_1545_1550 and existing_1530 is None:
                         key_1530_map[target_day] = {
                             "price": dpp,
                             "dataTime": None,
                             "fetchedAt": now_jst.isoformat(timespec="seconds"),
-                            "contract": str(best_row.get("DELIE") or best_row.get("DELI") or ""),
+                            "contract": contract_label,
                             "anchorSource": "fetched_1545_1550_no_time_field",
                         }
 
@@ -782,12 +803,13 @@ def fetch_ose_futures(anchor_cache: Dict[str, Any], now_jst: datetime.datetime) 
                     ).isoformat()
 
             out[key] = {
-                "contract": str(best_row.get("DELIE") or best_row.get("DELI") or ""),
+                "contract": contract_label,
                 "cur": dpp,
                 "dywp": dywp,
                 "baseSettlement": (dpp - dywp) if (dpp is not None and dywp is not None) else st_val,
                 "settle": st_val,
                 "settleDate": stt_ymd,
+                "settleAsOf": f"{stt_ymd}T15:45:00+09:00" if stt_ymd else None,
                 "tradingDate": ztd_ymd,
                 "dataDate": dpp_ymd,
                 "dataTime": dppt,
@@ -1509,6 +1531,7 @@ def get_cme_niy_futures_change(
     market_cache: Dict[str, Dict[str, Any]],
     d0_str: str,
     now_jst: datetime.datetime,
+    d1_str: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
     """大証先物が取得できない場合のフォールバックとして CME 日経先物 (NIY=F) の D0 15:30 比変化率を返す。"""
     fut_entry = market_cache.get("NIY=F")
@@ -1534,6 +1557,19 @@ def get_cme_niy_futures_change(
     best_f = min(f_bars, key=lambda x: abs(x[0] - target_ts))
     if abs(best_f[0] - target_ts) > 3600 * 4 or best_f[1] <= 0:
         return None
+
+    # D1 日中立会終了後（15:45 JST 以降）は D1+1 夜間セッションの値を混入させないよう D1 15:45 以前（15:30開始15分足 close）で固定
+    if d1_str:
+        d1_1545_dt = datetime.datetime.strptime(d1_str, "%Y-%m-%d").replace(hour=15, minute=45, second=0, tzinfo=JST)
+        d1_1545_ts = int(d1_1545_dt.timestamp())
+        d1_1530_bar_ts = d1_1545_ts - 900
+        if int(now_jst.timestamp()) >= d1_1545_ts and fut_time > d1_1545_ts:
+            d1_bars = [(t, c) for t, c in f_bars if target_ts < t <= d1_1530_bar_ts]
+            if d1_bars:
+                fut_cur = d1_bars[-1][1]
+                as_of_iso = datetime.datetime.fromtimestamp(d1_bars[-1][0] + 900, JST).isoformat()
+            else:
+                return None
 
     fut_1530 = best_f[1]
     r_fut = (fut_cur / fut_1530) - 1.0
@@ -1561,7 +1597,6 @@ def get_ose_session_futures_change(
     if not f_obj:
         return None
     t_date = f_obj.get("tradingDate")
-    s_date = f_obj.get("settleDate")
     cur_v = f_obj.get("cur")
 
     # 4-1: D0 の 15:30 値があれば起点に使用し、無い日は清算値基準に戻して baseSource: "settlement" を付ける
@@ -1600,8 +1635,8 @@ def get_ose_session_futures_change(
             return res_d0
         return None
 
-    # D1 セッション（夜間〜D1 日中）の取引値がある場合
-    if (t_date == d1_str or s_date == d0_str) and cur_v and base_v and base_v > 0:
+    # D1 セッション（D0 夜間・祝日取引〜D1 日中）の取引値がある場合（D1+1 夜間 t_date > d1_str は除外）
+    if t_date and (d0_str < t_date <= d1_str) and cur_v and base_v and base_v > 0:
         r_fut = (cur_v / base_v) - 1.0
         res_d1: Dict[str, Any] = {
             "symbol": label,
@@ -1655,10 +1690,10 @@ def get_nikkei_index_change(
             base_val = reg_price
 
     today_str = now_jst.strftime("%Y-%m-%d")
-    # D1 当日 9:00 以降（日中取引中および 15:30 大引け後〜基準価額公表前）は現物指数を使用
+    # D1 当日 9:00 以降（日中取引中・15:30 大引け後・翌日0:00以降の基準価額公表待ち）は現物指数で確定・固定
+    in_d1_cash_or_after = (today_str > d1_str) or (today_str == d1_str and now_jst.hour >= 9)
     use_cash_d1 = (
-        today_str >= d1_str
-        and now_jst.hour >= 9
+        in_d1_cash_or_after
         and (reg_date_jst >= d1_str or d1_str in bars_by_date)
     )
 
@@ -1666,12 +1701,15 @@ def get_nikkei_index_change(
     futures_info: Optional[Dict[str, Any]] = None
 
     if use_cash_d1:
-        cur_val = bars_by_date.get(d1_str, reg_price) if now_jst.hour >= 16 else reg_price
+        is_after_close = (today_str > d1_str) or (now_jst.hour >= 16) or (now_jst.hour == 15 and now_jst.minute >= 30)
+        cur_val = bars_by_date.get(d1_str, reg_price) if is_after_close else reg_price
+        if is_after_close and d1_str in bars_by_date:
+            as_of_iso = f"{d1_str}T15:30:00+09:00"
     else:
         ose_nk = get_ose_session_futures_change(
             ose_futures, anchor_cache, "nikkei225", "日経225先物(大証)", d0_str, d1_str
         )
-        fut = ose_nk or get_cme_niy_futures_change(market_cache, d0_str, now_jst)
+        fut = ose_nk or get_cme_niy_futures_change(market_cache, d0_str, now_jst, d1_str=d1_str)
         if fut:
             # 4-1: 現物終値 ×（先物の現在値 ÷ 15:30の先物値[または清算値]）
             if fut.get("base") and float(fut["base"]) > 0 and fut.get("cur"):
@@ -1712,35 +1750,116 @@ def get_nikkei_leveraged_change(
     d1_str: str,
     now_jst: datetime.datetime,
 ) -> Dict[str, Any]:
-    """4.3倍ブル向けに大証日経225先物の D0 公式清算値からの変化率を計算する（取得不可時は日経変化率へフォールバック）。"""
-    f_obj = ose_futures.get("nikkei225")
+    """4.3倍ブル向けに大証日経225先物の D0 公式精算値からの変化率を計算する。
+    D1 の日中立会終了（15:45）後は D1 日中精算値で確定・固定し、未公表の間は日中終値または 15:30 値で代用する。
+    夜間立会（16:30〜翌6:00）の値は targetDate が D+1 に切り替わった後の D+1 予想にのみ使用する。
+    """
+    f_obj = ose_futures.get("nikkei225") if isinstance(ose_futures, dict) else None
     cached_settles = anchor_cache.get("ose_settlements", {}).get("nikkei225", {})
+    cached_day_close = anchor_cache.get("ose_day_close", {}).get("nikkei225", {})
+    cached_1530 = anchor_cache.get("ose_1530", {}).get("nikkei225", {})
 
     base_st: Optional[float] = None
-    if f_obj and f_obj.get("settleDate") == d0_str and f_obj.get("settle"):
-        base_st = float(f_obj["settle"])
-    elif d0_str in cached_settles:
+    base_source = "settlement"
+    if d0_str in cached_settles and cached_settles[d0_str]:
         base_st = float(cached_settles[d0_str])
+    elif f_obj and f_obj.get("settleDate") == d0_str and f_obj.get("settle"):
+        base_st = float(f_obj["settle"])
+    elif d0_str in cached_day_close and isinstance(cached_day_close[d0_str], dict) and cached_day_close[d0_str].get("price"):
+        base_st = float(cached_day_close[d0_str]["price"])
+        base_source = "day_close"
+    else:
+        p1530_d0, _ = _extract_ose_1530_price(cached_1530.get(d0_str))
+        if p1530_d0 is not None and p1530_d0 > 0:
+            base_st = float(p1530_d0)
+            base_source = "ose_1530"
+
+    today_str = now_jst.strftime("%Y-%m-%d")
+    now_hm = now_jst.hour * 60 + now_jst.minute
+    d1_day_ended = (today_str > d1_str) or (today_str == d1_str and now_hm >= (15 * 60 + 45))
+
+    t_date = str(f_obj.get("tradingDate") or "") if f_obj else ""
+    s_date = str(f_obj.get("settleDate") or "") if f_obj else ""
+    d_date = str(f_obj.get("dataDate") or "") if f_obj else ""
+    d_time = str(f_obj.get("dataTime") or "").strip() if f_obj else ""
+    m_dt = re.match(r"^(\d{1,2}):(\d{2})$", d_time)
+    d_time_norm = f"{int(m_dt.group(1)):02d}:{int(m_dt.group(2)):02d}" if m_dt else ""
 
     cur_fut: Optional[float] = None
+    cur_source: Optional[str] = None
     as_of_iso = now_jst.isoformat(timespec="seconds")
-    if f_obj:
-        as_of_iso = f_obj["asOf"]
-        if f_obj.get("settleDate") == d1_str and f_obj.get("settle"):
-            # D1 夕方に D1 清算値が確定済みの場合
-            cur_fut = float(f_obj["settle"])
-        elif f_obj.get("tradingDate") == d1_str and f_obj.get("cur"):
+
+    # 1. D1 の日中精算値が公表・キャッシュ済みの場合は、夜間立会中であっても D1 精算値で確定・固定
+    if d1_str in cached_settles and cached_settles[d1_str]:
+        cur_fut = float(cached_settles[d1_str])
+        cur_source = "settlement"
+        as_of_iso = f"{d1_str}T15:45:00+09:00"
+    elif f_obj and s_date == d1_str and f_obj.get("settle"):
+        cur_fut = float(f_obj["settle"])
+        cur_source = "settlement"
+        as_of_iso = f"{d1_str}T15:45:00+09:00"
+
+    # 2. D1 の日中立会終了（15:45）後〜精算値公表前の間：夜間値は使わず日中最終値または 15:30 値で代用
+    elif d1_day_ended or (t_date and t_date > d1_str):
+        if (
+            f_obj
+            and t_date == d1_str
+            and f_obj.get("cur")
+            and (d_date in ("", d1_str))
+            and (not d_time_norm or "08:45" <= d_time_norm <= "15:45")
+        ):
             cur_fut = float(f_obj["cur"])
-        elif f_obj.get("tradingDate") == d0_str and base_st:
+            cur_source = "ose_1530" if (d_time_norm and d_time_norm <= "15:30") else "day_close"
+            as_of_iso = f_obj.get("asOf") or f"{d1_str}T15:45:00+09:00"
+        elif d1_str in cached_day_close and isinstance(cached_day_close[d1_str], dict) and cached_day_close[d1_str].get("price"):
+            dc_obj = cached_day_close[d1_str]
+            cur_fut = float(dc_obj["price"])
+            dc_time = str(dc_obj.get("dataTime") or "15:45")
+            cur_source = "ose_1530" if dc_time <= "15:30" else "day_close"
+            as_of_iso = str(dc_obj.get("asOf") or f"{d1_str}T{dc_time}:00+09:00")
+        else:
+            p1530_d1, _ = _extract_ose_1530_price(cached_1530.get(d1_str))
+            if p1530_d1 is not None and p1530_d1 > 0:
+                cur_fut = float(p1530_d1)
+                cur_source = "ose_1530"
+                as_of_iso = f"{d1_str}T15:30:00+09:00"
+            else:
+                fut_entry = market_cache.get("NIY=F")
+                fut_m15 = fut_entry.get("m15") if fut_entry else None
+                if fut_m15 and "timestamp" in fut_m15:
+                    d1_0845_ts = int(datetime.datetime.strptime(d1_str, "%Y-%m-%d").replace(hour=8, minute=45, tzinfo=JST).timestamp())
+                    d1_1530_bar_ts = int(datetime.datetime.strptime(d1_str, "%Y-%m-%d").replace(hour=15, minute=30, tzinfo=JST).timestamp())
+                    d1_bars = [
+                        (int(t), float(c))
+                        for t, c in zip(fut_m15["timestamp"], fut_m15["indicators"]["quote"][0]["close"])
+                        if c is not None and d1_0845_ts <= int(t) <= d1_1530_bar_ts
+                    ]
+                    if d1_bars:
+                        cur_fut = d1_bars[-1][1]
+                        cur_source = "cme_1545"
+                        as_of_iso = datetime.datetime.fromtimestamp(d1_bars[-1][0] + 900, JST).isoformat()
+
+    # 3. D1 日中立会終了前（targetDate が D1 に切り替わった後の D1 夜間立会・祝日取引〜D1 日中立会）
+    else:
+        if f_obj and t_date and (d0_str < t_date <= d1_str) and f_obj.get("cur"):
+            cur_fut = float(f_obj["cur"])
+            is_day_session = (d_date == d1_str and "08:45" <= d_time_norm <= "15:45")
+            cur_source = "day_live" if is_day_session else "night_live"
+            as_of_iso = f_obj.get("asOf") or now_jst.isoformat(timespec="seconds")
+        elif f_obj and t_date == d0_str and base_st:
             cur_fut = base_st
+            cur_source = "base_settlement"
+            as_of_iso = f"{d0_str}T15:45:00+09:00"
 
     if base_st and cur_fut and base_st > 0:
         r_idx = (cur_fut - base_st) / base_st
         return {
             "symbol": "日経225先物(清算値基準)",
             "base": round(base_st, 2),
+            "baseSource": base_source,
             "baseDate": d0_str,
             "cur": round(cur_fut, 2),
+            "curSource": cur_source or "settlement",
             "rawChange": r_idx,
             "change": round(r_idx * 100.0, 2),
             "asOf": as_of_iso,
@@ -1785,14 +1904,14 @@ def get_topix_index_change(
         sym_label = "1306.T"
 
     today_str = now_jst.strftime("%Y-%m-%d")
-    in_d1_cash_session = today_str >= d1_str and now_jst.hour >= 9
+    in_d1_cash_session = (today_str > d1_str) or (today_str == d1_str and now_jst.hour >= 9)
 
     cur_val = base_val
     as_of_iso = jpx_topix_live["asOf"] if jpx_topix_live else etf_as_of
     futures_info: Optional[Dict[str, Any]] = None
 
     if in_d1_cash_session:
-        # 日中〜大引け後：JPX TOPIX 指数の D1 現在値/終値を優先し、取れなければ 1306.T の変化率で補完
+        # 日中〜大引け後（および翌日0:00以降の基準価額公表待ち）：JPX TOPIX 指数の D1 現在値/終値を優先
         if jpx_topix_live and jpx_topix_live.get("date", "") >= d1_str:
             if sym_label == "TOPIX":
                 cur_val = float(jpx_topix_live["price"])
@@ -1801,10 +1920,12 @@ def get_topix_index_change(
             as_of_iso = jpx_topix_live["asOf"]
         elif d1_str in topix_daily and sym_label == "TOPIX":
             cur_val = float(topix_daily[d1_str])
+            as_of_iso = f"{d1_str}T15:30:00+09:00"
         else:
-            r_1306 = (etf_reg - etf_d0) / etf_d0 if etf_d0 > 0 else 0.0
+            etf_d1 = etf_bars.get(d1_str, etf_reg)
+            r_1306 = (etf_d1 - etf_d0) / etf_d0 if etf_d0 > 0 else 0.0
             cur_val = base_val * (1.0 + r_1306)
-            as_of_iso = etf_as_of
+            as_of_iso = f"{d1_str}T15:30:00+09:00" if d1_str in etf_bars else etf_as_of
     else:
         # 夜間・時間外：1. 大証 TOPIX先物 (15:30先物値比、欠損時は清算値比) → 2. β × 日経先物変化率
         ose_tpx = get_ose_session_futures_change(
@@ -1829,7 +1950,7 @@ def get_topix_index_change(
             ose_nk = get_ose_session_futures_change(
                 ose_futures, anchor_cache, "nikkei225", "日経225先物(大証)", d0_str, d1_str
             )
-            nk_fut = ose_nk or get_cme_niy_futures_change(market_cache, d0_str, now_jst)
+            nk_fut = ose_nk or get_cme_niy_futures_change(market_cache, d0_str, now_jst, d1_str=d1_str)
             if nk_fut:
                 r_approx = topix_beta * nk_fut["rawChange"]
                 cur_val = base_val * (1.0 + r_approx)
@@ -2149,11 +2270,16 @@ def run_build(
         for f in g.get("funds", []):
             all_funds.append((g["id"], f))
 
+    nav_retry_hours = 0.24  # 確認ウィンドウ（17:00〜24:00 / 0:00〜9:00）内で未反映の間は約15分おきに再確認
     nav_updated = False
     for _, f in all_funds:
         fid = f["id"]
         cached = nav_cache.get(fid)
-        fresh_within_ttl = is_nav_cache_fresh_within_hours(cached, now_jst, nav_ttl_hours)
+        waiting_new_nav = bool(
+            in_nav_window and isinstance(cached, dict) and cached.get("navDate") != expected_nav_date_str
+        )
+        effective_ttl = min(nav_ttl_hours, nav_retry_hours) if waiting_new_nav else nav_ttl_hours
+        fresh_within_ttl = is_nav_cache_fresh_within_hours(cached, now_jst, effective_ttl)
         need_fetch = force_nav or cached is None or "nav" not in cached
         if not need_fetch and not fresh_within_ttl:
             if in_nav_window and cached.get("navDate") != expected_nav_date_str:
@@ -2162,12 +2288,7 @@ def run_build(
         if need_fetch:
             try:
                 latest_nav, latest_date, history = fetch_fund_nav_csv(f["isinCd"], f["associFundCd"])
-                # 夕方更新待ちで未反映だった場合は1時間後に再試行できるよう fetchedAt を調整
-                if in_nav_window and latest_date != expected_nav_date_str and nav_ttl_hours > 1.0:
-                    adj_dt = now_jst - datetime.timedelta(hours=(nav_ttl_hours - 1.0))
-                    fetched_iso = adj_dt.isoformat(timespec="seconds")
-                else:
-                    fetched_iso = now_jst.isoformat(timespec="seconds")
+                fetched_iso = now_jst.isoformat(timespec="seconds")
                 nav_cache[fid] = {
                     "nav": latest_nav,
                     "navDate": latest_date,
@@ -2177,6 +2298,9 @@ def run_build(
                 nav_updated = True
                 print(f"[NAV] {fid}: {latest_nav} ({latest_date})")
             except Exception as e:
+                if isinstance(cached, dict):
+                    cached["fetchedAt"] = now_jst.isoformat(timespec="seconds")
+                    nav_updated = True
                 print(f"[ERROR] NAV fetch failed for {fid}: {e}", file=sys.stderr)
 
     if nav_updated or not NAV_CACHE_PATH.exists():
@@ -2415,6 +2539,10 @@ def run_build(
                             "asOf": idx_info["asOf"],
                         }
                     }
+                    if "baseSource" in idx_info:
+                        breakdown["index"]["baseSource"] = idx_info["baseSource"]
+                    if "curSource" in idx_info:
+                        breakdown["index"]["curSource"] = idx_info["curSource"]
                     if "futures" in idx_info:
                         breakdown["futures"] = idx_info["futures"]
 
